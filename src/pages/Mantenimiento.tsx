@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LocationMap } from "@/components/LocationMap";
+import { LocationMap, type LocationMapHandle } from "@/components/LocationMap";
+import { useRef } from "react";
 import {
   Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight, Clock,
   AlertTriangle, Flame, Plus, Minus, Wind, Shield, ChevronLeft, Gauge, Timer, Award,
