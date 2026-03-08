@@ -234,7 +234,7 @@ const MantenimientoCompresores = () => {
               Mantenimiento de Sistemas de Cascada
             </h2>
             <p className="text-muted-foreground leading-relaxed">
-              Servicio integral para sistemas de cascada utilizados en el suministro de aire respirable Grado D. Incluye inspección de cilindros, revisión de válvulas, pruebas hidrostáticas y verificación de conexiones.
+              Los sistemas de cascada almacenan aire respirable Grado D en bancos de cilindros de alta presión, los cuales son llenados por compresores dedicados. Ofrecemos mantenimiento integral tanto del compresor de llenado como de los cilindros, manifold y válvulas del sistema.
             </p>
             <ul className="space-y-3 text-muted-foreground">
               {[
