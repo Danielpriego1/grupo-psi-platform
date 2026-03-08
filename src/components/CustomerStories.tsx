@@ -89,42 +89,47 @@ function StoryCardStep({
               : "0 10px 22px hsl(var(--foreground) / 0.12)",
           }}
         >
-          <div className="overflow-hidden rounded-[1.5rem] bg-foreground text-background">
-            <div className="relative h-44 w-full">
-              <img
-                src={story.image}
-                alt={`Caso de éxito de ${story.company}`}
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
+          <div className="overflow-hidden rounded-[1.5rem]">
+            <div
+              className="relative min-h-[340px] sm:min-h-[400px] flex flex-col justify-end p-8 sm:p-10"
+              style={{
+                background: "linear-gradient(160deg, hsl(220 22% 8%), hsl(220 18% 12%), hsl(225 15% 14%))",
+              }}
+            >
+              {/* Pattern overlay */}
               <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(to top, hsl(var(--foreground) / 0.9), hsl(var(--foreground) / 0.35))",
-                }}
+                className="pointer-events-none absolute inset-0"
+                style={{ backgroundImage: story.pattern }}
               />
-              <span className="absolute left-5 top-5 rounded-md border border-background/20 bg-foreground/70 px-2.5 py-1 text-[11px] font-medium text-background/85">
+
+              {/* Tag */}
+              <span className="absolute left-6 top-6 sm:left-8 sm:top-8 rounded-md border border-background/15 bg-background/10 px-2.5 py-1 text-[11px] font-mono font-medium text-background/70 backdrop-blur-sm">
                 {story.tag}
               </span>
-            </div>
 
-            <div className="px-6 pb-7 pt-6 sm:px-8">
-              <h3 className="mb-3 text-2xl font-bold leading-tight sm:text-3xl">
-                {story.company}
-              </h3>
-              <p className="mb-5 max-w-2xl text-base text-background/80 sm:text-lg">
-                {story.quote}
-              </p>
+              {/* Content */}
+              <div className="relative z-10">
+                <h3 className="mb-3 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+                  {story.company}
+                </h3>
+                <p className="mb-5 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
+                  {story.quote}
+                </p>
 
-              <div className="inline-flex items-center gap-2 text-background/90">
-                <span className="text-sm font-medium">Más información</span>
-                <motion.span
-                  animate={{ x: isActive ? 6 : 0 }}
-                  transition={{ duration: 0.24, ease: "easeOut" }}
-                >
-                  <ArrowRight size={18} />
-                </motion.span>
+                <div className="inline-flex items-center gap-2 text-primary">
+                  <span
+                    className="overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-400 ease-out"
+                    style={{ maxWidth: isActive ? 160 : 0, opacity: isActive ? 1 : 0 }}
+                  >
+                    Más información
+                  </span>
+                  <motion.span
+                    animate={{ x: isActive ? 4 : 0 }}
+                    transition={{ duration: 0.24, ease: "easeOut" }}
+                  >
+                    <ArrowRight size={18} />
+                  </motion.span>
+                </div>
               </div>
             </div>
           </div>
