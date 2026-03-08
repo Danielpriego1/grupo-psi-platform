@@ -1,17 +1,56 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { LocationMap } from "@/components/LocationMap";
-import { Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight } from "lucide-react";
+import { Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
 import { mexicoStates, type MexicoState, type Municipality } from "@/data/mexicoLocations";
+
+// Time slot definitions with capacity logic
+interface TimeSlot {
+  id: string;
+  label: string;
+  startHour: number;
+  endHour: number;
+  maxCapacity: number;
+}
+
+const TIME_SLOTS: TimeSlot[] = [
+  { id: "morning-1", label: "8:00 – 9:30", startHour: 8, endHour: 9.5, maxCapacity: 3 },
+  { id: "morning-2", label: "9:30 – 11:00", startHour: 9.5, endHour: 11, maxCapacity: 3 },
+  { id: "morning-3", label: "11:00 – 12:30", startHour: 11, endHour: 12.5, maxCapacity: 3 },
+  { id: "afternoon-1", label: "12:30 – 14:00", startHour: 12.5, endHour: 14, maxCapacity: 2 },
+  { id: "afternoon-2", label: "14:00 – 15:30", startHour: 14, endHour: 15.5, maxCapacity: 3 },
+  { id: "afternoon-3", label: "15:30 – 17:00", startHour: 15.5, endHour: 17, maxCapacity: 3 },
+];
+
+// Simulated existing bookings per date (in production this comes from DB)
+const getSimulatedBookings = (dateStr: string): Record<string, number> => {
+  const seed = dateStr.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const bookings: Record<string, number> = {};
+  TIME_SLOTS.forEach((slot, i) => {
+    const pseudoRandom = ((seed * (i + 1) * 7) % 13);
+    if (pseudoRandom > 10) {
+      bookings[slot.id] = slot.maxCapacity; // Full
+    } else if (pseudoRandom > 6) {
+      bookings[slot.id] = slot.maxCapacity - 1; // Almost full
+    } else if (pseudoRandom > 3) {
+      bookings[slot.id] = Math.floor(slot.maxCapacity / 2); // Moderate
+    } else {
+      bookings[slot.id] = 0; // Empty
+    }
+  });
+  return bookings;
+};
+
+type SlotAvailability = "available" | "limited" | "unavailable";
 
 const formSchema = z.object({
   name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(100),
