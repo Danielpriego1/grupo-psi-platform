@@ -104,7 +104,8 @@ const Mantenimiento = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   // Equipment state
-  const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ type: "", weight: "", quantity: 1 }]);
+  const defaultEquipmentItem: EquipmentItem = { category: "", type: "", weight: "", quantity: 1, scbaLastMaintenance: "", scbaPsi: "", scbaMinutes: "", detectorBrand: "", detectorGases: "", detectorLastMaintenance: "" };
+  const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ ...defaultEquipmentItem }]);
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [equipmentError, setEquipmentError] = useState<string | null>(null);
 
