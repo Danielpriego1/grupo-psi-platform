@@ -11,11 +11,11 @@ export function HeroSection() {
           style={{
             backgroundImage: `
               linear-gradient(135deg, 
-                hsl(220 20% 7%) 0%, 
-                hsl(220 25% 12%) 25%, 
-                hsl(199 40% 15%) 50%, 
-                hsl(262 30% 15%) 75%, 
-                hsl(220 20% 7%) 100%
+                hsl(210 20% 98%) 0%, 
+                hsl(199 60% 95%) 25%, 
+                hsl(199 50% 92%) 50%, 
+                hsl(262 40% 95%) 75%, 
+                hsl(210 20% 98%) 100%
               )`,
           }}
         />
@@ -30,8 +30,8 @@ export function HeroSection() {
           }}
         />
         {/* Glow orbs */}
-        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/10 blur-[120px] animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full bg-accent/20 blur-[100px] animate-pulse-glow" style={{ animationDelay: "1.5s" }} />
+        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/5 blur-[120px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full bg-accent/10 blur-[100px] animate-pulse-glow" style={{ animationDelay: "1.5s" }} />
       </div>
 
       <div className="container mx-auto px-4">
