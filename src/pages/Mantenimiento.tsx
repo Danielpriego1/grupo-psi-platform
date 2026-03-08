@@ -31,7 +31,7 @@ const WEIGHT_OPTIONS = [
 // Equipment categories
 const EQUIPMENT_CATEGORIES = [
   { id: "extintores", label: "Extintores", icon: "🧯", description: "Recarga y mantenimiento" },
-  { id: "scba", label: "Equipos Autónomos (SCBA)", icon: "🎽", description: "Cilindros de aire respirable" },
+  { id: "scba", label: "Equipos Autónomos (SCBA)", icon: "⛑️", description: "Cilindros de aire respirable" },
   { id: "detector-multigas", label: "Detectores Multigas", icon: "📡", description: "Calibración y mantenimiento" },
 ];
 
