@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { HeroSection } from "@/components/HeroSection";
 import { AboutSection } from "@/components/AboutSection";
 import { CTASection } from "@/components/CTASection";
+import { CustomerStories } from "@/components/CustomerStories";
 import { motion } from "framer-motion";
 
 const Index = () => {
