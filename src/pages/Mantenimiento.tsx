@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LocationMap } from "@/components/LocationMap";
+import { LocationMap, type LocationMapHandle } from "@/components/LocationMap";
+import { useRef } from "react";
 import {
   Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight, Clock,
   AlertTriangle, Flame, Plus, Minus, Wind, Shield, ChevronLeft, Gauge, Timer, Award,
@@ -313,8 +314,11 @@ const Mantenimiento = () => {
   const [selectedState, setSelectedState] = useState<MexicoState | null>(null);
   const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(null);
   const [selectedPostalCode, setSelectedPostalCode] = useState<string | null>(null);
-  const [locationSubStep, setLocationSubStep] = useState<1 | 2 | 3 | 4>(1);
+  const [address, setAddress] = useState("");
+  const [locationSubStep, setLocationSubStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const mapRef = useRef<LocationMapHandle>(null);
 
   // ─── Contact form ───
   const [serviceContact, setServiceContact] = useState({ name: "", phone: "", email: "", notes: "" });
@@ -351,7 +355,7 @@ const Mantenimiento = () => {
     });
     if (!hasValid) { setEquipmentError("Agrega al menos un equipo con todos los campos requeridos"); setStep(1); return; }
     if (!date || !selectedTimeSlot) { toast.error("Selecciona una fecha y horario para la recolección"); setStep(2); return; }
-    if (!location) { toast.error("Fija tu ubicación en el mapa"); return; }
+    if (!location || !locationConfirmed) { toast.error("Confirma tu ubicación en el mapa"); setStep(3); return; }
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
     const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
     toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
@@ -383,11 +387,29 @@ const Mantenimiento = () => {
   }, [date]);
 
   const isStep2Complete = !!date && !!selectedTimeSlot;
-  const isLocationComplete = !!location;
+  const isLocationComplete = !!location && locationConfirmed;
 
-  const handleSelectState = (state: MexicoState) => { setSelectedState(state); setSelectedMunicipality(null); setSelectedPostalCode(null); setLocation(null); setLocationSubStep(2); };
-  const handleSelectMunicipality = (muni: Municipality) => { setSelectedMunicipality(muni); setSelectedPostalCode(null); setLocation(null); setLocationSubStep(3); };
-  const handleSelectPostalCode = (cp: string) => { setSelectedPostalCode(cp); setLocation(null); setLocationSubStep(4); };
+  const handleSelectState = (state: MexicoState) => {
+    setSelectedState(state); setSelectedMunicipality(null); setSelectedPostalCode(null); setAddress(""); setLocation(null); setLocationConfirmed(false); setLocationSubStep(2);
+    setTimeout(() => mapRef.current?.flyTo(state.coords[0], state.coords[1], 7), 100);
+  };
+  const handleSelectMunicipality = (muni: Municipality) => {
+    setSelectedMunicipality(muni); setSelectedPostalCode(null); setAddress(""); setLocation(null); setLocationConfirmed(false); setLocationSubStep(3);
+    if (selectedState) setTimeout(() => mapRef.current?.flyTo(selectedState.coords[0], selectedState.coords[1], 10), 100);
+  };
+  const handleSelectPostalCode = (cp: string) => {
+    setSelectedPostalCode(cp); setAddress(""); setLocation(null); setLocationConfirmed(false); setLocationSubStep(4);
+    if (selectedState) setTimeout(() => mapRef.current?.flyTo(selectedState.coords[0], selectedState.coords[1], 13), 100);
+  };
+  const handleAddressContinue = () => {
+    setLocationSubStep(5);
+    if (selectedState) setTimeout(() => mapRef.current?.flyTo(selectedState.coords[0], selectedState.coords[1], 16), 100);
+  };
+  const handleConfirmLocation = () => {
+    if (!location) { toast.error("Coloca un pin en el mapa primero"); return; }
+    setLocationConfirmed(true);
+    toast.success("Ubicación confirmada");
+  };
 
   const handleServiceContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -543,7 +565,7 @@ const Mantenimiento = () => {
               </Button>
             </div>
           ) : (
-            <div className="mx-auto max-w-2xl">
+            <div className={cn("mx-auto", step === 3 ? "max-w-5xl" : "max-w-2xl")}>
               {/* Progress steps */}
               <div className="mx-auto mb-10 flex items-center justify-center gap-2">
                 {[{ n: 1, label: "Datos" }, { n: 2, label: "Fecha" }, { n: 3, label: "Ubicación" }].map(({ n, label }) => (
@@ -825,93 +847,212 @@ const Mantenimiento = () => {
                 </div>
               )}
 
-              {/* Step 3: Location */}
+              {/* Step 3: Location — Split Layout */}
               {step === 3 && (
-                <div className="animate-fade-in space-y-6 rounded-2xl border border-border bg-card p-6 shadow-lg md:p-8">
-                  <h2 className="text-xl font-bold flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" /> Ubicación de recolección</h2>
+                <div className="animate-fade-in rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+                  <div className="grid md:grid-cols-2">
+                    {/* Left: Form */}
+                    <div className="p-6 md:p-8 space-y-5 overflow-y-auto max-h-[700px]">
+                      <h2 className="text-xl font-bold flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" /> Ubicación de recolección</h2>
 
-                  {/* Breadcrumb */}
-                  <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-                    <button onClick={() => { setLocationSubStep(1); setSelectedState(null); setSelectedMunicipality(null); setSelectedPostalCode(null); setLocation(null); }} className={cn("rounded-md px-2 py-1 transition-colors", locationSubStep === 1 ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-muted")}>Estado</button>
-                    {selectedState && (<><ChevronRight className="h-3 w-3" /><button onClick={() => { setLocationSubStep(2); setSelectedMunicipality(null); setSelectedPostalCode(null); setLocation(null); }} className={cn("rounded-md px-2 py-1 transition-colors", locationSubStep === 2 ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-muted")}>{selectedState.name}</button></>)}
-                    {selectedMunicipality && (<><ChevronRight className="h-3 w-3" /><button onClick={() => { setLocationSubStep(3); setSelectedPostalCode(null); setLocation(null); }} className={cn("rounded-md px-2 py-1 transition-colors", locationSubStep === 3 ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-muted")}>{selectedMunicipality.name}</button></>)}
-                    {selectedPostalCode && (<><ChevronRight className="h-3 w-3" /><span className={cn("rounded-md px-2 py-1", locationSubStep === 4 ? "bg-primary text-primary-foreground font-semibold" : "")}>CP {selectedPostalCode}</span></>)}
-                  </div>
-
-                  {locationSubStep === 1 && (
-                    <div className="animate-fade-in">
-                      <p className="mb-3 text-sm font-medium text-muted-foreground">Selecciona tu estado</p>
-                      <div className="space-y-1 rounded-xl border border-border overflow-hidden max-h-[400px] overflow-y-auto">
-                        {mexicoStates.map((state, i) => (
-                          <button key={state.name} onClick={() => handleSelectState(state)} onMouseEnter={() => setHoveredItem(state.name)} onMouseLeave={() => setHoveredItem(null)} className={cn(
-                            "flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium transition-all duration-300 group",
-                            hoveredItem === state.name ? "bg-gradient-to-r from-primary/20 via-primary/10 to-transparent text-foreground scale-[1.01]" : "bg-card text-foreground hover:bg-muted/50",
-                            i < mexicoStates.length - 1 && "border-b border-border/50"
-                          )} style={{ animationDelay: `${i * 30}ms`, animation: "fadeInUp 0.3s ease forwards", opacity: 0 }}>
-                            <span className={cn("h-2.5 w-2.5 rounded-full transition-all duration-300 shrink-0", hoveredItem === state.name ? "bg-primary scale-125 shadow-[0_0_8px_hsl(var(--primary)/0.5)]" : "bg-primary/40")} />
-                            <span className="flex-1">{state.name}</span>
-                            <ChevronRight className={cn("h-4 w-4 transition-all duration-300", hoveredItem === state.name ? "opacity-100 translate-x-0 text-primary" : "opacity-0 -translate-x-2")} />
-                          </button>
+                      {/* Progress indicators */}
+                      <div className="flex items-center gap-1.5">
+                        {[
+                          { n: 1, label: "Estado" },
+                          { n: 2, label: "Municipio" },
+                          { n: 3, label: "C.P." },
+                          { n: 4, label: "Dirección" },
+                          { n: 5, label: "Pin" },
+                        ].map(({ n, label }) => (
+                          <div key={n} className="flex items-center gap-1.5">
+                            {n > 1 && <div className={cn("h-px w-3", n <= locationSubStep ? "bg-primary" : "bg-border")} />}
+                            <button
+                              onClick={() => {
+                                if (n < locationSubStep) {
+                                  setLocationSubStep(n as any);
+                                  if (n <= 1) { setSelectedState(null); setSelectedMunicipality(null); setSelectedPostalCode(null); setAddress(""); setLocation(null); setLocationConfirmed(false); }
+                                  if (n <= 2) { setSelectedMunicipality(null); setSelectedPostalCode(null); setAddress(""); setLocation(null); setLocationConfirmed(false); }
+                                  if (n <= 3) { setSelectedPostalCode(null); setAddress(""); setLocation(null); setLocationConfirmed(false); }
+                                  if (n <= 4) { setLocation(null); setLocationConfirmed(false); }
+                                }
+                              }}
+                              className={cn(
+                                "flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all",
+                                n === locationSubStep ? "bg-primary text-primary-foreground shadow-sm" :
+                                n < locationSubStep ? "bg-primary/15 text-primary cursor-pointer" :
+                                "bg-muted text-muted-foreground"
+                              )}
+                            >
+                              {n < locationSubStep ? <CheckCircle className="h-3 w-3" /> : <span className="h-3 w-3 flex items-center justify-center text-[9px]">{n}</span>}
+                              <span className="hidden sm:inline">{label}</span>
+                            </button>
+                          </div>
                         ))}
                       </div>
-                    </div>
-                  )}
 
-                  {locationSubStep === 2 && selectedState && (
-                    <div className="animate-fade-in">
-                      <p className="mb-3 text-sm font-medium text-muted-foreground">Municipio en {selectedState.name}</p>
-                      <div className="space-y-1 rounded-xl border border-border overflow-hidden max-h-[400px] overflow-y-auto">
-                        {selectedState.municipalities.map((muni, i) => (
-                          <button key={muni.name} onClick={() => handleSelectMunicipality(muni)} onMouseEnter={() => setHoveredItem(muni.name)} onMouseLeave={() => setHoveredItem(null)} className={cn(
-                            "flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium transition-all duration-300",
-                            hoveredItem === muni.name ? "bg-gradient-to-r from-primary/20 via-primary/10 to-transparent text-foreground scale-[1.01]" : "bg-card text-foreground hover:bg-muted/50",
-                            i < selectedState.municipalities.length - 1 && "border-b border-border/50"
-                          )} style={{ animationDelay: `${i * 30}ms`, animation: "fadeInUp 0.3s ease forwards", opacity: 0 }}>
-                            <span className={cn("h-2.5 w-2.5 rounded-full transition-all duration-300 shrink-0", hoveredItem === muni.name ? "bg-primary scale-125 shadow-[0_0_8px_hsl(var(--primary)/0.5)]" : "bg-primary/40")} />
-                            <span className="flex-1">{muni.name}</span>
-                            <ChevronRight className={cn("h-4 w-4 transition-all duration-300", hoveredItem === muni.name ? "opacity-100 translate-x-0 text-primary" : "opacity-0 -translate-x-2")} />
-                          </button>
-                        ))}
+                      {/* Breadcrumb summary */}
+                      {selectedState && (
+                        <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                          <span className="font-medium text-foreground">{selectedState.name}</span>
+                          {selectedMunicipality && <><ChevronRight className="h-3 w-3" /><span className="font-medium text-foreground">{selectedMunicipality.name}</span></>}
+                          {selectedPostalCode && <><ChevronRight className="h-3 w-3" /><span className="font-medium text-foreground">CP {selectedPostalCode}</span></>}
+                          {address && <><ChevronRight className="h-3 w-3" /><span className="font-medium text-foreground truncate max-w-[120px]">{address}</span></>}
+                        </div>
+                      )}
+
+                      {/* Sub-step 1: State */}
+                      {locationSubStep === 1 && (
+                        <div className="animate-fade-in">
+                          <p className="mb-3 text-sm font-medium text-muted-foreground">Selecciona tu estado</p>
+                          <div className="space-y-0.5 rounded-xl border border-border overflow-hidden max-h-[350px] overflow-y-auto">
+                            {mexicoStates.map((state, i) => (
+                              <button key={state.name} onClick={() => handleSelectState(state)} onMouseEnter={() => setHoveredItem(state.name)} onMouseLeave={() => setHoveredItem(null)} className={cn(
+                                "flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-all duration-200",
+                                hoveredItem === state.name ? "bg-primary/10 text-foreground" : "bg-card text-foreground hover:bg-muted/50",
+                                i < mexicoStates.length - 1 && "border-b border-border/30"
+                              )}>
+                                <span className={cn("h-2 w-2 rounded-full shrink-0 transition-colors", hoveredItem === state.name ? "bg-primary" : "bg-primary/30")} />
+                                <span className="flex-1">{state.name}</span>
+                                <ChevronRight className={cn("h-3.5 w-3.5 transition-all", hoveredItem === state.name ? "opacity-100 text-primary" : "opacity-0")} />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sub-step 2: Municipality */}
+                      {locationSubStep === 2 && selectedState && (
+                        <div className="animate-fade-in">
+                          <p className="mb-3 text-sm font-medium text-muted-foreground">Municipio en {selectedState.name}</p>
+                          <div className="space-y-0.5 rounded-xl border border-border overflow-hidden max-h-[350px] overflow-y-auto">
+                            {selectedState.municipalities.map((muni, i) => (
+                              <button key={muni.name} onClick={() => handleSelectMunicipality(muni)} onMouseEnter={() => setHoveredItem(muni.name)} onMouseLeave={() => setHoveredItem(null)} className={cn(
+                                "flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-all duration-200",
+                                hoveredItem === muni.name ? "bg-primary/10 text-foreground" : "bg-card text-foreground hover:bg-muted/50",
+                                i < selectedState.municipalities.length - 1 && "border-b border-border/30"
+                              )}>
+                                <span className={cn("h-2 w-2 rounded-full shrink-0 transition-colors", hoveredItem === muni.name ? "bg-primary" : "bg-primary/30")} />
+                                <span className="flex-1">{muni.name}</span>
+                                <ChevronRight className={cn("h-3.5 w-3.5 transition-all", hoveredItem === muni.name ? "opacity-100 text-primary" : "opacity-0")} />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sub-step 3: Postal Code */}
+                      {locationSubStep === 3 && selectedMunicipality && (
+                        <div className="animate-fade-in">
+                          <p className="mb-3 text-sm font-medium text-muted-foreground">Código postal en {selectedMunicipality.name}</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {selectedMunicipality.postalCodes.map((cp, i) => (
+                              <button key={cp} onClick={() => handleSelectPostalCode(cp)} onMouseEnter={() => setHoveredItem(cp)} onMouseLeave={() => setHoveredItem(null)} className={cn(
+                                "flex items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200",
+                                hoveredItem === cp ? "border-primary bg-primary/10 text-primary scale-105 shadow-md" : "border-border bg-card text-foreground hover:border-primary/30"
+                              )}>
+                                {cp}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sub-step 4: Address */}
+                      {locationSubStep === 4 && (
+                        <div className="animate-fade-in space-y-4">
+                          <p className="text-sm font-medium text-muted-foreground">Ingresa la dirección o calle</p>
+                          <div className="space-y-2">
+                            <Label htmlFor="address" className="flex items-center gap-2 text-sm font-medium">
+                              <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Dirección
+                            </Label>
+                            <Input
+                              id="address"
+                              value={address}
+                              onChange={(e) => setAddress(e.target.value)}
+                              placeholder="Ej: Av. Paseo Tabasco #1504, Col. Tabasco 2000"
+                              maxLength={300}
+                            />
+                          </div>
+                          <Button
+                            className="w-full"
+                            disabled={address.trim().length < 5}
+                            onClick={handleAddressContinue}
+                          >
+                            Continuar → Colocar pin en el mapa
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Sub-step 5: Pin placement */}
+                      {locationSubStep === 5 && (
+                        <div className="animate-fade-in space-y-4">
+                          <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-2">
+                            <p className="text-sm font-bold text-primary flex items-center gap-2">
+                              <MapPin className="h-4 w-4" /> Coloque el pin en su ubicación exacta
+                            </p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              Mueva el mapa y coloque el pin en la ubicación exacta donde se realizará la entrega o recolección de su equipo para mantenimiento.
+                            </p>
+                          </div>
+
+                          {location && !locationConfirmed && (
+                            <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary animate-fade-in">
+                              <CheckCircle className="h-4 w-4" />
+                              📍 {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                            </div>
+                          )}
+
+                          {locationConfirmed && (
+                            <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-sm font-bold text-emerald-700 dark:text-emerald-400 animate-fade-in">
+                              <CheckCircle className="h-4 w-4" /> Ubicación confirmada
+                            </div>
+                          )}
+
+                          {!locationConfirmed && (
+                            <Button
+                              className="w-full"
+                              disabled={!location}
+                              onClick={handleConfirmLocation}
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" /> Confirmar ubicación
+                            </Button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Navigation */}
+                      <div className="flex gap-3 pt-2">
+                        <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>← Fecha</Button>
+                        <Button size="lg" className="flex-1 transition-transform hover:scale-[1.02] active:scale-[0.98]" disabled={!isLocationComplete} onClick={handleSubmit}>
+                          <Wrench className="mr-2 h-5 w-5" /> Solicitar Recolección
+                        </Button>
                       </div>
                     </div>
-                  )}
 
-                  {locationSubStep === 3 && selectedMunicipality && (
-                    <div className="animate-fade-in">
-                      <p className="mb-3 text-sm font-medium text-muted-foreground">Código postal en {selectedMunicipality.name}</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {selectedMunicipality.postalCodes.map((cp, i) => (
-                          <button key={cp} onClick={() => handleSelectPostalCode(cp)} onMouseEnter={() => setHoveredItem(cp)} onMouseLeave={() => setHoveredItem(null)} className={cn(
-                            "flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-all duration-300",
-                            hoveredItem === cp ? "border-primary bg-primary/10 text-primary scale-105 shadow-lg shadow-primary/10" : "border-border bg-card text-foreground hover:border-primary/30"
-                          )} style={{ animationDelay: `${i * 50}ms`, animation: "fadeInUp 0.3s ease forwards", opacity: 0 }}>
-                            {cp}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {locationSubStep === 4 && selectedState && (
-                    <div className="animate-fade-in space-y-4">
-                      <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3">
-                        <p className="text-sm font-medium text-primary flex items-center gap-2"><MapPin className="h-4 w-4" /> Ubica tu dirección exacta en el mapa</p>
-                        <p className="text-xs text-muted-foreground mt-1">{selectedState.name} → {selectedMunicipality?.name} → CP {selectedPostalCode}</p>
-                      </div>
-                      <LocationMap onLocationSelect={(lat, lng) => setLocation({ lat, lng })} defaultCenter={selectedState.coords} />
-                      {location && (
-                        <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary animate-fade-in">
-                          <CheckCircle className="h-4 w-4" /> Ubicación fijada correctamente
+                    {/* Right: Map (always visible) */}
+                    <div className="relative bg-muted/30 border-l border-border min-h-[400px] md:min-h-[700px]">
+                      <LocationMap
+                        ref={mapRef}
+                        onLocationSelect={(lat, lng) => { setLocation({ lat, lng }); setLocationConfirmed(false); }}
+                        defaultCenter={[23.6345, -102.5528]}
+                        defaultZoom={5}
+                        interactive={locationSubStep === 5}
+                        showGpsButton={locationSubStep === 5}
+                        className="h-full"
+                      />
+                      {locationSubStep < 5 && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="bg-card/80 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-border">
+                            <p className="text-xs font-medium text-muted-foreground text-center">
+                              {locationSubStep === 1 && "Selecciona un estado para acercar el mapa"}
+                              {locationSubStep === 2 && "Selecciona un municipio"}
+                              {locationSubStep === 3 && "Selecciona un código postal"}
+                              {locationSubStep === 4 && "Ingresa tu dirección para continuar"}
+                            </p>
+                          </div>
                         </div>
                       )}
                     </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>← Fecha</Button>
-                    <Button size="lg" className="flex-1 transition-transform hover:scale-[1.02] active:scale-[0.98]" disabled={!isLocationComplete} onClick={handleSubmit}>
-                      <Wrench className="mr-2 h-5 w-5" /> Solicitar Recolección
-                    </Button>
                   </div>
                 </div>
               )}
