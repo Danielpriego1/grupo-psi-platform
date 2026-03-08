@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { products, getCategories } from "@/data/products";
+import { visibleProducts, getCategories } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 import { cn } from "@/lib/utils";
 
@@ -8,8 +8,8 @@ const Index = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const filtered = activeCategory
-    ? products.filter((p) => p.category === activeCategory)
-    : products;
+    ? visibleProducts.filter((p) => p.category === activeCategory)
+    : visibleProducts;
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,10 +40,10 @@ const Index = () => {
                 : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
             )}
           >
-            Todos ({products.length})
+            Todos ({visibleProducts.length})
           </button>
           {categories.map((cat) => {
-            const count = products.filter((p) => p.category === cat).length;
+            const count = visibleProducts.filter((p) => p.category === cat).length;
             return (
               <button
                 key={cat}
