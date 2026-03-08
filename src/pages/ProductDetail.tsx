@@ -36,9 +36,10 @@ const ProductDetail = () => {
   const allImages = product.images?.length ? product.images : [product.image || "/placeholder.svg"];
   const allSizes = product.sizes ? Object.values(product.sizes).flat() : [];
 
+  const basePrice = getProductPrice(product, selectedSize || undefined);
   const finalPrice = product.discount
-    ? product.priceOriginalMxn * (1 - product.discount)
-    : product.priceOriginalMxn;
+    ? basePrice * (1 - product.discount)
+    : basePrice;
 
   const handleAddToCart = () => {
     if (allSizes.length > 0 && !selectedSize) {
