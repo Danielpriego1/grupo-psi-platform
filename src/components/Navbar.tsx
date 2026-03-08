@@ -11,9 +11,7 @@ export function Navbar() {
 
   const navLinks = [
     { to: "/", label: "Catálogo" },
-    { to: "/mantenimiento-extintores", label: "Extintores", icon: Flame },
-    { to: "/mantenimiento-compresores", label: "Compresores", icon: Wind },
-    { to: "/mantenimiento", label: "Agendar", icon: Wrench },
+    { to: "/mantenimiento", label: "Mantenimiento", icon: Wrench },
   ];
 
   return (
