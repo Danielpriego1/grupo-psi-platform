@@ -7,30 +7,30 @@ const stories = [
   {
     company: "Cervecería Nacional",
     quote:
-      "Grupo Psi nos equipó con extintores certificados en todas nuestras plantas.",
+      "Grupo Psi nos equipó con extintores certificados en todas nuestras plantas. Su servicio de mantenimiento es impecable.",
     tag: "Historia de cliente",
-    image: "/images/services/extintores-grupo-psi.jpeg",
+    pattern: "repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 9px)",
   },
   {
     company: "Aceros del Norte",
     quote:
-      "Su mantenimiento preventivo redujo incidentes y mejoró nuestras auditorías.",
+      "Los uniformes industriales que nos proveen son de la mejor calidad. Nuestro equipo está protegido y cómodo.",
     tag: "Historia de cliente",
-    image: "/images/services/compresores-linea.jpeg",
+    pattern: "radial-gradient(circle at 85% 15%, rgba(255,255,255,0.06) 0%, transparent 55%), repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.02) 60px, rgba(255,255,255,0.02) 61px)",
   },
   {
     company: "Construcciones MX",
     quote:
-      "Con su programa de seguridad integral, elevamos el estándar en todos nuestros proyectos.",
+      "Desde que trabajamos con Grupo Psi, nuestra calificación en auditorías de seguridad mejoró un 40%.",
     tag: "Historia de cliente",
-    image: "/images/services/cilindros-rack-1.jpeg",
+    pattern: "repeating-linear-gradient(135deg, transparent, transparent 40px, rgba(255,255,255,0.025) 40px, rgba(255,255,255,0.025) 41px)",
   },
   {
     company: "Plásticos Industriales",
     quote:
-      "Recarga, inspección y certificación a tiempo para toda nuestra operación crítica.",
+      "La recarga y certificación de nuestros extintores se realiza siempre a tiempo. Confiamos plenamente en su equipo.",
     tag: "Historia de cliente",
-    image: "/images/services/scba-equipo.jpeg",
+    pattern: "radial-gradient(ellipse at 70% 80%, rgba(255,255,255,0.05) 0%, transparent 50%), repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(255,255,255,0.02) 12px, rgba(255,255,255,0.02) 13px)",
   },
 ];
 
