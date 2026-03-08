@@ -133,6 +133,9 @@ const ProductDetail = () => {
                 <h1 className="text-xl font-bold text-card-foreground leading-tight">{product.name}</h1>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold">${finalPrice.toFixed(2)}</span>
+                  {product.sizePricing && selectedSize && (
+                    <span className="text-xs text-muted-foreground ml-1">(precio por talla)</span>
+                  )}
                   <span className="text-sm text-muted-foreground">MXN</span>
                   {product.discount && (
                     <span className="text-sm text-muted-foreground line-through">${product.priceOriginalMxn.toFixed(2)}</span>
