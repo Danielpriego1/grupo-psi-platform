@@ -8,7 +8,7 @@ import { LocationMap } from "@/components/LocationMap";
 import {
   Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight, Clock,
   AlertTriangle, Flame, Plus, Minus, Wind, Shield, ChevronLeft, Gauge, Timer, Award,
-  RefreshCw, FileCheck
+  RefreshCw, FileCheck, Droplets, Search, Zap, Box, Activity, ShieldCheck, Cylinder
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -17,78 +17,197 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { mexicoStates, type MexicoState, type Municipality } from "@/data/mexicoLocations";
 
-// ─── MAIN TABS ───────────────────────────────────────────────
-const MAIN_TABS = [
-  { id: "extintores", label: "Extintores", icon: Flame, color: "destructive" },
-  { id: "compresores", label: "Compresores", icon: Wind, color: "primary" },
-  { id: "agendar", label: "Agendar Mantenimiento", icon: Wrench, color: "primary" },
-] as const;
-
-type MainTab = typeof MAIN_TABS[number]["id"];
-
-// ─── EXTINTORES DATA ─────────────────────────────────────────
-const EXTINGUISHER_IMAGES = [
-  { src: "/images/services/extintores-mantenimiento-banner.png", alt: "Mantenimiento preventivo – la mejor inversión para prevenir siniestros" },
-  { src: "/images/services/extintor-recarga-detalle.jpeg", alt: "Extintor recargado con etiqueta PSI – detalle de instrucciones" },
-  { src: "/images/services/extintores-grupo-psi.jpeg", alt: "Línea completa de extintores PQS ABC – desde 1 kg hasta unidades móviles" },
-];
-
-const EXT_SERVICES = [
-  { icon: RefreshCw, title: "Recarga Certificada", description: "Recarga de extintores PQS ABC, CO₂, Tipo K, Halotron y espuma con agente extintor certificado y pesaje calibrado." },
-  { icon: Wrench, title: "Mantenimiento Preventivo", description: "Inspección visual, prueba de presión, revisión de manguera, válvula, manómetro y pasador de seguridad." },
-  { icon: AlertTriangle, title: "Mantenimiento Correctivo", description: "Cambio de válvulas, mangueras, manómetros, o-rings y pintura electrostática cuando se requiera." },
-  { icon: FileCheck, title: "Prueba Hidrostática", description: "Prueba de presión al cilindro conforme a NOM-154-SCFI para validar la integridad estructural del extintor." },
-];
-
-const TYPES_SERVED = [
-  "PQS ABC (1 kg – 70 kg)", "CO₂ (5 lb – 20 lb)", "Tipo K (cocinas industriales)",
-  "Espuma AFFF", "Halotron (áreas sensibles)", "Unidades móviles (35 kg – 70 kg)",
-];
-
-// ─── COMPRESORES DATA ────────────────────────────────────────
-const COMPRESSOR_IMAGES = [
-  { src: "/images/services/compresores-linea.jpeg", alt: "Línea de compresores de aire respirable" },
-  { src: "/images/services/compresor-desarme-1.jpg", alt: "Desarme de compresor – cabezal" },
-  { src: "/images/services/compresor-desarme-2.jpg", alt: "Compresor con filtro secador" },
-  { src: "/images/services/compresor-filtro.jpg", alt: "Mantenimiento de filtro catalizador Bauer" },
-  { src: "/images/services/compresor-vista-lateral.jpg", alt: "Vista lateral del compresor" },
-  { src: "/images/services/compresor-cilindro.jpg", alt: "Interior de cilindro – inspección de baleros" },
-  { src: "/images/services/compresor-ensamble.jpg", alt: "Ensamble de pistón y anillos" },
-  { src: "/images/services/etiqueta-scba.jpeg", alt: "Etiqueta de servicio SCBA – Grupo PSI" },
-];
-
-const CASCADE_IMAGES = [
-  { src: "/images/services/maniobra-grua-cilindros.jpg", alt: "Maniobra con grúa – traslado de sistema de cascada" },
-  { src: "/images/services/compresor-campo-psi.jpg", alt: "Compresor portátil PSI en campo" },
-  { src: "/images/services/cilindros-operador.jpeg", alt: "Operador revisando sistema de cascada" },
-  { src: "/images/services/cilindros-detalle.jpeg", alt: "Detalle de válvulas y conexiones en cascada" },
-  { src: "/images/services/cilindros-rack-1.jpeg", alt: "Sistema de cascada – rack de cilindros" },
-  { src: "/images/services/cilindros-rack-2.jpeg", alt: "Sistema de cascada – vista frontal" },
-];
-
-const COMP_SERVICES = [
-  { icon: Wrench, title: "Mantenimiento Preventivo", description: "Cambio de filtros, aceite, empaques y revisión de válvulas de seguridad según horas de operación." },
-  { icon: Gauge, title: "Prueba de Calidad de Aire", description: "Análisis certificado de oxígeno, CO, CO₂, vapor de aceite y agua conforme a la norma Grado D." },
-  { icon: Timer, title: "Mantenimiento Correctivo", description: "Reparación de cabezales, cambio de bielas, pistones, anillos y baleros de cigüeñal." },
-  { icon: Award, title: "Certificación SCBA", description: "Etiqueta de servicio con fecha de mantenimiento, capacidad PSI/bar y próxima fecha de servicio." },
+// ─── ALL SERVICE CATEGORIES ──────────────────────────────────
+const SERVICE_CATEGORIES = [
+  {
+    id: "extintores",
+    label: "Extintores",
+    icon: Flame,
+    color: "destructive",
+    description: "Recarga, mantenimiento preventivo y correctivo para todo tipo de extintores. NOM-154-SCFI.",
+    images: [
+      { src: "/images/services/extintores-mantenimiento-banner.png", alt: "Mantenimiento preventivo de extintores" },
+      { src: "/images/services/extintor-recarga-detalle.jpeg", alt: "Extintor recargado con etiqueta PSI" },
+      { src: "/images/services/extintores-grupo-psi.jpeg", alt: "Línea completa de extintores PQS ABC" },
+    ],
+    details: [
+      "Recarga certificada PQS ABC, CO₂, Tipo K, Halotron y espuma",
+      "Inspección visual, prueba de presión, revisión de manguera y válvula",
+      "Cambio de válvulas, mangueras, manómetros y pintura electrostática",
+      "Atendemos desde 1 kg hasta unidades móviles de 70 kg",
+    ],
+  },
+  {
+    id: "compresores",
+    label: "Compresores",
+    icon: Wind,
+    color: "primary",
+    description: "Mantenimiento de compresores de alta y baja presión para aire respirable Grado D.",
+    images: [
+      { src: "/images/services/compresores-linea.jpeg", alt: "Línea de compresores de aire respirable" },
+      { src: "/images/services/compresor-desarme-1.jpg", alt: "Desarme de compresor – cabezal" },
+      { src: "/images/services/compresor-filtro.jpg", alt: "Mantenimiento de filtro catalizador" },
+      { src: "/images/services/compresor-ensamble.jpg", alt: "Ensamble de pistón y anillos" },
+    ],
+    details: [
+      "Cambio de filtros, aceite, empaques y revisión de válvulas de seguridad",
+      "Reparación de cabezales, bielas, pistones y baleros de cigüeñal",
+      "Marcas: Bauer, Mako, Coltri, Nuvair, Alkin, Jordan",
+      "Certificación de aire Grado D conforme a CGA G-7.1",
+    ],
+  },
+  {
+    id: "cascada",
+    label: "Sistemas de Cascada",
+    icon: Cylinder,
+    color: "primary",
+    description: "Mantenimiento integral de sistemas de cascada y bancos de cilindros de alta presión.",
+    images: [
+      { src: "/images/services/maniobra-grua-cilindros.jpg", alt: "Maniobra con grúa – traslado de sistema de cascada" },
+      { src: "/images/services/cilindros-operador.jpeg", alt: "Operador revisando sistema de cascada" },
+      { src: "/images/services/cilindros-detalle.jpeg", alt: "Detalle de válvulas y conexiones en cascada" },
+      { src: "/images/services/cilindros-rack-1.jpeg", alt: "Rack de cilindros" },
+    ],
+    details: [
+      "Inspección visual y prueba hidrostática de cilindros",
+      "Revisión y reemplazo de válvulas de alta presión",
+      "Verificación de mangueras y conexiones del manifold",
+      "Recarga con aire respirable certificado Grado D",
+      "Logística y maniobras para traslado de equipos",
+    ],
+  },
+  {
+    id: "scba",
+    label: "SCBA",
+    icon: Shield,
+    color: "primary",
+    description: "Servicio completo para equipos autónomos de respiración: cilindros, máscaras y reguladores.",
+    images: [
+      { src: "/images/services/scba-equipo.jpeg", alt: "Equipo SCBA completo" },
+      { src: "/images/services/scba-cilindros-mascaras.jpeg", alt: "Cilindros y máscaras SCBA" },
+      { src: "/images/services/etiqueta-scba.jpeg", alt: "Etiqueta de servicio SCBA – Grupo PSI" },
+    ],
+    details: [
+      "Prueba hidrostática de cilindros (2216 PSI a 4500 PSI)",
+      "Inspección y certificación de máscaras y reguladores",
+      "Prueba de fuga y ajuste de válvulas de demanda",
+      "Etiqueta de servicio con fecha y próximo mantenimiento",
+    ],
+  },
+  {
+    id: "escape-rapido",
+    label: "Equipo de Escape Rápido",
+    icon: Zap,
+    color: "primary",
+    description: "Mantenimiento y certificación de equipos de escape rápido (EEBA/ELSA) para evacuación de emergencia.",
+    images: [],
+    details: [
+      "Inspección de cilindros y capuchas de evacuación",
+      "Verificación de reguladores y flujo de aire",
+      "Prueba de presión y recarga de cilindros",
+      "Certificación con etiqueta de servicio",
+    ],
+  },
+  {
+    id: "cajas-filtracion",
+    label: "Cajas de Filtración",
+    icon: Box,
+    color: "primary",
+    description: "Mantenimiento y cambio de elementos filtrantes para sistemas portátiles de purificación de aire.",
+    images: [
+      { src: "/images/services/caja-filtracion-abierta.jpeg", alt: "Caja de filtración abierta – sistema de purificación portátil" },
+      { src: "/images/services/caja-filtracion-conexiones.jpeg", alt: "Cajas de filtración – vista de conexiones" },
+    ],
+    details: [
+      "Cambio de filtros de carbón activado, coalescentes y partículas",
+      "Verificación de manómetros y reguladores de presión",
+      "Prueba de pureza de aire a la salida del sistema",
+      "Marcas: Honeywell, Bauer, Breathing Air Systems",
+    ],
+  },
+  {
+    id: "detectores",
+    label: "Detectores Multigas",
+    icon: Activity,
+    color: "primary",
+    description: "Calibración, bump test y mantenimiento de detectores portátiles y fijos de gases.",
+    images: [
+      { src: "/images/services/detector-multigas.jpeg", alt: "Detector multigas portátil" },
+    ],
+    details: [
+      "Calibración certificada con gas patrón trazable",
+      "Bump test y verificación de sensores",
+      "Reemplazo de sensores electroquímicos y catalíticos",
+      "Marcas: Honeywell, MSA, Dräger, Industrial Scientific",
+    ],
+  },
+  {
+    id: "certificaciones",
+    label: "Certificaciones",
+    icon: Award,
+    color: "primary",
+    description: "Emisión de certificados y etiquetas de servicio conforme a normas oficiales mexicanas.",
+    images: [],
+    details: [
+      "Certificación NOM-154-SCFI para extintores",
+      "Certificación de aire respirable Grado D (CGA G-7.1)",
+      "Etiquetas de servicio para SCBA, extintores y detectores",
+      "Registros de mantenimiento y bitácoras de equipo",
+    ],
+  },
+  {
+    id: "prueba-hidrostatica",
+    label: "Prueba Hidrostática",
+    icon: Droplets,
+    color: "primary",
+    description: "Prueba de presión para validar la integridad estructural de cilindros y extintores.",
+    images: [],
+    details: [
+      "Prueba a cilindros SCBA de acero, aluminio y fibra de carbono",
+      "Prueba a extintores conforme a NOM-154-SCFI",
+      "Prueba a cilindros de sistemas de cascada",
+      "Registro y documentación con número de serie",
+    ],
+  },
+  {
+    id: "pureza-aire",
+    label: "Prueba de Pureza de Aire",
+    icon: Search,
+    color: "primary",
+    description: "Análisis certificado de calidad de aire respirable conforme a estándares Grado D.",
+    images: [],
+    details: [
+      "Oxígeno: 19.5% – 23.5%",
+      "Monóxido de carbono (CO): máx. 10 ppm",
+      "Dióxido de carbono (CO₂): máx. 1,000 ppm",
+      "Vapor de aceite: máx. 5 mg/m³",
+      "Punto de rocío y ausencia de olor/sabor",
+    ],
+  },
 ];
 
 // ─── AGENDAR DATA ────────────────────────────────────────────
 const EXTINGUISHER_TYPES = [
-  { id: "pqs", label: "PQS ABC", description: "Polvo Químico Seco – el más común" },
-  { id: "co2", label: "CO₂", description: "Dióxido de carbono – equipos eléctricos" },
-  { id: "tipo-k", label: "Tipo K", description: "Para cocinas y aceites" },
-  { id: "agua", label: "Agua", description: "Para materiales sólidos (clase A)" },
-  { id: "espuma", label: "Espuma", description: "Para líquidos inflamables" },
-  { id: "halotron", label: "Halotron", description: "Sin residuo – electrónicos sensibles" },
+  { id: "pqs", label: "PQS ABC", description: "Polvo Químico Seco" },
+  { id: "co2", label: "CO₂", description: "Dióxido de carbono" },
+  { id: "tipo-k", label: "Tipo K", description: "Cocinas y aceites" },
+  { id: "agua", label: "Agua", description: "Clase A" },
+  { id: "espuma", label: "Espuma", description: "Líquidos inflamables" },
+  { id: "halotron", label: "Halotron", description: "Sin residuo" },
 ];
 
 const WEIGHT_OPTIONS = ["1 kg", "2 kg", "4.5 kg", "6 kg", "9 kg", "12 kg", "50 kg", "70 kg", "2.5 lbs", "5 lbs", "10 lbs", "15 lbs", "20 lbs"];
 
 const EQUIPMENT_CATEGORIES = [
   { id: "extintores", label: "Extintores", icon: "🧯", image: "", description: "Recarga y mantenimiento" },
-  { id: "scba", label: "Equipos Autónomos (SCBA)", icon: "", image: "/images/services/scba-equipo.jpeg", description: "Cilindros de aire respirable" },
+  { id: "scba", label: "SCBA", icon: "", image: "/images/services/scba-equipo.jpeg", description: "Cilindros de aire respirable" },
   { id: "detector-multigas", label: "Detectores Multigas", icon: "", image: "/images/services/detector-multigas.jpeg", description: "Calibración y mantenimiento" },
+  { id: "compresores", label: "Compresores", icon: "", image: "/images/services/compresores-linea.jpeg", description: "Aire respirable Grado D" },
+  { id: "cascada", label: "Sistemas de Cascada", icon: "", image: "/images/services/cilindros-rack-1.jpeg", description: "Bancos de cilindros" },
+  { id: "escape-rapido", label: "Escape Rápido", icon: "⚡", image: "", description: "EEBA/ELSA" },
+  { id: "cajas-filtracion", label: "Cajas de Filtración", icon: "", image: "/images/services/caja-filtracion-abierta.jpeg", description: "Sistemas de purificación" },
+  { id: "prueba-hidrostatica", label: "Prueba Hidrostática", icon: "💧", image: "", description: "Cilindros y extintores" },
+  { id: "pureza-aire", label: "Pureza de Aire", icon: "🔬", image: "", description: "Análisis Grado D" },
 ];
 
 const SCBA_PSI_OPTIONS = ["2216 PSI", "3000 PSI", "4500 PSI", "200 BAR", "300 BAR"];
@@ -125,6 +244,7 @@ interface EquipmentItem {
   type: string; weight: string; quantity: number;
   scbaLastMaintenance: string; scbaPsi: string; scbaMinutes: string;
   detectorBrand: string; detectorGases: string; detectorLastMaintenance: string;
+  notes: string;
 }
 
 const contactSchema = z.object({
@@ -138,6 +258,7 @@ type ContactData = z.infer<typeof contactSchema>;
 // ─── IMAGE GALLERY COMPONENT ────────────────────────────────
 function ImageGallery({ images }: { images: { src: string; alt: string }[] }) {
   const [current, setCurrent] = useState(0);
+  if (images.length === 0) return null;
   const next = () => setCurrent((p) => (p + 1) % images.length);
   const prev = () => setCurrent((p) => (p - 1 + images.length) % images.length);
 
@@ -147,37 +268,24 @@ function ImageGallery({ images }: { images: { src: string; alt: string }[] }) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
       <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
         <p className="text-sm text-white/90 font-medium drop-shadow-lg max-w-[70%]">{images[current].alt}</p>
-        <div className="flex gap-1.5">
-          <button onClick={prev} className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors">
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button onClick={next} className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors">
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-      <div className="absolute bottom-14 left-4 flex gap-1.5">
-        {images.map((_, i) => (
-          <button key={i} onClick={() => setCurrent(i)} className={cn("h-1.5 rounded-full transition-all duration-300", i === current ? "w-6 bg-white" : "w-1.5 bg-white/40")} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── SERVICES GRID COMPONENT ────────────────────────────────
-function ServicesGrid({ services, accent = "primary" }: { services: { icon: any; title: string; description: string }[]; accent?: string }) {
-  return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {services.map((s) => (
-        <div key={s.title} className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 group">
-          <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center mb-4 transition-colors", accent === "destructive" ? "bg-destructive/10 group-hover:bg-destructive/20" : "bg-primary/10 group-hover:bg-primary/20")}>
-            <s.icon className={cn("h-6 w-6", accent === "destructive" ? "text-destructive" : "text-primary")} />
+        {images.length > 1 && (
+          <div className="flex gap-1.5">
+            <button onClick={prev} className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button onClick={next} className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors">
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
-          <h3 className="font-bold text-lg mb-2">{s.title}</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{s.description}</p>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div className="absolute bottom-14 left-4 flex gap-1.5">
+          {images.map((_, i) => (
+            <button key={i} onClick={() => setCurrent(i)} className={cn("h-1.5 rounded-full transition-all duration-300", i === current ? "w-6 bg-white" : "w-1.5 bg-white/40")} />
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
@@ -186,7 +294,8 @@ function ServicesGrid({ services, accent = "primary" }: { services: { icon: any;
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════
 const Mantenimiento = () => {
-  const [activeTab, setActiveTab] = useState<MainTab>("extintores");
+  const [expandedService, setExpandedService] = useState<string | null>(null);
+  const [showScheduler, setShowScheduler] = useState(false);
 
   // ─── Agendar state ───
   const [date, setDate] = useState<Date>();
@@ -196,7 +305,7 @@ const Mantenimiento = () => {
   const [step, setStep] = useState(1);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
-  const defaultEquipmentItem: EquipmentItem = { category: "", type: "", weight: "", quantity: 1, scbaLastMaintenance: "", scbaPsi: "", scbaMinutes: "", detectorBrand: "", detectorGases: "", detectorLastMaintenance: "" };
+  const defaultEquipmentItem: EquipmentItem = { category: "", type: "", weight: "", quantity: 1, scbaLastMaintenance: "", scbaPsi: "", scbaMinutes: "", detectorBrand: "", detectorGases: "", detectorLastMaintenance: "", notes: "" };
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ ...defaultEquipmentItem }]);
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [equipmentError, setEquipmentError] = useState<string | null>(null);
@@ -207,7 +316,7 @@ const Mantenimiento = () => {
   const [locationSubStep, setLocationSubStep] = useState<1 | 2 | 3 | 4>(1);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-  // ─── Contact form for extintores/compresores ───
+  // ─── Contact form ───
   const [serviceContact, setServiceContact] = useState({ name: "", phone: "", email: "", notes: "" });
 
   const updateContact = (field: keyof ContactData, value: string) => {
@@ -237,6 +346,7 @@ const Mantenimiento = () => {
       if (item.category === "extintores") return item.type && item.weight && item.quantity > 0;
       if (item.category === "scba") return item.scbaPsi && item.scbaMinutes && item.quantity > 0;
       if (item.category === "detector-multigas") return item.detectorBrand && item.quantity > 0;
+      if (item.category) return item.quantity > 0;
       return false;
     });
     if (!hasValid) { setEquipmentError("Agrega al menos un equipo con todos los campos requeridos"); setStep(1); return; }
@@ -251,6 +361,7 @@ const Mantenimiento = () => {
     if (item.category === "extintores") return item.type && item.weight && item.quantity > 0;
     if (item.category === "scba") return item.scbaPsi && item.scbaMinutes && item.quantity > 0;
     if (item.category === "detector-multigas") return item.detectorBrand && item.quantity > 0;
+    if (item.category) return item.quantity > 0;
     return false;
   });
   const isStep1Complete = contact.name.length >= 2 && contact.phone.length >= 10 && contact.email.includes("@") && hasValidEquipment;
@@ -287,273 +398,173 @@ const Mantenimiento = () => {
     setServiceContact({ name: "", phone: "", email: "", notes: "" });
   };
 
+  const toggleService = (id: string) => {
+    setExpandedService(prev => prev === id ? null : id);
+  };
+
   return (
     <div className="min-h-screen bg-background pt-20 pb-16">
-      {/* ─── HERO + TAB SELECTOR ─── */}
-      <section className="relative overflow-hidden bg-foreground text-primary-foreground">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.15),transparent_60%)]" />
-        <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl mb-3">
-              Servicios de Mantenimiento
-            </h1>
-            <p className="text-primary-foreground/80 text-lg max-w-2xl mx-auto">
-              Mantenimiento profesional y certificado para todo tu equipo de seguridad industrial.
-            </p>
-          </div>
-
-          {/* Tab buttons */}
-          <div className="flex flex-wrap justify-center gap-2 md:gap-3">
-            {MAIN_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all duration-300",
-                  activeTab === tab.id
-                    ? "bg-primary-foreground text-foreground shadow-lg scale-105"
-                    : "bg-primary-foreground/10 text-primary-foreground/80 hover:bg-primary-foreground/20 border border-primary-foreground/20"
-                )}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            ))}
+      {/* ─── HERO BANNER ─── */}
+      <section className="relative overflow-hidden h-[60vh] min-h-[400px] max-h-[600px]">
+        <img
+          src="/images/services/plataforma-industrial.jpeg"
+          alt="Servicios de mantenimiento industrial – plataforma offshore"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/60 to-foreground/30" />
+        <div className="relative z-10 h-full flex flex-col items-center justify-end pb-12 px-4 text-center">
+          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl text-primary-foreground mb-3">
+            Centro de Servicios y Mantenimiento
+          </h1>
+          <p className="text-primary-foreground/80 text-lg max-w-2xl mx-auto mb-6">
+            Mantenimiento profesional y certificado para todo tu equipo de seguridad industrial. Extintores, SCBA, compresores, detectores y más.
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <Button size="lg" className="font-semibold" onClick={() => { setShowScheduler(true); setTimeout(() => document.getElementById("agendar-section")?.scrollIntoView({ behavior: "smooth" }), 100); }}>
+              <Wrench className="mr-2 h-4 w-4" /> Agendar Servicio
+            </Button>
+            <a href="#servicios">
+              <Button size="lg" variant="outline" className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
+                Ver Servicios
+              </Button>
+            </a>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {/* TAB: EXTINTORES */}
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {activeTab === "extintores" && (
-        <div className="animate-fade-in">
-          {/* Hero gallery */}
-          <section className="container mx-auto px-4 py-12">
-            <div className="grid md:grid-cols-2 gap-10 items-center">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-destructive/20 bg-destructive/5 px-4 py-1.5 text-sm font-medium text-destructive">
-                  <Flame className="h-4 w-4" />
-                  Recarga y Mantenimiento
-                </div>
-                <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl lg:text-4xl">
-                  Mantenimiento y Recarga de Extintores
-                </h2>
-                <p className="text-muted-foreground text-lg max-w-lg">
-                  Servicio profesional de recarga, mantenimiento preventivo y correctivo para todo tipo de extintores. Cumplimos con la <strong className="text-foreground">NOM-154-SCFI</strong> y certificamos cada equipo con etiqueta PSI.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <Button size="lg" className="font-semibold" onClick={() => setActiveTab("agendar")}>
-                    <Wrench className="mr-2 h-4 w-4" /> Agendar Recolección
-                  </Button>
-                  <a href="#ext-servicios">
-                    <Button size="lg" variant="outline">Ver Servicios</Button>
-                  </a>
-                </div>
-              </div>
-              <ImageGallery images={EXTINGUISHER_IMAGES} />
-            </div>
-          </section>
+      {/* ─── SERVICES GRID ─── */}
+      <section id="servicios" className="container mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">Nuestros Servicios</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">Selecciona un servicio para ver más detalles. Ofrecemos cobertura integral para toda tu operación.</p>
+        </div>
 
-          {/* Services */}
-          <section id="ext-servicios" className="container mx-auto px-4 py-12">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">Nuestros Servicios</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">Mantenimiento integral para extintores de todas las capacidades y agentes extintores.</p>
-            </div>
-            <ServicesGrid services={EXT_SERVICES} accent="destructive" />
-          </section>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {SERVICE_CATEGORIES.map((cat) => {
+            const isExpanded = expandedService === cat.id;
+            const IconComp = cat.icon;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => toggleService(cat.id)}
+                className={cn(
+                  "relative flex flex-col items-start gap-3 rounded-2xl border p-5 text-left transition-all duration-300 group",
+                  isExpanded
+                    ? "border-primary bg-primary/5 shadow-lg shadow-primary/10 scale-[1.02]"
+                    : "border-border bg-card hover:border-primary/30 hover:shadow-md"
+                )}
+              >
+                <div className={cn(
+                  "h-10 w-10 rounded-xl flex items-center justify-center transition-colors",
+                  isExpanded ? "bg-primary/20" : "bg-muted group-hover:bg-primary/10"
+                )}>
+                  <IconComp className={cn("h-5 w-5", isExpanded ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
+                </div>
+                <h3 className="font-bold text-sm leading-tight">{cat.label}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{cat.description}</p>
+                {isExpanded && (
+                  <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-primary animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-          {/* Types */}
-          <section className="bg-muted/50 py-16">
-            <div className="container mx-auto px-4">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-6">Tipos de Extintores que Atendemos</h2>
-                  <p className="text-muted-foreground mb-6">Trabajamos con todos los tipos y capacidades de extintores portátiles y móviles. Cada equipo recibe su etiqueta de servicio.</p>
-                  <ul className="space-y-3 text-muted-foreground">
-                    {TYPES_SERVED.map((item) => (
+      {/* ─── EXPANDED SERVICE DETAIL ─── */}
+      {expandedService && (() => {
+        const service = SERVICE_CATEGORIES.find(s => s.id === expandedService);
+        if (!service) return null;
+        const IconComp = service.icon;
+        return (
+          <section className="container mx-auto px-4 pb-16 animate-fade-in">
+            <div className="rounded-2xl border border-primary/20 bg-card shadow-lg overflow-hidden">
+              <div className="grid md:grid-cols-2 gap-0">
+                {/* Left: Info */}
+                <div className="p-8 md:p-10 space-y-6">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+                    <IconComp className="h-4 w-4" />
+                    {service.label}
+                  </div>
+                  <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+                    {service.label}
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed">{service.description}</p>
+                  <ul className="space-y-3">
+                    {service.details.map((item) => (
                       <li key={item} className="flex items-start gap-2.5">
                         <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        <span className="text-sm font-medium">{item}</span>
+                        <span className="text-sm text-muted-foreground">{item}</span>
                       </li>
                     ))}
                   </ul>
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <Button className="font-semibold" onClick={() => { setShowScheduler(true); setTimeout(() => document.getElementById("agendar-section")?.scrollIntoView({ behavior: "smooth" }), 100); }}>
+                      <Wrench className="mr-2 h-4 w-4" /> Agendar Servicio
+                    </Button>
+                    <a href="#contacto">
+                      <Button variant="outline">Solicitar Cotización</Button>
+                    </a>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2 rounded-xl overflow-hidden aspect-video">
-                    <img src="/images/services/extintores-grupo-psi.jpeg" alt="Grupo de extintores PSI" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <div className="rounded-xl overflow-hidden aspect-square">
-                    <img src="/images/services/extintor-recarga-detalle.jpeg" alt="Detalle extintor recargado" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <div className="rounded-xl overflow-hidden aspect-square">
-                    <img src="/images/services/extintores-mantenimiento-banner.png" alt="Banner mantenimiento" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                  </div>
+                {/* Right: Gallery */}
+                <div className="p-6 md:p-8 flex items-center">
+                  {service.images.length > 0 ? (
+                    <ImageGallery images={service.images} />
+                  ) : (
+                    <div className="w-full aspect-[4/3] rounded-2xl bg-muted flex items-center justify-center">
+                      <div className="text-center space-y-3">
+                        <IconComp className="h-16 w-16 text-muted-foreground/30 mx-auto" />
+                        <p className="text-sm text-muted-foreground">Contáctanos para más información</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </section>
+        );
+      })()}
 
-          {/* CTA */}
-          <section className="container mx-auto px-4 py-16 text-center">
-            <div className="rounded-2xl border border-border bg-card p-10 shadow-lg max-w-3xl mx-auto">
-              <Flame className="h-10 w-10 text-destructive mx-auto mb-4" />
-              <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">¿Necesitas recolección de extintores?</h2>
-              <p className="text-muted-foreground mb-6 max-w-xl mx-auto">Agenda la recolección directamente. Selecciona fecha, horario y ubicación — nosotros vamos por ellos.</p>
-              <Button size="lg" className="font-semibold" onClick={() => setActiveTab("agendar")}>
-                <Wrench className="mr-2 h-5 w-5" /> Agendar Recolección
+      {/* ─── AGENDAR SECTION ─── */}
+      <section id="agendar-section" className="bg-muted/50 py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">Agendar Servicio</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Programa la recolección de tus equipos para mantenimiento, recarga o certificación.
+            </p>
+          </div>
+
+          {!showScheduler ? (
+            <div className="text-center">
+              <Button size="lg" className="font-semibold" onClick={() => setShowScheduler(true)}>
+                <Wrench className="mr-2 h-5 w-5" /> Iniciar Agendamiento
               </Button>
             </div>
-          </section>
-
-          {/* Contact form */}
-          <ServiceContactForm contact={serviceContact} setContact={setServiceContact} onSubmit={handleServiceContactSubmit} icon={Shield} accent="destructive" title="Solicitar Cotización" subtitle="Déjanos tus datos y te enviamos una cotización personalizada." notesPlaceholder="Ej: 10 extintores PQS de 4.5 kg, 5 de CO₂ 10 lb..." />
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {/* TAB: COMPRESORES */}
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {activeTab === "compresores" && (
-        <div className="animate-fade-in">
-          {/* Hero */}
-          <section className="container mx-auto px-4 py-12">
-            <div className="grid md:grid-cols-2 gap-10 items-center">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-                  <Wind className="h-4 w-4" />
-                  Aire Respirable Grado D
-                </div>
-                <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl lg:text-4xl">
-                  Mantenimiento de Compresores para Aire Respirable
-                </h2>
-                <p className="text-muted-foreground text-lg max-w-lg">
-                  Servicio especializado de mantenimiento preventivo y correctivo para compresores de alta y baja presión que suministran aire respirable <strong className="text-foreground">Grado D</strong> a equipos SCBA.
-                </p>
-                <a href="#comp-contacto">
-                  <Button size="lg" className="font-semibold">Solicitar Servicio</Button>
-                </a>
-              </div>
-              <ImageGallery images={COMPRESSOR_IMAGES} />
-            </div>
-          </section>
-
-          {/* Services */}
-          <section className="container mx-auto px-4 py-12">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">Nuestros Servicios</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">Mantenimiento integral para compresores de aire respirable, cumpliendo con las normativas de seguridad industrial.</p>
-            </div>
-            <ServicesGrid services={COMP_SERVICES} />
-          </section>
-
-          {/* Grade D info */}
-          <section className="bg-muted/50 py-16">
-            <div className="container mx-auto px-4">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-6">¿Qué es el Aire Respirable Grado D?</h2>
-                  <div className="space-y-4 text-muted-foreground">
-                    <p>El <strong className="text-foreground">Grado D</strong> es el estándar mínimo de calidad de aire para equipos de respiración autónomos (SCBA), definido por la <em>Compressed Gas Association</em> (CGA G-7.1).</p>
-                    <ul className="space-y-3">
-                      {["Oxígeno: 19.5% – 23.5%", "Monóxido de carbono (CO): máx. 10 ppm", "Dióxido de carbono (CO₂): máx. 1,000 ppm", "Vapor de aceite: máx. 5 mg/m³", "Sin olor ni sabor objetable"].map((spec) => (
-                        <li key={spec} className="flex items-start gap-2.5">
-                          <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                          <span className="text-sm">{spec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {COMPRESSOR_IMAGES.slice(1, 5).map((img, i) => (
-                    <div key={i} className={cn("rounded-xl overflow-hidden", i === 0 && "col-span-2 aspect-video", i > 0 && "aspect-square")}>
-                      <img src={img.src} alt={img.alt} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Cascade */}
-          <section className="container mx-auto px-4 py-16">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-                  <Shield className="h-4 w-4" />
-                  Sistemas de Cascada
-                </div>
-                <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">Mantenimiento de Sistemas de Cascada</h2>
-                <p className="text-muted-foreground leading-relaxed">Los sistemas de cascada almacenan aire respirable Grado D en bancos de cilindros de alta presión. Ofrecemos mantenimiento integral.</p>
-                <ul className="space-y-3 text-muted-foreground">
-                  {["Inspección visual y prueba hidrostática de cilindros", "Revisión y reemplazo de válvulas de alta presión", "Verificación de mangueras y conexiones del manifold", "Prueba de fugas en todo el sistema", "Recarga de cilindros con aire respirable certificado", "Logística y maniobras para traslado de equipos"].map((item) => (
-                    <li key={item} className="flex items-start gap-2.5">
-                      <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                      <span className="text-sm">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <ImageGallery images={CASCADE_IMAGES} />
-            </div>
-          </section>
-
-          {/* Brands */}
-          <section className="container mx-auto px-4 py-12">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">Marcas que Atendemos</h2>
-              <p className="text-muted-foreground">Experiencia con las principales marcas de compresores industriales</p>
-            </div>
-            <div className="flex flex-wrap justify-center gap-6">
-              {["Bauer", "Mako", "Coltri", "Nuvair", "Alkin", "Jordan"].map((brand) => (
-                <div key={brand} className="rounded-xl border border-border bg-card px-8 py-4 text-center font-bold text-lg text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-300">
-                  {brand}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Contact */}
-          <ServiceContactForm id="comp-contacto" contact={serviceContact} setContact={setServiceContact} onSubmit={handleServiceContactSubmit} icon={Shield} accent="primary" title="Solicitar Servicio" subtitle="Déjanos tus datos y nos comunicaremos contigo para programar el servicio." notesPlaceholder="Ej: Compresor Bauer Capitano, 500 horas, requiere cambio de filtros..." />
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {/* TAB: AGENDAR MANTENIMIENTO */}
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {activeTab === "agendar" && (
-        <div className="animate-fade-in">
-          <div className="container mx-auto px-4 py-10">
-            <div className="mb-10 text-center">
-              <p className="mx-auto max-w-xl text-muted-foreground">
-                Programa la recolección de tus extintores y equipo de seguridad para mantenimiento o recarga.
-              </p>
-            </div>
-
-            {/* Progress steps */}
-            <div className="mx-auto mb-10 flex max-w-2xl items-center justify-center gap-2">
-              {[{ n: 1, label: "Datos" }, { n: 2, label: "Fecha" }, { n: 3, label: "Ubicación" }].map(({ n, label }) => (
-                <button
-                  key={n}
-                  onClick={() => setStep(n)}
-                  className={cn(
-                    "flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-300",
-                    step === n ? "bg-primary text-primary-foreground shadow-lg"
-                      : n < step || (n === 1 && isStep1Complete) || (n === 2 && isStep2Complete)
-                        ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {(n < step || (n === 1 && isStep1Complete) || (n === 2 && isStep2Complete)) && n !== step
-                    ? <CheckCircle className="h-4 w-4" />
-                    : <span className="flex h-5 w-5 items-center justify-center rounded-full bg-current/10 text-xs">{n}</span>}
-                  <span className="hidden sm:inline">{label}</span>
-                </button>
-              ))}
-            </div>
-
+          ) : (
             <div className="mx-auto max-w-2xl">
+              {/* Progress steps */}
+              <div className="mx-auto mb-10 flex items-center justify-center gap-2">
+                {[{ n: 1, label: "Datos" }, { n: 2, label: "Fecha" }, { n: 3, label: "Ubicación" }].map(({ n, label }) => (
+                  <button
+                    key={n}
+                    onClick={() => setStep(n)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-300",
+                      step === n ? "bg-primary text-primary-foreground shadow-lg"
+                        : n < step || (n === 1 && isStep1Complete) || (n === 2 && isStep2Complete)
+                          ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {(n < step || (n === 1 && isStep1Complete) || (n === 2 && isStep2Complete)) && n !== step
+                      ? <CheckCircle className="h-4 w-4" />
+                      : <span className="flex h-5 w-5 items-center justify-center rounded-full bg-current/10 text-xs">{n}</span>}
+                    <span className="hidden sm:inline">{label}</span>
+                  </button>
+                ))}
+              </div>
+
               {/* Step 1: Contact + Equipment */}
               {step === 1 && (
                 <div className="animate-fade-in space-y-6 rounded-2xl border border-border bg-card p-6 shadow-lg md:p-8">
@@ -579,7 +590,7 @@ const Mantenimiento = () => {
                   {/* Equipment */}
                   <div className="space-y-4 pt-2">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-bold flex items-center gap-2"><Flame className="h-5 w-5 text-primary" /> Equipo a recolectar</h2>
+                      <h2 className="text-xl font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Equipo a recolectar</h2>
                       <span className="text-xs text-muted-foreground">{equipmentItems.length} equipo(s)</span>
                     </div>
                     {equipmentError && <p className="text-sm text-destructive flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" /> {equipmentError}</p>}
@@ -596,15 +607,15 @@ const Mantenimiento = () => {
 
                           {/* Category selector */}
                           <div className="space-y-2">
-                            <Label className="text-sm font-medium">Tipo de equipo</Label>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <Label className="text-sm font-medium">Tipo de servicio</Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                               {EQUIPMENT_CATEGORIES.map((cat) => (
                                 <button key={cat.id} onClick={() => updateEquipmentItem(index, "category", cat.id)} className={cn(
                                   "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-200",
                                   item.category === cat.id ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
                                 )}>
-                                  <span className="flex items-center gap-1.5 text-sm font-medium">
-                                    {cat.image ? <img src={cat.image} alt={cat.label} className="h-5 w-5 rounded object-cover" /> : <span>{cat.icon}</span>}
+                                  <span className="flex items-center gap-1.5 text-xs font-medium">
+                                    {cat.image ? <img src={cat.image} alt={cat.label} className="h-4 w-4 rounded object-cover" /> : <span className="text-sm">{cat.icon}</span>}
                                     {cat.label}
                                   </span>
                                   <span className="text-[10px] text-muted-foreground leading-tight pl-5">{cat.description}</span>
@@ -684,10 +695,10 @@ const Mantenimiento = () => {
                             <>
                               <div className="space-y-2">
                                 <Label className="text-sm font-medium">Marca del detector</Label>
-                                <Input value={item.detectorBrand} onChange={(e) => updateEquipmentItem(index, "detectorBrand", e.target.value)} placeholder="Ej: Honeywell, MSA, Dräger, Industrial Scientific..." maxLength={100} />
+                                <Input value={item.detectorBrand} onChange={(e) => updateEquipmentItem(index, "detectorBrand", e.target.value)} placeholder="Ej: Honeywell, MSA, Dräger..." maxLength={100} />
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-sm font-medium">Capacidad de gases a detectar</Label>
+                                <Label className="text-sm font-medium">Gases a detectar</Label>
                                 <Input value={item.detectorGases} onChange={(e) => updateEquipmentItem(index, "detectorGases", e.target.value)} placeholder="Ej: O₂, CO, H₂S, LEL (4 gases)" maxLength={200} />
                               </div>
                               <div className="space-y-2">
@@ -695,6 +706,14 @@ const Mantenimiento = () => {
                                 <Input type="date" value={item.detectorLastMaintenance} onChange={(e) => updateEquipmentItem(index, "detectorLastMaintenance", e.target.value)} className="max-w-[220px]" />
                               </div>
                             </>
+                          )}
+
+                          {/* Generic notes for other categories */}
+                          {item.category && !["extintores", "scba", "detector-multigas"].includes(item.category) && (
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">Detalles del equipo</Label>
+                              <Textarea value={item.notes} onChange={(e) => updateEquipmentItem(index, "notes", e.target.value)} placeholder="Describe marca, modelo, capacidad o cualquier detalle relevante..." rows={2} maxLength={500} />
+                            </div>
                           )}
 
                           {/* Quantity */}
@@ -719,7 +738,7 @@ const Mantenimiento = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="notes" className="flex items-center gap-2 text-sm font-medium"><Package className="h-3.5 w-3.5 text-muted-foreground" /> Notas adicionales (opcional)</Label>
-                      <Textarea id="notes" value={additionalNotes} onChange={(e) => setAdditionalNotes(e.target.value)} placeholder="Ej: Algunos extintores tienen daño en la manguera, necesito factura..." maxLength={500} rows={2} />
+                      <Textarea id="notes" value={additionalNotes} onChange={(e) => setAdditionalNotes(e.target.value)} placeholder="Ej: Algunos equipos tienen daño visible, necesito factura..." maxLength={500} rows={2} />
                       <p className="text-xs text-muted-foreground text-right">{additionalNotes.length}/500</p>
                     </div>
                   </div>
@@ -792,12 +811,6 @@ const Mantenimiento = () => {
                             Horario seleccionado: {TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label}
                           </div>
                         )}
-                        <div className="rounded-lg bg-muted/50 border border-border/50 px-4 py-3 text-xs text-muted-foreground">
-                          <p className="flex items-start gap-2">
-                            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
-                            <span>Los horarios reflejan nuestra disponibilidad real. Un horario marcado como <strong>"Ocupado"</strong> significa que ya tenemos recolecciones en curso.</span>
-                          </p>
-                        </div>
                       </div>
                     </div>
                   )}
@@ -825,11 +838,10 @@ const Mantenimiento = () => {
                     {selectedPostalCode && (<><ChevronRight className="h-3 w-3" /><span className={cn("rounded-md px-2 py-1", locationSubStep === 4 ? "bg-primary text-primary-foreground font-semibold" : "")}>CP {selectedPostalCode}</span></>)}
                   </div>
 
-                  {/* Sub-step 1: Estado */}
                   {locationSubStep === 1 && (
                     <div className="animate-fade-in">
                       <p className="mb-3 text-sm font-medium text-muted-foreground">Selecciona tu estado</p>
-                      <div className="space-y-1 rounded-xl border border-border overflow-hidden">
+                      <div className="space-y-1 rounded-xl border border-border overflow-hidden max-h-[400px] overflow-y-auto">
                         {mexicoStates.map((state, i) => (
                           <button key={state.name} onClick={() => handleSelectState(state)} onMouseEnter={() => setHoveredItem(state.name)} onMouseLeave={() => setHoveredItem(null)} className={cn(
                             "flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium transition-all duration-300 group",
@@ -845,11 +857,10 @@ const Mantenimiento = () => {
                     </div>
                   )}
 
-                  {/* Sub-step 2: Municipio */}
                   {locationSubStep === 2 && selectedState && (
                     <div className="animate-fade-in">
                       <p className="mb-3 text-sm font-medium text-muted-foreground">Municipio en {selectedState.name}</p>
-                      <div className="space-y-1 rounded-xl border border-border overflow-hidden">
+                      <div className="space-y-1 rounded-xl border border-border overflow-hidden max-h-[400px] overflow-y-auto">
                         {selectedState.municipalities.map((muni, i) => (
                           <button key={muni.name} onClick={() => handleSelectMunicipality(muni)} onMouseEnter={() => setHoveredItem(muni.name)} onMouseLeave={() => setHoveredItem(null)} className={cn(
                             "flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium transition-all duration-300",
@@ -865,7 +876,6 @@ const Mantenimiento = () => {
                     </div>
                   )}
 
-                  {/* Sub-step 3: Código Postal */}
                   {locationSubStep === 3 && selectedMunicipality && (
                     <div className="animate-fade-in">
                       <p className="mb-3 text-sm font-medium text-muted-foreground">Código postal en {selectedMunicipality.name}</p>
@@ -882,7 +892,6 @@ const Mantenimiento = () => {
                     </div>
                   )}
 
-                  {/* Sub-step 4: Map */}
                   {locationSubStep === 4 && selectedState && (
                     <div className="animate-fade-in space-y-4">
                       <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3">
@@ -907,57 +916,47 @@ const Mantenimiento = () => {
                 </div>
               )}
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* ─── CONTACT FORM ─── */}
+      <section id="contacto" className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-xl">
+            <div className="text-center mb-8">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                <ShieldCheck className="h-7 w-7 text-primary" />
+              </div>
+              <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-2">Solicitar Cotización</h2>
+              <p className="text-muted-foreground">Déjanos tus datos y te enviamos una cotización personalizada para el servicio que necesites.</p>
+            </div>
+            <form onSubmit={handleServiceContactSubmit} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-lg md:p-8">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-sm font-medium"><User className="h-3.5 w-3.5 text-muted-foreground" /> Nombre completo *</Label>
+                <Input value={serviceContact.name} onChange={(e) => setServiceContact(prev => ({ ...prev, name: e.target.value }))} placeholder="Juan Pérez" required />
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium"><Phone className="h-3.5 w-3.5 text-muted-foreground" /> Teléfono *</Label>
+                  <Input value={serviceContact.phone} onChange={(e) => setServiceContact(prev => ({ ...prev, phone: e.target.value }))} placeholder="993 155 0935" required />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium"><Mail className="h-3.5 w-3.5 text-muted-foreground" /> Correo electrónico *</Label>
+                  <Input type="email" value={serviceContact.email} onChange={(e) => setServiceContact(prev => ({ ...prev, email: e.target.value }))} placeholder="correo@ejemplo.com" required />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Detalles del servicio</Label>
+                <Textarea value={serviceContact.notes} onChange={(e) => setServiceContact(prev => ({ ...prev, notes: e.target.value }))} placeholder="Describe los equipos, cantidades y tipo de servicio que necesitas..." rows={4} />
+              </div>
+              <Button type="submit" size="lg" className="w-full font-semibold">Enviar Solicitud</Button>
+            </form>
           </div>
         </div>
-      )}
+      </section>
     </div>
   );
 };
-
-// ─── REUSABLE CONTACT FORM ──────────────────────────────────
-function ServiceContactForm({ id, contact, setContact, onSubmit, icon: Icon, accent, title, subtitle, notesPlaceholder }: {
-  id?: string;
-  contact: { name: string; phone: string; email: string; notes: string };
-  setContact: React.Dispatch<React.SetStateAction<{ name: string; phone: string; email: string; notes: string }>>;
-  onSubmit: (e: React.FormEvent) => void;
-  icon: any; accent: string; title: string; subtitle: string; notesPlaceholder: string;
-}) {
-  return (
-    <section id={id} className="bg-muted/50 py-16">
-      <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-xl">
-          <div className="text-center mb-8">
-            <div className={cn("mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl", accent === "destructive" ? "bg-destructive/10" : "bg-primary/10")}>
-              <Icon className={cn("h-7 w-7", accent === "destructive" ? "text-destructive" : "text-primary")} />
-            </div>
-            <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-2">{title}</h2>
-            <p className="text-muted-foreground">{subtitle}</p>
-          </div>
-          <form onSubmit={onSubmit} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-lg md:p-8">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-sm font-medium"><User className="h-3.5 w-3.5 text-muted-foreground" /> Nombre completo *</Label>
-              <Input value={contact.name} onChange={(e) => setContact(prev => ({ ...prev, name: e.target.value }))} placeholder="Juan Pérez" required />
-            </div>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-sm font-medium"><Phone className="h-3.5 w-3.5 text-muted-foreground" /> Teléfono *</Label>
-                <Input value={contact.phone} onChange={(e) => setContact(prev => ({ ...prev, phone: e.target.value }))} placeholder="993 155 0935" required />
-              </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-sm font-medium"><Mail className="h-3.5 w-3.5 text-muted-foreground" /> Correo electrónico *</Label>
-                <Input type="email" value={contact.email} onChange={(e) => setContact(prev => ({ ...prev, email: e.target.value }))} placeholder="correo@ejemplo.com" required />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Detalles del equipo</Label>
-              <Textarea value={contact.notes} onChange={(e) => setContact(prev => ({ ...prev, notes: e.target.value }))} placeholder={notesPlaceholder} rows={4} />
-            </div>
-            <Button type="submit" size="lg" className="w-full font-semibold">Enviar Solicitud</Button>
-          </form>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export default Mantenimiento;
