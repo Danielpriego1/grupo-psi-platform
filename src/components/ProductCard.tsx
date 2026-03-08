@@ -22,7 +22,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         {/* Card content */}
         <div className="relative z-10 overflow-hidden rounded-2xl bg-card p-5 transition-shadow duration-500 group-hover:shadow-[0_8px_40px_-8px_hsl(210,90%,60%,0.2)]">
           {/* Product image */}
-          <div className="aspect-[4/3] mb-5 overflow-hidden rounded-xl bg-muted/50">
+          <div className="aspect-[4/3] mb-5 overflow-hidden rounded-xl">
             <img
               src={product.image || "/placeholder.svg"}
               alt={product.name}
