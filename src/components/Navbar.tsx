@@ -23,7 +23,7 @@ export function Navbar() {
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-3">
           <img
-            src="/logo_fondo_negro.png"
+            src="/logo_fondo_blanco.png"
             alt="Grupo PSI"
             className="h-10 w-auto"
           />
