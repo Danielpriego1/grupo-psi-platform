@@ -3,9 +3,11 @@ import { ShoppingCart, Wrench, Wind, Flame, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/contexts/CartContext";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { totalItems, setIsOpen } = useCart();
 
   const navLinks = [
     { to: "/", label: "Catálogo" },
@@ -34,18 +36,33 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Button variant="outline" size="icon" className="relative">
+          <Button variant="outline" size="icon" className="relative" onClick={() => setIsOpen(true)}>
             <ShoppingCart className="h-4 w-4" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center animate-scale-in">
+                {totalItems}
+              </span>
+            )}
           </Button>
         </nav>
 
-        {/* Mobile toggle */}
-        <button
-          className="md:hidden h-10 w-10 flex items-center justify-center"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Mobile: cart + menu */}
+        <div className="md:hidden flex items-center gap-2">
+          <Button variant="outline" size="icon" className="relative" onClick={() => setIsOpen(true)}>
+            <ShoppingCart className="h-4 w-4" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+          </Button>
+          <button
+            className="h-10 w-10 flex items-center justify-center"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
