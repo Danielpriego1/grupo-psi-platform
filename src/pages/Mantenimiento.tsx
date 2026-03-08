@@ -5,13 +5,28 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { LocationMap } from "@/components/LocationMap";
-import { Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight, Clock, AlertTriangle } from "lucide-react";
+import { Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight, Clock, AlertTriangle, Flame, Plus, Minus } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
 import { mexicoStates, type MexicoState, type Municipality } from "@/data/mexicoLocations";
+
+// Equipment options
+const EXTINGUISHER_TYPES = [
+  { id: "pqs", label: "PQS ABC", description: "Polvo Químico Seco – el más común" },
+  { id: "co2", label: "CO₂", description: "Dióxido de carbono – equipos eléctricos" },
+  { id: "tipo-k", label: "Tipo K", description: "Para cocinas y aceites" },
+  { id: "agua", label: "Agua", description: "Para materiales sólidos (clase A)" },
+  { id: "espuma", label: "Espuma", description: "Para líquidos inflamables" },
+  { id: "halotron", label: "Halotron", description: "Sin residuo – electrónicos sensibles" },
+];
+
+const WEIGHT_OPTIONS = [
+  "1 kg", "2 kg", "4.5 kg", "6 kg", "9 kg", "12 kg", "50 kg", "70 kg",
+  "2.5 lbs", "5 lbs", "10 lbs", "15 lbs", "20 lbs",
+];
 
 // Time slot definitions with capacity logic
 interface TimeSlot {
@@ -31,42 +46,46 @@ const TIME_SLOTS: TimeSlot[] = [
   { id: "afternoon-3", label: "15:30 – 17:00", startHour: 15.5, endHour: 17, maxCapacity: 3 },
 ];
 
-// Simulated existing bookings per date (in production this comes from DB)
 const getSimulatedBookings = (dateStr: string): Record<string, number> => {
   const seed = dateStr.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const bookings: Record<string, number> = {};
   TIME_SLOTS.forEach((slot, i) => {
     const pseudoRandom = ((seed * (i + 1) * 7) % 13);
-    if (pseudoRandom > 10) {
-      bookings[slot.id] = slot.maxCapacity; // Full
-    } else if (pseudoRandom > 6) {
-      bookings[slot.id] = slot.maxCapacity - 1; // Almost full
-    } else if (pseudoRandom > 3) {
-      bookings[slot.id] = Math.floor(slot.maxCapacity / 2); // Moderate
-    } else {
-      bookings[slot.id] = 0; // Empty
-    }
+    if (pseudoRandom > 10) bookings[slot.id] = slot.maxCapacity;
+    else if (pseudoRandom > 6) bookings[slot.id] = slot.maxCapacity - 1;
+    else if (pseudoRandom > 3) bookings[slot.id] = Math.floor(slot.maxCapacity / 2);
+    else bookings[slot.id] = 0;
   });
   return bookings;
 };
 
 type SlotAvailability = "available" | "limited" | "unavailable";
 
-const formSchema = z.object({
+interface EquipmentItem {
+  type: string;
+  weight: string;
+  quantity: number;
+}
+
+const contactSchema = z.object({
   name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(100),
   phone: z.string().trim().min(10, "Ingresa un teléfono válido de 10 dígitos").max(15).regex(/^[\d\s\-+()]+$/, "Teléfono inválido"),
   email: z.string().trim().email("Correo electrónico inválido").max(255),
-  equipmentDescription: z.string().trim().min(5, "Describe brevemente tu equipo").max(500),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type ContactData = z.infer<typeof contactSchema>;
 
 const Mantenimiento = () => {
   const [date, setDate] = useState<Date>();
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [form, setForm] = useState<FormData>({ name: "", phone: "", email: "", equipmentDescription: "" });
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [contact, setContact] = useState<ContactData>({ name: "", phone: "", email: "" });
+  const [contactErrors, setContactErrors] = useState<Partial<Record<keyof ContactData, string>>>({});
   const [step, setStep] = useState(1);
+
+  // Equipment state
+  const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ type: "", weight: "", quantity: 1 }]);
+  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [equipmentError, setEquipmentError] = useState<string | null>(null);
 
   // Location cascade state
   const [selectedState, setSelectedState] = useState<MexicoState | null>(null);
@@ -75,22 +94,43 @@ const Mantenimiento = () => {
   const [locationSubStep, setLocationSubStep] = useState<1 | 2 | 3 | 4>(1);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-  const updateField = (field: keyof FormData, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  const updateContact = (field: keyof ContactData, value: string) => {
+    setContact((prev) => ({ ...prev, [field]: value }));
+    if (contactErrors[field]) setContactErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const updateEquipmentItem = (index: number, field: keyof EquipmentItem, value: string | number) => {
+    setEquipmentItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+    if (equipmentError) setEquipmentError(null);
+  };
+
+  const addEquipmentItem = () => {
+    setEquipmentItems(prev => [...prev, { type: "", weight: "", quantity: 1 }]);
+  };
+
+  const removeEquipmentItem = (index: number) => {
+    if (equipmentItems.length > 1) {
+      setEquipmentItems(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleSubmit = () => {
-    const result = formSchema.safeParse(form);
+    const result = contactSchema.safeParse(contact);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof FormData, string>> = {};
+      const fieldErrors: Partial<Record<keyof ContactData, string>> = {};
       result.error.errors.forEach((e) => {
-        const field = e.path[0] as keyof FormData;
+        const field = e.path[0] as keyof ContactData;
         if (!fieldErrors[field]) fieldErrors[field] = e.message;
       });
-      setErrors(fieldErrors);
+      setContactErrors(fieldErrors);
       setStep(1);
       toast.error("Por favor completa todos los campos correctamente");
+      return;
+    }
+    const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
+    if (!hasValidEquipment) {
+      setEquipmentError("Agrega al menos un equipo con tipo y peso");
+      setStep(1);
       return;
     }
     if (!date || !selectedTimeSlot) {
@@ -103,10 +143,12 @@ const Mantenimiento = () => {
       return;
     }
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
-    toast.success(`¡Solicitud enviada! Recolección programada el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}. Nos pondremos en contacto para confirmar.`);
+    const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
+    toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
   };
 
-  const isStep1Complete = form.name.length >= 2 && form.phone.length >= 10 && form.email.includes("@") && form.equipmentDescription.length >= 5;
+  const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
+  const isStep1Complete = contact.name.length >= 2 && contact.phone.length >= 10 && contact.email.includes("@") && hasValidEquipment;
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   // Calculate slot availability when date changes
@@ -208,13 +250,13 @@ const Mantenimiento = () => {
                   </Label>
                   <Input
                     id="name"
-                    value={form.name}
-                    onChange={(e) => updateField("name", e.target.value)}
+                    value={contact.name}
+                    onChange={(e) => updateContact("name", e.target.value)}
                     placeholder="Juan Pérez"
                     maxLength={100}
-                    className={cn(errors.name && "border-destructive")}
+                    className={cn(contactErrors.name && "border-destructive")}
                   />
-                  {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+                  {contactErrors.name && <p className="text-xs text-destructive">{contactErrors.name}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -223,13 +265,13 @@ const Mantenimiento = () => {
                   </Label>
                   <Input
                     id="phone"
-                    value={form.phone}
-                    onChange={(e) => updateField("phone", e.target.value)}
+                    value={contact.phone}
+                    onChange={(e) => updateContact("phone", e.target.value)}
                     placeholder="55 1234 5678"
                     maxLength={15}
-                    className={cn(errors.phone && "border-destructive")}
+                    className={cn(contactErrors.phone && "border-destructive")}
                   />
-                  {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+                  {contactErrors.phone && <p className="text-xs text-destructive">{contactErrors.phone}</p>}
                 </div>
               </div>
 
@@ -240,44 +282,161 @@ const Mantenimiento = () => {
                 <Input
                   id="email"
                   type="email"
-                  value={form.email}
-                  onChange={(e) => updateField("email", e.target.value)}
+                  value={contact.email}
+                  onChange={(e) => updateContact("email", e.target.value)}
                   placeholder="correo@ejemplo.com"
                   maxLength={255}
-                  className={cn(errors.email && "border-destructive")}
+                  className={cn(contactErrors.email && "border-destructive")}
                 />
-                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                {contactErrors.email && <p className="text-xs text-destructive">{contactErrors.email}</p>}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="equipment" className="flex items-center gap-2 text-sm font-medium">
-                  <Package className="h-3.5 w-3.5 text-muted-foreground" /> Descripción del equipo
-                </Label>
-                <Textarea
-                  id="equipment"
-                  value={form.equipmentDescription}
-                  onChange={(e) => updateField("equipmentDescription", e.target.value)}
-                  placeholder="Ej: 3 extintores PQS de 4.5 kg que necesitan recarga..."
-                  maxLength={500}
-                  rows={3}
-                  className={cn(errors.equipmentDescription && "border-destructive")}
-                />
-                {errors.equipmentDescription && <p className="text-xs text-destructive">{errors.equipmentDescription}</p>}
-                <p className="text-xs text-muted-foreground text-right">{form.equipmentDescription.length}/500</p>
+              {/* Equipment questionnaire */}
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Flame className="h-5 w-5 text-primary" /> Equipo a recolectar
+                  </h2>
+                  <span className="text-xs text-muted-foreground">{equipmentItems.length} equipo(s)</span>
+                </div>
+
+                {equipmentError && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3.5 w-3.5" /> {equipmentError}
+                  </p>
+                )}
+
+                <div className="space-y-4">
+                  {equipmentItems.map((item, index) => (
+                    <div key={index} className="rounded-xl border border-border bg-muted/30 p-4 space-y-4 relative">
+                      {equipmentItems.length > 1 && (
+                        <button
+                          onClick={() => removeEquipmentItem(index)}
+                          className="absolute top-3 right-3 h-6 w-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                      )}
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Equipo {index + 1}
+                      </span>
+
+                      {/* Tipo de extintor */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Tipo de extintor</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {EXTINGUISHER_TYPES.map((type) => (
+                            <button
+                              key={type.id}
+                              onClick={() => updateEquipmentItem(index, "type", type.id)}
+                              className={cn(
+                                "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-200",
+                                item.type === type.id
+                                  ? "border-primary bg-primary/10 text-primary shadow-sm"
+                                  : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                              )}
+                            >
+                              <span className="flex items-center gap-1.5 text-sm font-medium">
+                                <span className={cn(
+                                  "h-2 w-2 rounded-full",
+                                  item.type === type.id ? "bg-primary" : "bg-muted-foreground/30"
+                                )} />
+                                {type.label}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground leading-tight pl-3.5">{type.description}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Peso / Capacidad */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Peso / Capacidad</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {WEIGHT_OPTIONS.map((w) => (
+                            <button
+                              key={w}
+                              onClick={() => updateEquipmentItem(index, "weight", w)}
+                              className={cn(
+                                "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                item.weight === w
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                              )}
+                            >
+                              {w}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Cantidad */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Cantidad</Label>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => updateEquipmentItem(index, "quantity", Math.max(1, item.quantity - 1))}
+                            className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
+                          <span className="min-w-[2rem] text-center text-lg font-bold">{item.quantity}</span>
+                          <button
+                            onClick={() => updateEquipmentItem(index, "quantity", Math.min(50, item.quantity + 1))}
+                            className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                          <span className="text-xs text-muted-foreground">unidades</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addEquipmentItem}
+                  className="w-full border-dashed"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Agregar otro equipo
+                </Button>
+
+                {/* Notas adicionales */}
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="flex items-center gap-2 text-sm font-medium">
+                    <Package className="h-3.5 w-3.5 text-muted-foreground" /> Notas adicionales (opcional)
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    value={additionalNotes}
+                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    placeholder="Ej: Algunos extintores tienen daño en la manguera, necesito factura..."
+                    maxLength={500}
+                    rows={2}
+                  />
+                  <p className="text-xs text-muted-foreground text-right">{additionalNotes.length}/500</p>
+                </div>
               </div>
 
               <Button className="w-full transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={() => {
-                const result = formSchema.safeParse(form);
+                const result = contactSchema.safeParse(contact);
                 if (!result.success) {
-                  const fieldErrors: Partial<Record<keyof FormData, string>> = {};
+                  const fieldErrors: Partial<Record<keyof ContactData, string>> = {};
                   result.error.errors.forEach((e) => {
-                    const field = e.path[0] as keyof FormData;
+                    const field = e.path[0] as keyof ContactData;
                     if (!fieldErrors[field]) fieldErrors[field] = e.message;
                   });
-                  setErrors(fieldErrors);
+                  setContactErrors(fieldErrors);
                   return;
                 }
-                setErrors({});
+                if (!hasValidEquipment) {
+                  setEquipmentError("Selecciona tipo y peso de al menos un equipo");
+                  return;
+                }
+                setContactErrors({});
+                setEquipmentError(null);
                 setStep(2);
               }}>
                 Siguiente → Seleccionar fecha
