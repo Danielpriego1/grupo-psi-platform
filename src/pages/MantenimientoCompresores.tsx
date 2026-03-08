@@ -7,13 +7,8 @@ import { Wind, Shield, CheckCircle, Phone, Mail, User, ChevronLeft, ChevronRight
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const SERVICE_IMAGES = [
+const COMPRESSOR_IMAGES = [
   { src: "/images/services/compresores-linea.jpeg", alt: "Línea de compresores de aire respirable" },
-  { src: "/images/services/maniobra-grua-cilindros.jpg", alt: "Maniobra con grúa – traslado de cilindros y compresor" },
-  { src: "/images/services/compresor-campo-psi.jpg", alt: "Compresor portátil PSI en campo" },
-  { src: "/images/services/cilindros-operador.jpeg", alt: "Operador revisando rack de cilindros de aire respirable" },
-  { src: "/images/services/cilindros-detalle.jpeg", alt: "Detalle de válvulas y conexiones en cilindros" },
-  { src: "/images/services/cilindros-rack-1.jpeg", alt: "Rack de cilindros de aire respirable" },
   { src: "/images/services/compresor-desarme-1.jpg", alt: "Desarme de compresor – cabezal" },
   { src: "/images/services/compresor-desarme-2.jpg", alt: "Compresor con filtro secador" },
   { src: "/images/services/compresor-filtro.jpg", alt: "Mantenimiento de filtro catalizador Bauer" },
@@ -21,6 +16,15 @@ const SERVICE_IMAGES = [
   { src: "/images/services/compresor-cilindro.jpg", alt: "Interior de cilindro – inspección de baleros" },
   { src: "/images/services/compresor-ensamble.jpg", alt: "Ensamble de pistón y anillos" },
   { src: "/images/services/etiqueta-scba.jpeg", alt: "Etiqueta de servicio SCBA – Grupo PSI" },
+];
+
+const CASCADE_IMAGES = [
+  { src: "/images/services/maniobra-grua-cilindros.jpg", alt: "Maniobra con grúa – traslado de sistema de cascada" },
+  { src: "/images/services/compresor-campo-psi.jpg", alt: "Compresor portátil PSI en campo" },
+  { src: "/images/services/cilindros-operador.jpeg", alt: "Operador revisando sistema de cascada" },
+  { src: "/images/services/cilindros-detalle.jpeg", alt: "Detalle de válvulas y conexiones en cascada" },
+  { src: "/images/services/cilindros-rack-1.jpeg", alt: "Sistema de cascada – rack de cilindros" },
+  { src: "/images/services/cilindros-rack-2.jpeg", alt: "Sistema de cascada – vista frontal" },
 ];
 
 const SERVICES = [
@@ -48,10 +52,13 @@ const SERVICES = [
 
 const MantenimientoCompresores = () => {
   const [currentImage, setCurrentImage] = useState(0);
+  const [currentCascadeImage, setCurrentCascadeImage] = useState(0);
   const [contact, setContact] = useState({ name: "", phone: "", email: "", notes: "" });
 
-  const nextImage = () => setCurrentImage((prev) => (prev + 1) % SERVICE_IMAGES.length);
-  const prevImage = () => setCurrentImage((prev) => (prev - 1 + SERVICE_IMAGES.length) % SERVICE_IMAGES.length);
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % COMPRESSOR_IMAGES.length);
+  const prevImage = () => setCurrentImage((prev) => (prev - 1 + COMPRESSOR_IMAGES.length) % COMPRESSOR_IMAGES.length);
+  const nextCascade = () => setCurrentCascadeImage((prev) => (prev + 1) % CASCADE_IMAGES.length);
+  const prevCascade = () => setCurrentCascadeImage((prev) => (prev - 1 + CASCADE_IMAGES.length) % CASCADE_IMAGES.length);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,14 +105,13 @@ const MantenimientoCompresores = () => {
             {/* Image Gallery */}
             <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-background/5">
               <img
-                src={SERVICE_IMAGES[currentImage].src}
-                alt={SERVICE_IMAGES[currentImage].alt}
-                className="w-full h-full object-cover transition-opacity duration-500"
+                src={COMPRESSOR_IMAGES[currentImage].src}
+                alt={COMPRESSOR_IMAGES[currentImage].alt}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                 <p className="text-sm text-white/90 font-medium drop-shadow-lg">
-                  {SERVICE_IMAGES[currentImage].alt}
+                  {COMPRESSOR_IMAGES[currentImage].alt}
                 </p>
                 <div className="flex gap-1.5">
                   <button
@@ -124,7 +130,7 @@ const MantenimientoCompresores = () => {
               </div>
               {/* Dots */}
               <div className="absolute bottom-14 left-4 flex gap-1.5">
-                {SERVICE_IMAGES.map((_, i) => (
+                {COMPRESSOR_IMAGES.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentImage(i)}
@@ -199,7 +205,7 @@ const MantenimientoCompresores = () => {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {SERVICE_IMAGES.slice(1, 5).map((img, i) => (
+              {COMPRESSOR_IMAGES.slice(1, 5).map((img, i) => (
                 <div
                   key={i}
                   className={cn(
@@ -216,7 +222,80 @@ const MantenimientoCompresores = () => {
         </div>
       </section>
 
-      {/* Brands we service */}
+      {/* Cascade Systems Section */}
+      <section id="cascada" className="container mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+              <Shield className="h-4 w-4" />
+              Sistemas de Cascada
+            </div>
+            <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+              Mantenimiento de Sistemas de Cascada
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              Servicio integral para sistemas de cascada utilizados en el suministro de aire respirable Grado D. Incluye inspección de cilindros, revisión de válvulas, pruebas hidrostáticas y verificación de conexiones.
+            </p>
+            <ul className="space-y-3 text-muted-foreground">
+              {[
+                "Inspección visual y prueba hidrostática de cilindros",
+                "Revisión y reemplazo de válvulas de alta presión",
+                "Verificación de mangueras y conexiones del manifold",
+                "Prueba de fugas en todo el sistema",
+                "Recarga de cilindros con aire respirable certificado",
+                "Logística y maniobras para traslado de equipos",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5">
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <span className="text-sm">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Cascade Gallery */}
+          <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-muted">
+            <img
+              src={CASCADE_IMAGES[currentCascadeImage].src}
+              alt={CASCADE_IMAGES[currentCascadeImage].alt}
+              className="w-full h-full object-cover transition-opacity duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+              <p className="text-sm text-white/90 font-medium drop-shadow-lg">
+                {CASCADE_IMAGES[currentCascadeImage].alt}
+              </p>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={prevCascade}
+                  className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={nextCascade}
+                  className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="absolute bottom-14 left-4 flex gap-1.5">
+              {CASCADE_IMAGES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentCascadeImage(i)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300",
+                    i === currentCascadeImage ? "w-6 bg-white" : "w-1.5 bg-white/40"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">
