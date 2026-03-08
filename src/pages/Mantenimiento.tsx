@@ -1,17 +1,56 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { LocationMap } from "@/components/LocationMap";
-import { Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight } from "lucide-react";
+import { Wrench, CheckCircle, User, Phone, Mail, Package, MapPin, ChevronRight, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
 import { mexicoStates, type MexicoState, type Municipality } from "@/data/mexicoLocations";
+
+// Time slot definitions with capacity logic
+interface TimeSlot {
+  id: string;
+  label: string;
+  startHour: number;
+  endHour: number;
+  maxCapacity: number;
+}
+
+const TIME_SLOTS: TimeSlot[] = [
+  { id: "morning-1", label: "8:00 – 9:30", startHour: 8, endHour: 9.5, maxCapacity: 3 },
+  { id: "morning-2", label: "9:30 – 11:00", startHour: 9.5, endHour: 11, maxCapacity: 3 },
+  { id: "morning-3", label: "11:00 – 12:30", startHour: 11, endHour: 12.5, maxCapacity: 3 },
+  { id: "afternoon-1", label: "12:30 – 14:00", startHour: 12.5, endHour: 14, maxCapacity: 2 },
+  { id: "afternoon-2", label: "14:00 – 15:30", startHour: 14, endHour: 15.5, maxCapacity: 3 },
+  { id: "afternoon-3", label: "15:30 – 17:00", startHour: 15.5, endHour: 17, maxCapacity: 3 },
+];
+
+// Simulated existing bookings per date (in production this comes from DB)
+const getSimulatedBookings = (dateStr: string): Record<string, number> => {
+  const seed = dateStr.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const bookings: Record<string, number> = {};
+  TIME_SLOTS.forEach((slot, i) => {
+    const pseudoRandom = ((seed * (i + 1) * 7) % 13);
+    if (pseudoRandom > 10) {
+      bookings[slot.id] = slot.maxCapacity; // Full
+    } else if (pseudoRandom > 6) {
+      bookings[slot.id] = slot.maxCapacity - 1; // Almost full
+    } else if (pseudoRandom > 3) {
+      bookings[slot.id] = Math.floor(slot.maxCapacity / 2); // Moderate
+    } else {
+      bookings[slot.id] = 0; // Empty
+    }
+  });
+  return bookings;
+};
+
+type SlotAvailability = "available" | "limited" | "unavailable";
 
 const formSchema = z.object({
   name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(100),
@@ -54,8 +93,8 @@ const Mantenimiento = () => {
       toast.error("Por favor completa todos los campos correctamente");
       return;
     }
-    if (!date) {
-      toast.error("Selecciona una fecha para la recolección");
+    if (!date || !selectedTimeSlot) {
+      toast.error("Selecciona una fecha y horario para la recolección");
       setStep(2);
       return;
     }
@@ -63,11 +102,31 @@ const Mantenimiento = () => {
       toast.error("Fija tu ubicación en el mapa");
       return;
     }
-    toast.success("¡Solicitud enviada! Nos pondremos en contacto contigo para confirmar la recolección.");
+    const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
+    toast.success(`¡Solicitud enviada! Recolección programada el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}. Nos pondremos en contacto para confirmar.`);
   };
 
   const isStep1Complete = form.name.length >= 2 && form.phone.length >= 10 && form.email.includes("@") && form.equipmentDescription.length >= 5;
-  const isStep2Complete = !!date;
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+
+  // Calculate slot availability when date changes
+  const slotAvailabilities = useMemo(() => {
+    if (!date) return {};
+    const dateStr = format(date, "yyyy-MM-dd");
+    const bookings = getSimulatedBookings(dateStr);
+    const result: Record<string, { availability: SlotAvailability; remaining: number; total: number; booked: number }> = {};
+    TIME_SLOTS.forEach((slot) => {
+      const booked = bookings[slot.id] || 0;
+      const remaining = slot.maxCapacity - booked;
+      let availability: SlotAvailability = "available";
+      if (remaining <= 0) availability = "unavailable";
+      else if (remaining === 1) availability = "limited";
+      result[slot.id] = { availability, remaining, total: slot.maxCapacity, booked };
+    });
+    return result;
+  }, [date]);
+
+  const isStep2Complete = !!date && !!selectedTimeSlot;
   const isLocationComplete = !!location;
 
   const handleSelectState = (state: MexicoState) => {
@@ -226,16 +285,16 @@ const Mantenimiento = () => {
             </div>
           )}
 
-          {/* Step 2: Calendar */}
+          {/* Step 2: Calendar + Time Slots */}
           {step === 2 && (
             <div className="animate-fade-in space-y-6 rounded-2xl border border-border bg-card p-6 shadow-lg md:p-8">
-              <h2 className="text-xl font-bold">Selecciona la fecha de recolección</h2>
+              <h2 className="text-xl font-bold">Selecciona fecha y horario de recolección</h2>
               <div className="flex justify-center">
                 <div className="overflow-hidden rounded-xl border border-border">
                   <Calendar
                     mode="single"
                     selected={date}
-                    onSelect={setDate}
+                    onSelect={(d) => { setDate(d); setSelectedTimeSlot(null); }}
                     locale={es}
                     className={cn("p-3 pointer-events-auto")}
                     disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
@@ -243,9 +302,95 @@ const Mantenimiento = () => {
                 </div>
               </div>
               {date && (
-                <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary animate-fade-in">
-                  <CheckCircle className="h-4 w-4" />
-                  {format(date, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                <div className="animate-fade-in space-y-4">
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
+                    <CheckCircle className="h-4 w-4" />
+                    {format(date, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                  </div>
+
+                  {/* Time slot selector */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-primary" />
+                      Horarios disponibles
+                    </h3>
+
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Disponible
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Último lugar
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" /> Sin disponibilidad
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {TIME_SLOTS.map((slot) => {
+                        const info = slotAvailabilities[slot.id];
+                        if (!info) return null;
+                        const isSelected = selectedTimeSlot === slot.id;
+                        const isUnavailable = info.availability === "unavailable";
+                        const isLimited = info.availability === "limited";
+
+                        return (
+                          <button
+                            key={slot.id}
+                            disabled={isUnavailable}
+                            onClick={() => setSelectedTimeSlot(slot.id)}
+                            className={cn(
+                              "relative flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-300",
+                              isUnavailable
+                                ? "border-border/50 bg-muted/50 text-muted-foreground cursor-not-allowed opacity-60"
+                                : isSelected
+                                  ? "border-primary bg-primary text-primary-foreground shadow-lg scale-105"
+                                  : isLimited
+                                    ? "border-amber-400/50 bg-amber-50 text-amber-800 hover:border-amber-500 hover:scale-[1.02] dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-700"
+                                    : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5 hover:scale-[1.02]"
+                            )}
+                          >
+                            <span className="font-semibold">{slot.label}</span>
+                            <span className={cn(
+                              "text-[10px] font-normal",
+                              isSelected ? "text-primary-foreground/80" : isUnavailable ? "text-muted-foreground" : isLimited ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                            )}>
+                              {isUnavailable ? (
+                                <span className="flex items-center gap-1">
+                                  <AlertTriangle className="h-3 w-3" /> Ocupado
+                                </span>
+                              ) : isLimited ? (
+                                "¡Último lugar!"
+                              ) : (
+                                `${info.remaining} de ${info.total} disponibles`
+                              )}
+                            </span>
+                            <span className={cn(
+                              "absolute top-2 right-2 h-2 w-2 rounded-full",
+                              isUnavailable ? "bg-destructive/60" : isLimited ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                            )} />
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {selectedTimeSlot && (
+                      <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary animate-fade-in">
+                        <Clock className="h-4 w-4" />
+                        Horario seleccionado: {TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label}
+                      </div>
+                    )}
+
+                    <div className="rounded-lg bg-muted/50 border border-border/50 px-4 py-3 text-xs text-muted-foreground">
+                      <p className="flex items-start gap-2">
+                        <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+                        <span>
+                          Los horarios reflejan nuestra disponibilidad real. Un horario marcado como <strong>"Ocupado"</strong> significa que ya tenemos recolecciones en curso y <strong>no podemos garantizar</strong> llegar a tiempo. Preferimos ser honestos contigo.
+                        </span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
               <div className="flex gap-3">
@@ -256,6 +401,7 @@ const Mantenimiento = () => {
                   className="flex-1 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                   onClick={() => {
                     if (!date) { toast.error("Selecciona una fecha"); return; }
+                    if (!selectedTimeSlot) { toast.error("Selecciona un horario disponible"); return; }
                     setStep(3);
                   }}
                 >
