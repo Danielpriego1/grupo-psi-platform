@@ -26,7 +26,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             <img
               src={product.image || "/placeholder.svg"}
               alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
             />
           </div>
 
