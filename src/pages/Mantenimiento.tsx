@@ -314,8 +314,11 @@ const Mantenimiento = () => {
   const [selectedState, setSelectedState] = useState<MexicoState | null>(null);
   const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(null);
   const [selectedPostalCode, setSelectedPostalCode] = useState<string | null>(null);
-  const [locationSubStep, setLocationSubStep] = useState<1 | 2 | 3 | 4>(1);
+  const [address, setAddress] = useState("");
+  const [locationSubStep, setLocationSubStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const mapRef = useRef<LocationMapHandle>(null);
 
   // ─── Contact form ───
   const [serviceContact, setServiceContact] = useState({ name: "", phone: "", email: "", notes: "" });
