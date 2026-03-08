@@ -355,7 +355,7 @@ const Mantenimiento = () => {
     });
     if (!hasValid) { setEquipmentError("Agrega al menos un equipo con todos los campos requeridos"); setStep(1); return; }
     if (!date || !selectedTimeSlot) { toast.error("Selecciona una fecha y horario para la recolección"); setStep(2); return; }
-    if (!location) { toast.error("Fija tu ubicación en el mapa"); return; }
+    if (!location || !locationConfirmed) { toast.error("Confirma tu ubicación en el mapa"); setStep(3); return; }
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
     const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
     toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
