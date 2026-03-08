@@ -40,7 +40,7 @@ const Index = () => {
                 : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
             )}
           >
-            Todos ({products.length})
+            Todos ({visibleProducts.length})
           </button>
           {categories.map((cat) => {
             const count = products.filter((p) => p.category === cat).length;
