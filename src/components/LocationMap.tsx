@@ -7,9 +7,10 @@ const LEAFLET_CSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
 interface LocationMapProps {
   onLocationSelect?: (lat: number, lng: number) => void;
   className?: string;
+  defaultCenter?: [number, number];
 }
 
-export function LocationMap({ onLocationSelect, className }: LocationMapProps) {
+export function LocationMap({ onLocationSelect, className, defaultCenter = [17.9869, -92.9303] }: LocationMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
@@ -38,7 +39,7 @@ export function LocationMap({ onLocationSelect, className }: LocationMapProps) {
       });
 
       // Center on Mexico City
-      const map = L.map(mapContainer.current).setView([17.9869, -92.9303], 13);
+      const map = L.map(mapContainer.current).setView(defaultCenter, 13);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
       }).addTo(map);
