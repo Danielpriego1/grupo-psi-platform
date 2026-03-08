@@ -7,6 +7,7 @@ import { Navbar } from "./components/Navbar";
 import { ChatWidget } from "./components/ChatWidget";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
+import Mantenimiento from "./pages/Mantenimiento";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/mantenimiento" element={<Mantenimiento />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatWidget />
