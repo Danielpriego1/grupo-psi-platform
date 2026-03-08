@@ -51,7 +51,7 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
               }}
               className="w-full h-full object-contain pt-16"
             >
-              <source src="/videos/logo-animation.mp4" type="video/mp4" />
+              <source src="/videos/logo-animation.mov" type="video/mp4" />
             </video>
           </motion.div>
         )}
