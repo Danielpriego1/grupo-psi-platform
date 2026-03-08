@@ -13,6 +13,21 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { mexicoStates, type MexicoState, type Municipality } from "@/data/mexicoLocations";
 
+// Equipment options
+const EXTINGUISHER_TYPES = [
+  { id: "pqs", label: "PQS ABC", description: "Polvo Químico Seco – el más común" },
+  { id: "co2", label: "CO₂", description: "Dióxido de carbono – equipos eléctricos" },
+  { id: "tipo-k", label: "Tipo K", description: "Para cocinas y aceites" },
+  { id: "agua", label: "Agua", description: "Para materiales sólidos (clase A)" },
+  { id: "espuma", label: "Espuma", description: "Para líquidos inflamables" },
+  { id: "halotron", label: "Halotron", description: "Sin residuo – electrónicos sensibles" },
+];
+
+const WEIGHT_OPTIONS = [
+  "1 kg", "2 kg", "4.5 kg", "6 kg", "9 kg", "12 kg", "50 kg", "70 kg",
+  "2.5 lbs", "5 lbs", "10 lbs", "15 lbs", "20 lbs",
+];
+
 // Time slot definitions with capacity logic
 interface TimeSlot {
   id: string;
@@ -31,35 +46,34 @@ const TIME_SLOTS: TimeSlot[] = [
   { id: "afternoon-3", label: "15:30 – 17:00", startHour: 15.5, endHour: 17, maxCapacity: 3 },
 ];
 
-// Simulated existing bookings per date (in production this comes from DB)
 const getSimulatedBookings = (dateStr: string): Record<string, number> => {
   const seed = dateStr.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const bookings: Record<string, number> = {};
   TIME_SLOTS.forEach((slot, i) => {
     const pseudoRandom = ((seed * (i + 1) * 7) % 13);
-    if (pseudoRandom > 10) {
-      bookings[slot.id] = slot.maxCapacity; // Full
-    } else if (pseudoRandom > 6) {
-      bookings[slot.id] = slot.maxCapacity - 1; // Almost full
-    } else if (pseudoRandom > 3) {
-      bookings[slot.id] = Math.floor(slot.maxCapacity / 2); // Moderate
-    } else {
-      bookings[slot.id] = 0; // Empty
-    }
+    if (pseudoRandom > 10) bookings[slot.id] = slot.maxCapacity;
+    else if (pseudoRandom > 6) bookings[slot.id] = slot.maxCapacity - 1;
+    else if (pseudoRandom > 3) bookings[slot.id] = Math.floor(slot.maxCapacity / 2);
+    else bookings[slot.id] = 0;
   });
   return bookings;
 };
 
 type SlotAvailability = "available" | "limited" | "unavailable";
 
-const formSchema = z.object({
+interface EquipmentItem {
+  type: string;
+  weight: string;
+  quantity: number;
+}
+
+const contactSchema = z.object({
   name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(100),
   phone: z.string().trim().min(10, "Ingresa un teléfono válido de 10 dígitos").max(15).regex(/^[\d\s\-+()]+$/, "Teléfono inválido"),
   email: z.string().trim().email("Correo electrónico inválido").max(255),
-  equipmentDescription: z.string().trim().min(5, "Describe brevemente tu equipo").max(500),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type ContactData = z.infer<typeof contactSchema>;
 
 const Mantenimiento = () => {
   const [date, setDate] = useState<Date>();
