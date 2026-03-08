@@ -19,7 +19,7 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-3">
           <img src="/images/logo_fondo_negro.png" alt="Grupo PSI" className="h-14 w-auto" />
-          <span className="hidden text-lg font-bold sm:inline">Grupo PSI</span>
+          <span className="hidden text-lg font-bold sm:inline">Grupo Psi</span>
         </Link>
 
         {/* Desktop nav */}
