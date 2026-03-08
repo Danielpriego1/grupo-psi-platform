@@ -3,6 +3,8 @@ import { visibleProducts, getCategories } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 import { cn } from "@/lib/utils";
 import { HeroSection } from "@/components/HeroSection";
+import { AboutSection } from "@/components/AboutSection";
+import { CTASection } from "@/components/CTASection";
 import { motion } from "framer-motion";
 
 const Index = () => {
