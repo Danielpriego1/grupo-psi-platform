@@ -127,7 +127,7 @@ const Mantenimiento = () => {
   };
 
   const addEquipmentItem = () => {
-    setEquipmentItems(prev => [...prev, { type: "", weight: "", quantity: 1 }]);
+    setEquipmentItems(prev => [...prev, { ...defaultEquipmentItem }]);
   };
 
   const removeEquipmentItem = (index: number) => {
