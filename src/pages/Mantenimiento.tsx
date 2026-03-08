@@ -28,6 +28,16 @@ const WEIGHT_OPTIONS = [
   "2.5 lbs", "5 lbs", "10 lbs", "15 lbs", "20 lbs",
 ];
 
+// Equipment categories
+const EQUIPMENT_CATEGORIES = [
+  { id: "extintores", label: "Extintores", icon: "🧯", description: "Recarga y mantenimiento" },
+  { id: "scba", label: "Equipos Autónomos (SCBA)", icon: "🫁", description: "Cilindros de aire respirable" },
+  { id: "detector-multigas", label: "Detectores Multigas", icon: "📡", description: "Calibración y mantenimiento" },
+];
+
+const SCBA_PSI_OPTIONS = ["2216 PSI", "3000 PSI", "4500 PSI", "200 BAR", "300 BAR"];
+const SCBA_MINUTES_OPTIONS = ["5 min", "10 min", "15 min", "30 min", "45 min", "60 min"];
+
 // Time slot definitions with capacity logic
 interface TimeSlot {
   id: string;
@@ -62,9 +72,19 @@ const getSimulatedBookings = (dateStr: string): Record<string, number> => {
 type SlotAvailability = "available" | "limited" | "unavailable";
 
 interface EquipmentItem {
+  category: string;
+  // Extintores fields
   type: string;
   weight: string;
   quantity: number;
+  // SCBA fields
+  scbaLastMaintenance: string;
+  scbaPsi: string;
+  scbaMinutes: string;
+  // Detector multigas fields
+  detectorBrand: string;
+  detectorGases: string;
+  detectorLastMaintenance: string;
 }
 
 const contactSchema = z.object({
@@ -84,7 +104,8 @@ const Mantenimiento = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   // Equipment state
-  const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ type: "", weight: "", quantity: 1 }]);
+  const defaultEquipmentItem: EquipmentItem = { category: "", type: "", weight: "", quantity: 1, scbaLastMaintenance: "", scbaPsi: "", scbaMinutes: "", detectorBrand: "", detectorGases: "", detectorLastMaintenance: "" };
+  const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ ...defaultEquipmentItem }]);
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [equipmentError, setEquipmentError] = useState<string | null>(null);
 
@@ -106,7 +127,7 @@ const Mantenimiento = () => {
   };
 
   const addEquipmentItem = () => {
-    setEquipmentItems(prev => [...prev, { type: "", weight: "", quantity: 1 }]);
+    setEquipmentItems(prev => [...prev, { ...defaultEquipmentItem }]);
   };
 
   const removeEquipmentItem = (index: number) => {
@@ -128,9 +149,14 @@ const Mantenimiento = () => {
       toast.error("Por favor completa todos los campos correctamente");
       return;
     }
-    const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
+    const hasValidEquipment = equipmentItems.some(item => {
+      if (item.category === "extintores") return item.type && item.weight && item.quantity > 0;
+      if (item.category === "scba") return item.scbaPsi && item.scbaMinutes && item.quantity > 0;
+      if (item.category === "detector-multigas") return item.detectorBrand && item.quantity > 0;
+      return false;
+    });
     if (!hasValidEquipment) {
-      setEquipmentError("Agrega al menos un equipo con tipo y peso");
+      setEquipmentError("Agrega al menos un equipo con todos los campos requeridos");
       setStep(1);
       return;
     }
@@ -148,7 +174,12 @@ const Mantenimiento = () => {
     toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
   };
 
-  const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
+  const hasValidEquipment = equipmentItems.some(item => {
+    if (item.category === "extintores") return item.type && item.weight && item.quantity > 0;
+    if (item.category === "scba") return item.scbaPsi && item.scbaMinutes && item.quantity > 0;
+    if (item.category === "detector-multigas") return item.detectorBrand && item.quantity > 0;
+    return false;
+  });
   const isStep1Complete = contact.name.length >= 2 && contact.phone.length >= 10 && contact.email.includes("@") && hasValidEquipment;
 
   // Calculate slot availability when date changes
@@ -321,75 +352,187 @@ const Mantenimiento = () => {
                         Equipo {index + 1}
                       </span>
 
-                      {/* Tipo de extintor */}
+                      {/* Categoría del equipo */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">Tipo de extintor</Label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {EXTINGUISHER_TYPES.map((type) => (
+                        <Label className="text-sm font-medium">Tipo de equipo</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {EQUIPMENT_CATEGORIES.map((cat) => (
                             <button
-                              key={type.id}
-                              onClick={() => updateEquipmentItem(index, "type", type.id)}
+                              key={cat.id}
+                              onClick={() => updateEquipmentItem(index, "category", cat.id)}
                               className={cn(
                                 "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-200",
-                                item.type === type.id
+                                item.category === cat.id
                                   ? "border-primary bg-primary/10 text-primary shadow-sm"
                                   : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
                               )}
                             >
                               <span className="flex items-center gap-1.5 text-sm font-medium">
-                                <span className={cn(
-                                  "h-2 w-2 rounded-full",
-                                  item.type === type.id ? "bg-primary" : "bg-muted-foreground/30"
-                                )} />
-                                {type.label}
+                                <span>{cat.icon}</span>
+                                {cat.label}
                               </span>
-                              <span className="text-[10px] text-muted-foreground leading-tight pl-3.5">{type.description}</span>
+                              <span className="text-[10px] text-muted-foreground leading-tight pl-5">{cat.description}</span>
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      {/* Peso / Capacidad */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Peso / Capacidad</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {WEIGHT_OPTIONS.map((w) => (
+                      {/* === EXTINTORES fields === */}
+                      {item.category === "extintores" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Tipo de extintor</Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {EXTINGUISHER_TYPES.map((type) => (
+                                <button
+                                  key={type.id}
+                                  onClick={() => updateEquipmentItem(index, "type", type.id)}
+                                  className={cn(
+                                    "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-200",
+                                    item.type === type.id
+                                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                                      : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  )}
+                                >
+                                  <span className="flex items-center gap-1.5 text-sm font-medium">
+                                    <span className={cn("h-2 w-2 rounded-full", item.type === type.id ? "bg-primary" : "bg-muted-foreground/30")} />
+                                    {type.label}
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground leading-tight pl-3.5">{type.description}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Peso / Capacidad</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {WEIGHT_OPTIONS.map((w) => (
+                                <button
+                                  key={w}
+                                  onClick={() => updateEquipmentItem(index, "weight", w)}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                    item.weight === w
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  )}
+                                >
+                                  {w}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* === SCBA fields === */}
+                      {item.category === "scba" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Fecha de último mantenimiento</Label>
+                            <Input
+                              type="date"
+                              value={item.scbaLastMaintenance}
+                              onChange={(e) => updateEquipmentItem(index, "scbaLastMaintenance", e.target.value)}
+                              className="max-w-[220px]"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Capacidad PSI</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {SCBA_PSI_OPTIONS.map((psi) => (
+                                <button
+                                  key={psi}
+                                  onClick={() => updateEquipmentItem(index, "scbaPsi", psi)}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                    item.scbaPsi === psi
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  )}
+                                >
+                                  {psi}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Capacidad en Minutos</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {SCBA_MINUTES_OPTIONS.map((min) => (
+                                <button
+                                  key={min}
+                                  onClick={() => updateEquipmentItem(index, "scbaMinutes", min)}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                    item.scbaMinutes === min
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  )}
+                                >
+                                  {min}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* === DETECTOR MULTIGAS fields === */}
+                      {item.category === "detector-multigas" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Marca del detector</Label>
+                            <Input
+                              value={item.detectorBrand}
+                              onChange={(e) => updateEquipmentItem(index, "detectorBrand", e.target.value)}
+                              placeholder="Ej: Honeywell, MSA, Dräger, Industrial Scientific..."
+                              maxLength={100}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Capacidad de gases a detectar</Label>
+                            <Input
+                              value={item.detectorGases}
+                              onChange={(e) => updateEquipmentItem(index, "detectorGases", e.target.value)}
+                              placeholder="Ej: O₂, CO, H₂S, LEL (4 gases)"
+                              maxLength={200}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Fecha de último mantenimiento</Label>
+                            <Input
+                              type="date"
+                              value={item.detectorLastMaintenance}
+                              onChange={(e) => updateEquipmentItem(index, "detectorLastMaintenance", e.target.value)}
+                              className="max-w-[220px]"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* Cantidad - siempre visible cuando hay categoría */}
+                      {item.category && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Cantidad</Label>
+                          <div className="flex items-center gap-3">
                             <button
-                              key={w}
-                              onClick={() => updateEquipmentItem(index, "weight", w)}
-                              className={cn(
-                                "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
-                                item.weight === w
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
-                              )}
+                              onClick={() => updateEquipmentItem(index, "quantity", Math.max(1, item.quantity - 1))}
+                              className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
                             >
-                              {w}
+                              <Minus className="h-3.5 w-3.5" />
                             </button>
-                          ))}
+                            <span className="min-w-[2rem] text-center text-lg font-bold">{item.quantity}</span>
+                            <button
+                              onClick={() => updateEquipmentItem(index, "quantity", Math.min(50, item.quantity + 1))}
+                              className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="text-xs text-muted-foreground">unidades</span>
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Cantidad */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Cantidad</Label>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => updateEquipmentItem(index, "quantity", Math.max(1, item.quantity - 1))}
-                            className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
-                          >
-                            <Minus className="h-3.5 w-3.5" />
-                          </button>
-                          <span className="min-w-[2rem] text-center text-lg font-bold">{item.quantity}</span>
-                          <button
-                            onClick={() => updateEquipmentItem(index, "quantity", Math.min(50, item.quantity + 1))}
-                            className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
-                          <span className="text-xs text-muted-foreground">unidades</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -432,7 +575,7 @@ const Mantenimiento = () => {
                   return;
                 }
                 if (!hasValidEquipment) {
-                  setEquipmentError("Selecciona tipo y peso de al menos un equipo");
+                  setEquipmentError("Completa los campos requeridos de al menos un equipo");
                   return;
                 }
                 setContactErrors({});
