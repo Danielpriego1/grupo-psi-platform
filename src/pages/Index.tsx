@@ -8,8 +8,8 @@ const Index = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const filtered = activeCategory
-    ? products.filter((p) => p.category === activeCategory)
-    : products;
+    ? visibleProducts.filter((p) => p.category === activeCategory)
+    : visibleProducts;
 
   return (
     <div className="min-h-screen bg-background">
