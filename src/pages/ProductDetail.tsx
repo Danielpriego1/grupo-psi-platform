@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { getProductById } from "@/data/products";
+import { getProductById, getProductPrice } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { ShoppingCart, Truck, Wrench, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
@@ -36,9 +36,10 @@ const ProductDetail = () => {
   const allImages = product.images?.length ? product.images : [product.image || "/placeholder.svg"];
   const allSizes = product.sizes ? Object.values(product.sizes).flat() : [];
 
+  const basePrice = getProductPrice(product, selectedSize || undefined);
   const finalPrice = product.discount
-    ? product.priceOriginalMxn * (1 - product.discount)
-    : product.priceOriginalMxn;
+    ? basePrice * (1 - product.discount)
+    : basePrice;
 
   const handleAddToCart = () => {
     if (allSizes.length > 0 && !selectedSize) {
@@ -132,6 +133,9 @@ const ProductDetail = () => {
                 <h1 className="text-xl font-bold text-card-foreground leading-tight">{product.name}</h1>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold">${finalPrice.toFixed(2)}</span>
+                  {product.sizePricing && selectedSize && (
+                    <span className="text-xs text-muted-foreground ml-1">(precio por talla)</span>
+                  )}
                   <span className="text-sm text-muted-foreground">MXN</span>
                   {product.discount && (
                     <span className="text-sm text-muted-foreground line-through">${product.priceOriginalMxn.toFixed(2)}</span>
