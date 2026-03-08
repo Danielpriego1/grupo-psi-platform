@@ -105,9 +105,8 @@ const MantenimientoCompresores = () => {
             {/* Image Gallery */}
             <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-background/5">
               <img
-                src={SERVICE_IMAGES[currentImage].src}
-                alt={SERVICE_IMAGES[currentImage].alt}
-                className="w-full h-full object-cover transition-opacity duration-500"
+                src={COMPRESSOR_IMAGES[currentImage].src}
+                alt={COMPRESSOR_IMAGES[currentImage].alt}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
