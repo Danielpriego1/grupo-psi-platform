@@ -217,10 +217,10 @@ export const products: Product[] = [
 
   // ── OVEROLES ──
   {
-    id: "uni-overol-basico",
-    name: "Overol Industrial Básico",
+    id: "uni-overol-8200",
+    name: "Overol Industrial Mod. 8200",
     category: "Uniformes",
-    description: "Overol de trabajo uso industrial. Tela resistente con cierres reforzados. Disponible en varios colores.",
+    description: "Overol de trabajo uso industrial Modelo 8200. Tela resistente con cierres reforzados. Disponible en varios colores.",
     priceOriginalMxn: 650.0,
     discount: null,
     purchaseUrl: null,
@@ -231,10 +231,10 @@ export const products: Product[] = [
     images: ["/images/products/overol-presentacion.png", "/images/products/overol-basico-ficha.png", "/images/products/overol-colores-disponibles.jpg"],
   },
   {
-    id: "uni-overol-supervisor",
-    name: "Overol Supervisor",
+    id: "uni-overol-9200",
+    name: "Overol Supervisor Mod. 9200",
     category: "Uniformes",
-    description: "Overol para supervisor con detalles reflejantes y bolsillos funcionales. Diseñado para visibilidad y comodidad en campo.",
+    description: "Overol para supervisor Modelo 9200 con detalles reflejantes y bolsillos funcionales. Diseñado para visibilidad y comodidad en campo.",
     priceOriginalMxn: 850.0,
     discount: null,
     purchaseUrl: null,
@@ -245,10 +245,10 @@ export const products: Product[] = [
     images: ["/images/products/overol-supervisor-presentacion.png", "/images/products/overol-supervisor-ficha.png"],
   },
   {
-    id: "uni-overol-fr",
-    name: "Overol Ignífugo FR (Flame Resistant)",
+    id: "uni-overol-9000",
+    name: "Overol Ignífugo FR Mod. 9000",
     category: "Uniformes",
-    description: "Overol ignífugo certificado NRF-006-PEMEX. Protección contra fuego y arco eléctrico. Modelo 9000.",
+    description: "Overol ignífugo Modelo 9000 certificado NRF-006-PEMEX. Protección contra fuego y arco eléctrico. Flame Resistant.",
     priceOriginalMxn: 3200.0,
     discount: null,
     purchaseUrl: null,
