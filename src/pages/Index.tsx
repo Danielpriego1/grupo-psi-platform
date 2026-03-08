@@ -1,7 +1,16 @@
-import { products } from "@/data/products";
+import { useState } from "react";
+import { products, getCategories } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
+  const categories = getCategories();
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const filtered = activeCategory
+    ? products.filter((p) => p.category === activeCategory)
+    : products;
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 pt-24 pb-12">
@@ -20,8 +29,40 @@ const Index = () => {
           </p>
         </div>
 
+        {/* Category filters */}
+        <div className="mb-8 flex flex-wrap justify-center gap-2">
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={cn(
+              "rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
+              !activeCategory
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+            )}
+          >
+            Todos ({products.length})
+          </button>
+          {categories.map((cat) => {
+            const count = products.filter((p) => p.category === cat).length;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
+                  activeCategory === cat
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                )}
+              >
+                {cat} ({count})
+              </button>
+            );
+          })}
+        </div>
+
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product, i) => (
+          {filtered.map((product, i) => (
             <ProductCard key={product.id} product={product} index={i} />
           ))}
         </div>
