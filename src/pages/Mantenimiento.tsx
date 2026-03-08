@@ -284,16 +284,16 @@ const Mantenimiento = () => {
             </div>
           )}
 
-          {/* Step 2: Calendar */}
+          {/* Step 2: Calendar + Time Slots */}
           {step === 2 && (
             <div className="animate-fade-in space-y-6 rounded-2xl border border-border bg-card p-6 shadow-lg md:p-8">
-              <h2 className="text-xl font-bold">Selecciona la fecha de recolección</h2>
+              <h2 className="text-xl font-bold">Selecciona fecha y horario de recolección</h2>
               <div className="flex justify-center">
                 <div className="overflow-hidden rounded-xl border border-border">
                   <Calendar
                     mode="single"
                     selected={date}
-                    onSelect={setDate}
+                    onSelect={(d) => { setDate(d); setSelectedTimeSlot(null); }}
                     locale={es}
                     className={cn("p-3 pointer-events-auto")}
                     disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
@@ -301,9 +301,95 @@ const Mantenimiento = () => {
                 </div>
               </div>
               {date && (
-                <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary animate-fade-in">
-                  <CheckCircle className="h-4 w-4" />
-                  {format(date, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                <div className="animate-fade-in space-y-4">
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
+                    <CheckCircle className="h-4 w-4" />
+                    {format(date, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                  </div>
+
+                  {/* Time slot selector */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-primary" />
+                      Horarios disponibles
+                    </h3>
+
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Disponible
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Último lugar
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" /> Sin disponibilidad
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {TIME_SLOTS.map((slot) => {
+                        const info = slotAvailabilities[slot.id];
+                        if (!info) return null;
+                        const isSelected = selectedTimeSlot === slot.id;
+                        const isUnavailable = info.availability === "unavailable";
+                        const isLimited = info.availability === "limited";
+
+                        return (
+                          <button
+                            key={slot.id}
+                            disabled={isUnavailable}
+                            onClick={() => setSelectedTimeSlot(slot.id)}
+                            className={cn(
+                              "relative flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-300",
+                              isUnavailable
+                                ? "border-border/50 bg-muted/50 text-muted-foreground cursor-not-allowed opacity-60"
+                                : isSelected
+                                  ? "border-primary bg-primary text-primary-foreground shadow-lg scale-105"
+                                  : isLimited
+                                    ? "border-amber-400/50 bg-amber-50 text-amber-800 hover:border-amber-500 hover:scale-[1.02] dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-700"
+                                    : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5 hover:scale-[1.02]"
+                            )}
+                          >
+                            <span className="font-semibold">{slot.label}</span>
+                            <span className={cn(
+                              "text-[10px] font-normal",
+                              isSelected ? "text-primary-foreground/80" : isUnavailable ? "text-muted-foreground" : isLimited ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                            )}>
+                              {isUnavailable ? (
+                                <span className="flex items-center gap-1">
+                                  <AlertTriangle className="h-3 w-3" /> Ocupado
+                                </span>
+                              ) : isLimited ? (
+                                "¡Último lugar!"
+                              ) : (
+                                `${info.remaining} de ${info.total} disponibles`
+                              )}
+                            </span>
+                            <span className={cn(
+                              "absolute top-2 right-2 h-2 w-2 rounded-full",
+                              isUnavailable ? "bg-destructive/60" : isLimited ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                            )} />
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {selectedTimeSlot && (
+                      <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary animate-fade-in">
+                        <Clock className="h-4 w-4" />
+                        Horario seleccionado: {TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label}
+                      </div>
+                    )}
+
+                    <div className="rounded-lg bg-muted/50 border border-border/50 px-4 py-3 text-xs text-muted-foreground">
+                      <p className="flex items-start gap-2">
+                        <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+                        <span>
+                          Los horarios reflejan nuestra disponibilidad real. Un horario marcado como <strong>"Ocupado"</strong> significa que ya tenemos recolecciones en curso y <strong>no podemos garantizar</strong> llegar a tiempo. Preferimos ser honestos contigo.
+                        </span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
               <div className="flex gap-3">
@@ -314,6 +400,7 @@ const Mantenimiento = () => {
                   className="flex-1 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                   onClick={() => {
                     if (!date) { toast.error("Selecciona una fecha"); return; }
+                    if (!selectedTimeSlot) { toast.error("Selecciona un horario disponible"); return; }
                     setStep(3);
                   }}
                 >
