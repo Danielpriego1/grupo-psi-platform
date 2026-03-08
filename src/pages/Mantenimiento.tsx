@@ -174,7 +174,12 @@ const Mantenimiento = () => {
     toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
   };
 
-  const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
+  const hasValidEquipment = equipmentItems.some(item => {
+    if (item.category === "extintores") return item.type && item.weight && item.quantity > 0;
+    if (item.category === "scba") return item.scbaPsi && item.scbaMinutes && item.quantity > 0;
+    if (item.category === "detector-multigas") return item.detectorBrand && item.quantity > 0;
+    return false;
+  });
   const isStep1Complete = contact.name.length >= 2 && contact.phone.length >= 10 && contact.email.includes("@") && hasValidEquipment;
 
   // Calculate slot availability when date changes
