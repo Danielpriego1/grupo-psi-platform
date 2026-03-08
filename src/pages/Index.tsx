@@ -90,6 +90,7 @@ const Index = () => {
       </main>
 
       <AboutSection />
+      <CustomerStories />
       <CTASection />
     </div>
   );
