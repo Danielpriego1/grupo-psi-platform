@@ -30,9 +30,9 @@ const WEIGHT_OPTIONS = [
 
 // Equipment categories
 const EQUIPMENT_CATEGORIES = [
-  { id: "extintores", label: "Extintores", icon: "🧯", description: "Recarga y mantenimiento" },
-  { id: "scba", label: "Equipos Autónomos (SCBA)", icon: "⛑️", description: "Cilindros de aire respirable" },
-  { id: "detector-multigas", label: "Detectores Multigas", icon: "📡", description: "Calibración y mantenimiento" },
+  { id: "extintores", label: "Extintores", icon: "🧯", image: "", description: "Recarga y mantenimiento" },
+  { id: "scba", label: "Equipos Autónomos (SCBA)", icon: "", image: "/images/services/scba-equipo.jpeg", description: "Cilindros de aire respirable" },
+  { id: "detector-multigas", label: "Detectores Multigas", icon: "", image: "/images/services/detector-multigas.jpeg", description: "Calibración y mantenimiento" },
 ];
 
 const SCBA_PSI_OPTIONS = ["2216 PSI", "3000 PSI", "4500 PSI", "200 BAR", "300 BAR"];
@@ -368,7 +368,11 @@ const Mantenimiento = () => {
                               )}
                             >
                               <span className="flex items-center gap-1.5 text-sm font-medium">
-                                <span>{cat.icon}</span>
+                                {cat.image ? (
+                                  <img src={cat.image} alt={cat.label} className="h-5 w-5 rounded object-cover" />
+                                ) : (
+                                  <span>{cat.icon}</span>
+                                )}
                                 {cat.label}
                               </span>
                               <span className="text-[10px] text-muted-foreground leading-tight pl-5">{cat.description}</span>
