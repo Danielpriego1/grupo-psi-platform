@@ -389,9 +389,27 @@ const Mantenimiento = () => {
   const isStep2Complete = !!date && !!selectedTimeSlot;
   const isLocationComplete = !!location;
 
-  const handleSelectState = (state: MexicoState) => { setSelectedState(state); setSelectedMunicipality(null); setSelectedPostalCode(null); setLocation(null); setLocationSubStep(2); };
-  const handleSelectMunicipality = (muni: Municipality) => { setSelectedMunicipality(muni); setSelectedPostalCode(null); setLocation(null); setLocationSubStep(3); };
-  const handleSelectPostalCode = (cp: string) => { setSelectedPostalCode(cp); setLocation(null); setLocationSubStep(4); };
+  const handleSelectState = (state: MexicoState) => {
+    setSelectedState(state); setSelectedMunicipality(null); setSelectedPostalCode(null); setAddress(""); setLocation(null); setLocationConfirmed(false); setLocationSubStep(2);
+    setTimeout(() => mapRef.current?.flyTo(state.coords[0], state.coords[1], 7), 100);
+  };
+  const handleSelectMunicipality = (muni: Municipality) => {
+    setSelectedMunicipality(muni); setSelectedPostalCode(null); setAddress(""); setLocation(null); setLocationConfirmed(false); setLocationSubStep(3);
+    if (selectedState) setTimeout(() => mapRef.current?.flyTo(selectedState.coords[0], selectedState.coords[1], 10), 100);
+  };
+  const handleSelectPostalCode = (cp: string) => {
+    setSelectedPostalCode(cp); setAddress(""); setLocation(null); setLocationConfirmed(false); setLocationSubStep(4);
+    if (selectedState) setTimeout(() => mapRef.current?.flyTo(selectedState.coords[0], selectedState.coords[1], 13), 100);
+  };
+  const handleAddressContinue = () => {
+    setLocationSubStep(5);
+    if (selectedState) setTimeout(() => mapRef.current?.flyTo(selectedState.coords[0], selectedState.coords[1], 16), 100);
+  };
+  const handleConfirmLocation = () => {
+    if (!location) { toast.error("Coloca un pin en el mapa primero"); return; }
+    setLocationConfirmed(true);
+    toast.success("Ubicación confirmada");
+  };
 
   const handleServiceContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
