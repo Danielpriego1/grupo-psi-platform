@@ -1,45 +1,40 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight } from "lucide-react";
 import { motion, useInView } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const stories = [
   {
     company: "Cervecería Nacional",
     quote:
-      "Grupo Psi nos equipó con extintores certificados en todas nuestras plantas. Su servicio de mantenimiento es impecable.",
-    contact: "Ing. Roberto Méndez — Gerente de Seguridad Industrial",
+      "Grupo Psi nos equipó con extintores certificados en todas nuestras plantas.",
     tag: "Historia de cliente",
+    image: "/images/services/extintores-grupo-psi.jpeg",
   },
   {
     company: "Aceros del Norte",
     quote:
-      "Los uniformes industriales que nos proveen son de la mejor calidad. Nuestro equipo está protegido y cómodo.",
-    contact: "Lic. María Fernanda Torres — Directora de Operaciones",
+      "Su mantenimiento preventivo redujo incidentes y mejoró nuestras auditorías.",
     tag: "Historia de cliente",
+    image: "/images/services/compresores-linea.jpeg",
   },
   {
     company: "Construcciones MX",
     quote:
-      "Desde que trabajamos con Grupo Psi, nuestra calificación en auditorías de seguridad mejoró un 40%.",
-    contact: "Arq. Carlos Vega — Coordinador de Proyectos",
+      "Con su programa de seguridad integral, elevamos el estándar en todos nuestros proyectos.",
     tag: "Historia de cliente",
+    image: "/images/services/cilindros-rack-1.jpeg",
   },
   {
     company: "Plásticos Industriales",
     quote:
-      "La recarga y certificación de nuestros extintores se realiza siempre a tiempo. Confiamos plenamente en su equipo.",
-    contact: "Ing. Laura Sánchez — Jefa de Planta",
+      "Recarga, inspección y certificación a tiempo para toda nuestra operación crítica.",
     tag: "Historia de cliente",
+    image: "/images/services/scba-equipo.jpeg",
   },
 ];
 
-const patterns = [
-  "repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.03) 60px, rgba(255,255,255,0.03) 61px)",
-  "repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.03) 40px, rgba(255,255,255,0.03) 41px)",
-  "radial-gradient(circle at 80% 20%, rgba(255,255,255,0.04) 0%, transparent 50%)",
-  "repeating-linear-gradient(45deg, transparent, transparent 80px, rgba(255,255,255,0.02) 80px, rgba(255,255,255,0.02) 81px)",
-];
-
-function StoryCard({
+function StoryCardStep({
   story,
   index,
   activeIndex,
@@ -50,98 +45,92 @@ function StoryCard({
   activeIndex: number;
   setActiveIndex: (i: number) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, {
-    margin: "-45% 0px -45% 0px",
+  const stepRef = useRef<HTMLDivElement>(null);
+  const isStepInView = useInView(stepRef, {
+    margin: "-35% 0px -40% 0px",
   });
 
   useEffect(() => {
-    if (isInView) {
-      setActiveIndex(index);
-    }
-  }, [isInView, index, setActiveIndex]);
+    if (isStepInView) setActiveIndex(index);
+  }, [isStepInView, index, setActiveIndex]);
 
   const isActive = activeIndex === index;
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10%" }}
-      transition={{ duration: 0.5, delay: 0.1 }}
-      className="relative"
+    <div
+      ref={stepRef}
+      className={cn(
+        "relative min-h-[78vh]",
+        index === 0 ? "" : "-mt-[48vh]"
+      )}
     >
-      {/* Gradient glow border */}
-      <div
-        className="absolute -inset-[2px] rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-primary transition-opacity duration-500 blur-[1px]"
-        style={{ opacity: isActive ? 0.8 : 0 }}
-      />
-      <div
-        className="absolute -inset-[2px] rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-primary transition-opacity duration-500"
-        style={{ opacity: isActive ? 1 : 0 }}
-      />
-
-      {/* Card */}
-      <div
-        className={`relative rounded-2xl overflow-hidden transition-all duration-400
-          ${isActive ? "shadow-2xl shadow-primary/15 scale-[1.01]" : "shadow-lg scale-100"}`}
+      <motion.article
+        initial={{ opacity: 0, y: 32 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-8%" }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="sticky top-24"
+        style={{ zIndex: index + 1 }}
       >
-        <div className="relative min-h-[340px] sm:min-h-[380px] p-8 sm:p-12 flex flex-col justify-end bg-gradient-to-br from-[hsl(220,25%,7%)] via-[hsl(220,20%,11%)] to-[hsl(220,15%,15%)]">
-          {/* Pattern */}
-          <div
-            className="absolute inset-0 opacity-[0.06]"
-            style={{ backgroundImage: patterns[index % patterns.length] }}
-          />
-
-          {/* Tag */}
-          <span
-            className={`absolute top-6 left-8 sm:top-8 sm:left-12 inline-block rounded-md border px-3 py-1.5 text-xs font-mono font-medium backdrop-blur-sm transition-all duration-300
-              ${isActive ? "border-primary/50 bg-white/15 text-white/90" : "border-white/15 bg-white/5 text-white/50"}`}
-          >
-            {story.tag}
-          </span>
-
-          {/* Content */}
-          <div className="relative z-10">
-            <h3
-              className={`text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-3 transition-colors duration-300
-                ${isActive ? "text-white" : "text-white/60"}`}
-            >
-              {story.company}
-            </h3>
-            <p
-              className={`text-base sm:text-lg leading-relaxed mb-2 max-w-2xl transition-colors duration-300
-                ${isActive ? "text-white/85" : "text-white/40"}`}
-            >
-              {story.quote}
-            </p>
-            <p
-              className={`text-sm mb-5 transition-colors duration-300
-                ${isActive ? "text-white/55" : "text-white/25"}`}
-            >
-              {story.contact}
-            </p>
-
-            {/* Arrow */}
-            <div className="flex items-center gap-0 text-primary">
-              <span
-                className="text-sm font-medium overflow-hidden whitespace-nowrap transition-all duration-500 ease-out"
-                style={{ maxWidth: isActive ? 200 : 0 }}
-              >
-                Más información&nbsp;
-              </span>
-              <span
-                className="text-lg transition-transform duration-300"
-                style={{ transform: isActive ? "translateX(4px)" : "translateX(0)" }}
-              >
-                →
+        <motion.div
+          animate={{
+            y: isActive ? 0 : 14,
+            scale: isActive ? 1 : 0.985,
+            opacity: isActive ? 1 : 0.9,
+          }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="rounded-[1.6rem] p-[1.5px]"
+          style={{
+            background: isActive
+              ? "linear-gradient(135deg, hsl(220 85% 62%), hsl(258 84% 67%), hsl(var(--primary)))"
+              : "hsl(var(--border))",
+            boxShadow: isActive
+              ? "0 14px 38px hsl(220 85% 60% / 0.24), 0 0 0 1px hsl(258 84% 67% / 0.35)"
+              : "0 10px 22px hsl(var(--foreground) / 0.12)",
+          }}
+        >
+          <div className="overflow-hidden rounded-[1.5rem] bg-foreground text-background">
+            <div className="relative h-44 w-full">
+              <img
+                src={story.image}
+                alt={`Caso de éxito de ${story.company}`}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(to top, hsl(var(--foreground) / 0.9), hsl(var(--foreground) / 0.35))",
+                }}
+              />
+              <span className="absolute left-5 top-5 rounded-md border border-background/20 bg-foreground/70 px-2.5 py-1 text-[11px] font-medium text-background/85">
+                {story.tag}
               </span>
             </div>
+
+            <div className="px-6 pb-7 pt-6 sm:px-8">
+              <h3 className="mb-3 text-2xl font-bold leading-tight sm:text-3xl">
+                {story.company}
+              </h3>
+              <p className="mb-5 max-w-2xl text-base text-background/80 sm:text-lg">
+                {story.quote}
+              </p>
+
+              <div className="inline-flex items-center gap-2 text-background/90">
+                <span className="text-sm font-medium">Más información</span>
+                <motion.span
+                  animate={{ x: isActive ? 6 : 0 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                >
+                  <ArrowRight size={18} />
+                </motion.span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </motion.div>
+        </motion.div>
+      </motion.article>
+    </div>
   );
 }
 
@@ -149,32 +138,32 @@ export function CustomerStories() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <section className="py-24 relative">
+    <section className="relative py-24">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
           className="mb-16 text-center"
         >
-          <span className="inline-block mb-4 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-medium text-primary">
+          <span className="mb-4 inline-block rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-medium text-primary">
             Casos de Éxito
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">
+          <h2 className="mb-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
             Historias de <span className="text-primary">nuestros clientes</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Empresas que confían en Grupo Psi para proteger a su equipo
+          <p className="mx-auto max-w-xl text-muted-foreground">
+            Tarjetas apiladas que se activan una por una al hacer scroll
           </p>
         </motion.div>
 
-        <div className="max-w-5xl mx-auto space-y-8">
-          {stories.map((story, i) => (
-            <StoryCard
+        <div className="mx-auto max-w-5xl pb-12">
+          {stories.map((story, index) => (
+            <StoryCardStep
               key={story.company}
               story={story}
-              index={i}
+              index={index}
               activeIndex={activeIndex}
               setActiveIndex={setActiveIndex}
             />
