@@ -40,7 +40,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             </p>
             <div className="flex items-baseline gap-2 pt-1">
               <span className="text-lg font-bold text-primary">
-                ${product.priceOriginalMxn.toFixed(2)} MXN
+                {product.sizePricing ? "Desde " : ""}${product.priceOriginalMxn.toFixed(2)} MXN
               </span>
               {product.discount && (
                 <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold text-destructive">
