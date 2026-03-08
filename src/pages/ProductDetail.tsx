@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { getProductById } from "@/data/products";
+import { getProductById, getProductPrice } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { ShoppingCart, Truck, Wrench, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
