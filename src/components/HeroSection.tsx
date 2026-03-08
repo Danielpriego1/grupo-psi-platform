@@ -11,11 +11,11 @@ export function HeroSection() {
           style={{
             backgroundImage: `
               linear-gradient(135deg, 
-                hsl(220 20% 7%) 0%, 
-                hsl(220 25% 12%) 25%, 
-                hsl(199 40% 15%) 50%, 
-                hsl(262 30% 15%) 75%, 
-                hsl(220 20% 7%) 100%
+                hsl(210 20% 98%) 0%, 
+                hsl(199 60% 95%) 25%, 
+                hsl(199 50% 92%) 50%, 
+                hsl(262 40% 95%) 75%, 
+                hsl(210 20% 98%) 100%
               )`,
           }}
         />
