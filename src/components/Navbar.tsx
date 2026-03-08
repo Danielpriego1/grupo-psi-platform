@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Wrench, Wind, Flame, Menu, X } from "lucide-react";
+import { ShoppingCart, Wrench, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -11,9 +11,7 @@ export function Navbar() {
 
   const navLinks = [
     { to: "/", label: "Catálogo" },
-    { to: "/mantenimiento-extintores", label: "Extintores", icon: Flame },
-    { to: "/mantenimiento-compresores", label: "Compresores", icon: Wind },
-    { to: "/mantenimiento", label: "Agendar", icon: Wrench },
+    { to: "/mantenimiento", label: "Mantenimiento", icon: Wrench },
   ];
 
   return (
