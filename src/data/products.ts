@@ -1,3 +1,8 @@
+export interface SizeTierPrice {
+  sizeGroup: string;       // key in sizes, e.g. "sizeOveroles"
+  price: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -10,8 +15,24 @@ export interface Product {
   inStock: boolean;
   variants?: Record<string, string[]>;
   sizes?: Record<string, string[]>;
+  sizePricing?: SizeTierPrice[];
   image?: string;
   images?: string[];
+}
+
+/** Get price for a product based on selected size */
+export function getProductPrice(product: Product, selectedSize?: string): number {
+  if (!product.sizePricing || !product.sizes || !selectedSize) {
+    return product.priceOriginalMxn;
+  }
+  // Find which sizeGroup the selected size belongs to
+  for (const tier of product.sizePricing) {
+    const sizes = product.sizes[tier.sizeGroup];
+    if (sizes?.includes(selectedSize)) {
+      return tier.price;
+    }
+  }
+  return product.priceOriginalMxn;
 }
 
 export const products: Product[] = [
