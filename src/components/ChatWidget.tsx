@@ -66,45 +66,84 @@ export function ChatWidget() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating video button */}
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 overflow-hidden",
-          "ring-2 ring-primary/30 hover:ring-primary/60",
+          "fixed bottom-6 right-6 z-50 h-[72px] w-[72px] rounded-full shadow-2xl transition-all duration-500 overflow-hidden",
+          "animate-glow-pulse hover:scale-110",
           open && "scale-0 opacity-0 pointer-events-none"
         )}
       >
-        <img src="/images/foto_chat.png" alt="Chat" className="h-full w-full object-cover" />
+        <video
+          src="/videos/sora.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="h-full w-full object-cover scale-150"
+        />
       </button>
 
       {/* Chat panel */}
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex w-[360px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all duration-300",
-          "max-h-[520px]",
-          open ? "scale-100 opacity-100" : "scale-90 opacity-0 pointer-events-none"
+          "fixed bottom-6 right-6 z-50 flex w-[370px] flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl",
+          "max-h-[540px] transition-all duration-400",
+          open
+            ? "animate-scale-in opacity-100"
+            : "scale-90 opacity-0 pointer-events-none"
         )}
       >
-        {/* Header */}
-        <div className="flex items-center gap-3 bg-primary px-4 py-3">
-          <img src="/images/foto_chat.png" alt="PSI" className="h-10 w-10 rounded-full ring-2 ring-primary-foreground/30" />
-          <div className="flex-1">
-            <div className="text-sm font-bold text-primary-foreground">Asistente Grupo PSI</div>
-            <div className="text-xs text-primary-foreground/70">En línea</div>
+        {/* Header with video */}
+        <div className="relative flex items-center gap-3 overflow-hidden px-4 py-3">
+          {/* Video background */}
+          <video
+            src="/videos/sora-2.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover brightness-50"
+          />
+          <div className="relative z-10 flex items-center gap-3 w-full">
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-white/30">
+              <video
+                src="/videos/sora.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="h-full w-full object-cover scale-150"
+              />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-bold text-white">Asistente Grupo PSI</div>
+              <div className="flex items-center gap-1.5 text-xs text-white/70">
+                <span className="h-2 w-2 rounded-full bg-green-400 animate-bounce-soft" />
+                En línea
+              </div>
+            </div>
+            <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white transition-colors">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button onClick={() => setOpen(false)} className="text-primary-foreground/70 hover:text-primary-foreground">
-            <X className="h-5 w-5" />
-          </button>
         </div>
 
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4" style={{ maxHeight: 360 }}>
-          {messages.map((msg) => (
-            <div key={msg.id} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+          {messages.map((msg, i) => (
+            <div
+              key={msg.id}
+              className={cn(
+                "flex animate-slide-up",
+                msg.role === "user" ? "justify-end" : "justify-start"
+              )}
+              style={{ animationDelay: `${i * 50}ms` }}
+            >
               <div
                 className={cn(
-                  "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                  "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed transition-all duration-300",
                   msg.role === "user"
                     ? "bg-primary text-primary-foreground rounded-br-md"
                     : "bg-muted text-foreground rounded-bl-md"
@@ -115,7 +154,7 @@ export function ChatWidget() {
             </div>
           ))}
           {isTyping && (
-            <div className="flex justify-start">
+            <div className="flex justify-start animate-fade-in">
               <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
                 <span className="inline-flex gap-1">
                   <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: "0ms" }} />
@@ -140,9 +179,9 @@ export function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Escribe tu mensaje..."
-              className="flex-1 rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none ring-ring focus:ring-2"
+              className="flex-1 rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none ring-ring transition-all duration-200 focus:ring-2 focus:border-primary"
             />
-            <Button type="submit" size="icon" className="shrink-0 rounded-xl">
+            <Button type="submit" size="icon" className="shrink-0 rounded-xl transition-transform hover:scale-105 active:scale-95">
               <Send className="h-4 w-4" />
             </Button>
           </form>
