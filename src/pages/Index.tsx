@@ -4,8 +4,14 @@ import { ProductCard } from "@/components/ProductCard";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-12 md:py-24">
+      <main className="container mx-auto px-4 pt-24 pb-12">
+        {/* Hero with logo */}
         <div className="mb-12 text-center">
+          <img
+            src="/images/logo_y_leyenda.png"
+            alt="Grupo PSI"
+            className="mx-auto mb-6 h-24 w-auto"
+          />
           <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
             Equipamiento y Seguridad Industrial
           </h1>
