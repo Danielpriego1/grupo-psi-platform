@@ -575,7 +575,7 @@ const Mantenimiento = () => {
                   return;
                 }
                 if (!hasValidEquipment) {
-                  setEquipmentError("Selecciona tipo y peso de al menos un equipo");
+                  setEquipmentError("Completa los campos requeridos de al menos un equipo");
                   return;
                 }
                 setContactErrors({});
