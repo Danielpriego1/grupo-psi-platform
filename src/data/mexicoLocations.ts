@@ -23,7 +23,7 @@ export const mexicoStates: MexicoState[] = [
       { name: "Jalapa", postalCodes: ["86850", "86851"] },
       { name: "Jalpa de Méndez", postalCodes: ["86200", "86210"] },
       { name: "Macuspana", postalCodes: ["86700", "86710"] },
-      { name: "Nacajuca", postalCodes: ["86220", "86221"] },
+      { name: "Nacajuca", postalCodes: ["86220", "86230", "86233", "86235", "86236", "86237", "86238", "86240", "86243", "86244", "86245", "86246", "86247"] },
       { name: "Paraíso", postalCodes: ["86600", "86610"] },
       { name: "Tacotalpa", postalCodes: ["86800", "86810"] },
       { name: "Teapa", postalCodes: ["86800", "86801"] },
