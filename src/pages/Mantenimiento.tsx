@@ -352,72 +352,190 @@ const Mantenimiento = () => {
                         Equipo {index + 1}
                       </span>
 
-                      {/* Tipo de extintor */}
+                      {/* Categoría del equipo */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">Tipo de extintor</Label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {EXTINGUISHER_TYPES.map((type) => (
+                        <Label className="text-sm font-medium">Tipo de equipo</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {EQUIPMENT_CATEGORIES.map((cat) => (
                             <button
-                              key={type.id}
-                              onClick={() => updateEquipmentItem(index, "type", type.id)}
+                              key={cat.id}
+                              onClick={() => updateEquipmentItem(index, "category", cat.id)}
                               className={cn(
                                 "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-200",
-                                item.type === type.id
+                                item.category === cat.id
                                   ? "border-primary bg-primary/10 text-primary shadow-sm"
                                   : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
                               )}
                             >
                               <span className="flex items-center gap-1.5 text-sm font-medium">
-                                <span className={cn(
-                                  "h-2 w-2 rounded-full",
-                                  item.type === type.id ? "bg-primary" : "bg-muted-foreground/30"
-                                )} />
-                                {type.label}
+                                <span>{cat.icon}</span>
+                                {cat.label}
                               </span>
-                              <span className="text-[10px] text-muted-foreground leading-tight pl-3.5">{type.description}</span>
+                              <span className="text-[10px] text-muted-foreground leading-tight pl-5">{cat.description}</span>
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      {/* Peso / Capacidad */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Peso / Capacidad</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {WEIGHT_OPTIONS.map((w) => (
+                      {/* === EXTINTORES fields === */}
+                      {item.category === "extintores" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Tipo de extintor</Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {EXTINGUISHER_TYPES.map((type) => (
+                                <button
+                                  key={type.id}
+                                  onClick={() => updateEquipmentItem(index, "type", type.id)}
+                                  className={cn(
+                                    "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-200",
+                                    item.type === type.id
+                                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                                      : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  )}
+                                >
+                                  <span className="flex items-center gap-1.5 text-sm font-medium">
+                                    <span className={cn("h-2 w-2 rounded-full", item.type === type.id ? "bg-primary" : "bg-muted-foreground/30")} />
+                                    {type.label}
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground leading-tight pl-3.5">{type.description}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Peso / Capacidad</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {WEIGHT_OPTIONS.map((w) => (
+                                <button
+                                  key={w}
+                                  onClick={() => updateEquipmentItem(index, "weight", w)}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                    item.weight === w
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  )}
+                                >
+                                  {w}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* === SCBA fields === */}
+                      {item.category === "scba" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Fecha de último mantenimiento</Label>
+                            <Input
+                              type="date"
+                              value={item.scbaLastMaintenance}
+                              onChange={(e) => updateEquipmentItem(index, "scbaLastMaintenance", e.target.value)}
+                              className="max-w-[220px]"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Capacidad PSI</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {SCBA_PSI_OPTIONS.map((psi) => (
+                                <button
+                                  key={psi}
+                                  onClick={() => updateEquipmentItem(index, "scbaPsi", psi)}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                    item.scbaPsi === psi
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  )}
+                                >
+                                  {psi}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Capacidad en Minutos</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {SCBA_MINUTES_OPTIONS.map((min) => (
+                                <button
+                                  key={min}
+                                  onClick={() => updateEquipmentItem(index, "scbaMinutes", min)}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                    item.scbaMinutes === min
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  )}
+                                >
+                                  {min}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* === DETECTOR MULTIGAS fields === */}
+                      {item.category === "detector-multigas" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Marca del detector</Label>
+                            <Input
+                              value={item.detectorBrand}
+                              onChange={(e) => updateEquipmentItem(index, "detectorBrand", e.target.value)}
+                              placeholder="Ej: Honeywell, MSA, Dräger, Industrial Scientific..."
+                              maxLength={100}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Capacidad de gases a detectar</Label>
+                            <Input
+                              value={item.detectorGases}
+                              onChange={(e) => updateEquipmentItem(index, "detectorGases", e.target.value)}
+                              placeholder="Ej: O₂, CO, H₂S, LEL (4 gases)"
+                              maxLength={200}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Fecha de último mantenimiento</Label>
+                            <Input
+                              type="date"
+                              value={item.detectorLastMaintenance}
+                              onChange={(e) => updateEquipmentItem(index, "detectorLastMaintenance", e.target.value)}
+                              className="max-w-[220px]"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* Cantidad - siempre visible cuando hay categoría */}
+                      {item.category && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Cantidad</Label>
+                          <div className="flex items-center gap-3">
                             <button
-                              key={w}
-                              onClick={() => updateEquipmentItem(index, "weight", w)}
-                              className={cn(
-                                "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
-                                item.weight === w
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
-                              )}
+                              onClick={() => updateEquipmentItem(index, "quantity", Math.max(1, item.quantity - 1))}
+                              className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
                             >
-                              {w}
+                              <Minus className="h-3.5 w-3.5" />
                             </button>
-                          ))}
+                            <span className="min-w-[2rem] text-center text-lg font-bold">{item.quantity}</span>
+                            <button
+                              onClick={() => updateEquipmentItem(index, "quantity", Math.min(50, item.quantity + 1))}
+                              className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="text-xs text-muted-foreground">unidades</span>
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Cantidad */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Cantidad</Label>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => updateEquipmentItem(index, "quantity", Math.max(1, item.quantity - 1))}
-                            className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
-                          >
-                            <Minus className="h-3.5 w-3.5" />
-                          </button>
-                          <span className="min-w-[2rem] text-center text-lg font-bold">{item.quantity}</span>
-                          <button
-                            onClick={() => updateEquipmentItem(index, "quantity", Math.min(50, item.quantity + 1))}
-                            className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
                           <span className="text-xs text-muted-foreground">unidades</span>
                         </div>
                       </div>
