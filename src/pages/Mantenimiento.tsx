@@ -150,7 +150,6 @@ const Mantenimiento = () => {
 
   const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
   const isStep1Complete = contact.name.length >= 2 && contact.phone.length >= 10 && contact.email.includes("@") && hasValidEquipment;
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   // Calculate slot availability when date changes
   const slotAvailabilities = useMemo(() => {
