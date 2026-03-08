@@ -37,8 +37,6 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2 }}
           >
-            {/* Gradient to cover watermark */}
-            <div className="absolute bottom-0 left-0 w-2/3 h-48 bg-gradient-to-t from-black via-black to-transparent z-10" />
             <video
               ref={logoVideoRef}
               autoPlay
