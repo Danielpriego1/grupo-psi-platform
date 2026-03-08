@@ -78,9 +78,14 @@ type ContactData = z.infer<typeof contactSchema>;
 const Mantenimiento = () => {
   const [date, setDate] = useState<Date>();
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [form, setForm] = useState<FormData>({ name: "", phone: "", email: "", equipmentDescription: "" });
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [contact, setContact] = useState<ContactData>({ name: "", phone: "", email: "" });
+  const [contactErrors, setContactErrors] = useState<Partial<Record<keyof ContactData, string>>>({});
   const [step, setStep] = useState(1);
+
+  // Equipment state
+  const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ type: "", weight: "", quantity: 1 }]);
+  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [equipmentError, setEquipmentError] = useState<string | null>(null);
 
   // Location cascade state
   const [selectedState, setSelectedState] = useState<MexicoState | null>(null);
@@ -89,22 +94,43 @@ const Mantenimiento = () => {
   const [locationSubStep, setLocationSubStep] = useState<1 | 2 | 3 | 4>(1);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-  const updateField = (field: keyof FormData, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  const updateContact = (field: keyof ContactData, value: string) => {
+    setContact((prev) => ({ ...prev, [field]: value }));
+    if (contactErrors[field]) setContactErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const updateEquipmentItem = (index: number, field: keyof EquipmentItem, value: string | number) => {
+    setEquipmentItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+    if (equipmentError) setEquipmentError(null);
+  };
+
+  const addEquipmentItem = () => {
+    setEquipmentItems(prev => [...prev, { type: "", weight: "", quantity: 1 }]);
+  };
+
+  const removeEquipmentItem = (index: number) => {
+    if (equipmentItems.length > 1) {
+      setEquipmentItems(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleSubmit = () => {
-    const result = formSchema.safeParse(form);
+    const result = contactSchema.safeParse(contact);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof FormData, string>> = {};
+      const fieldErrors: Partial<Record<keyof ContactData, string>> = {};
       result.error.errors.forEach((e) => {
-        const field = e.path[0] as keyof FormData;
+        const field = e.path[0] as keyof ContactData;
         if (!fieldErrors[field]) fieldErrors[field] = e.message;
       });
-      setErrors(fieldErrors);
+      setContactErrors(fieldErrors);
       setStep(1);
       toast.error("Por favor completa todos los campos correctamente");
+      return;
+    }
+    const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
+    if (!hasValidEquipment) {
+      setEquipmentError("Agrega al menos un equipo con tipo y peso");
+      setStep(1);
       return;
     }
     if (!date || !selectedTimeSlot) {
@@ -117,10 +143,12 @@ const Mantenimiento = () => {
       return;
     }
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
-    toast.success(`¡Solicitud enviada! Recolección programada el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}. Nos pondremos en contacto para confirmar.`);
+    const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
+    toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
   };
 
-  const isStep1Complete = form.name.length >= 2 && form.phone.length >= 10 && form.email.includes("@") && form.equipmentDescription.length >= 5;
+  const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
+  const isStep1Complete = contact.name.length >= 2 && contact.phone.length >= 10 && contact.email.includes("@") && hasValidEquipment;
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   // Calculate slot availability when date changes
