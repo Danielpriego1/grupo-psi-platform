@@ -7,13 +7,8 @@ import { Wind, Shield, CheckCircle, Phone, Mail, User, ChevronLeft, ChevronRight
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const SERVICE_IMAGES = [
+const COMPRESSOR_IMAGES = [
   { src: "/images/services/compresores-linea.jpeg", alt: "Línea de compresores de aire respirable" },
-  { src: "/images/services/maniobra-grua-cilindros.jpg", alt: "Maniobra con grúa – traslado de cilindros y compresor" },
-  { src: "/images/services/compresor-campo-psi.jpg", alt: "Compresor portátil PSI en campo" },
-  { src: "/images/services/cilindros-operador.jpeg", alt: "Operador revisando rack de cilindros de aire respirable" },
-  { src: "/images/services/cilindros-detalle.jpeg", alt: "Detalle de válvulas y conexiones en cilindros" },
-  { src: "/images/services/cilindros-rack-1.jpeg", alt: "Rack de cilindros de aire respirable" },
   { src: "/images/services/compresor-desarme-1.jpg", alt: "Desarme de compresor – cabezal" },
   { src: "/images/services/compresor-desarme-2.jpg", alt: "Compresor con filtro secador" },
   { src: "/images/services/compresor-filtro.jpg", alt: "Mantenimiento de filtro catalizador Bauer" },
@@ -21,6 +16,15 @@ const SERVICE_IMAGES = [
   { src: "/images/services/compresor-cilindro.jpg", alt: "Interior de cilindro – inspección de baleros" },
   { src: "/images/services/compresor-ensamble.jpg", alt: "Ensamble de pistón y anillos" },
   { src: "/images/services/etiqueta-scba.jpeg", alt: "Etiqueta de servicio SCBA – Grupo PSI" },
+];
+
+const CASCADE_IMAGES = [
+  { src: "/images/services/maniobra-grua-cilindros.jpg", alt: "Maniobra con grúa – traslado de sistema de cascada" },
+  { src: "/images/services/compresor-campo-psi.jpg", alt: "Compresor portátil PSI en campo" },
+  { src: "/images/services/cilindros-operador.jpeg", alt: "Operador revisando sistema de cascada" },
+  { src: "/images/services/cilindros-detalle.jpeg", alt: "Detalle de válvulas y conexiones en cascada" },
+  { src: "/images/services/cilindros-rack-1.jpeg", alt: "Sistema de cascada – rack de cilindros" },
+  { src: "/images/services/cilindros-rack-2.jpeg", alt: "Sistema de cascada – vista frontal" },
 ];
 
 const SERVICES = [
