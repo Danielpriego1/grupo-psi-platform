@@ -52,10 +52,13 @@ const SERVICES = [
 
 const MantenimientoCompresores = () => {
   const [currentImage, setCurrentImage] = useState(0);
+  const [currentCascadeImage, setCurrentCascadeImage] = useState(0);
   const [contact, setContact] = useState({ name: "", phone: "", email: "", notes: "" });
 
-  const nextImage = () => setCurrentImage((prev) => (prev + 1) % SERVICE_IMAGES.length);
-  const prevImage = () => setCurrentImage((prev) => (prev - 1 + SERVICE_IMAGES.length) % SERVICE_IMAGES.length);
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % COMPRESSOR_IMAGES.length);
+  const prevImage = () => setCurrentImage((prev) => (prev - 1 + COMPRESSOR_IMAGES.length) % COMPRESSOR_IMAGES.length);
+  const nextCascade = () => setCurrentCascadeImage((prev) => (prev + 1) % CASCADE_IMAGES.length);
+  const prevCascade = () => setCurrentCascadeImage((prev) => (prev - 1 + CASCADE_IMAGES.length) % CASCADE_IMAGES.length);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
