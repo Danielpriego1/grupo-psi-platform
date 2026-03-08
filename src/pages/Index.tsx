@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { products, getCategories } from "@/data/products";
+import { visibleProducts, getCategories } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 import { cn } from "@/lib/utils";
 
