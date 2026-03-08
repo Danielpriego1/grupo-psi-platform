@@ -222,7 +222,80 @@ const MantenimientoCompresores = () => {
         </div>
       </section>
 
-      {/* Brands we service */}
+      {/* Cascade Systems Section */}
+      <section id="cascada" className="container mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+              <Shield className="h-4 w-4" />
+              Sistemas de Cascada
+            </div>
+            <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+              Mantenimiento de Sistemas de Cascada
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              Servicio integral para sistemas de cascada utilizados en el suministro de aire respirable Grado D. Incluye inspección de cilindros, revisión de válvulas, pruebas hidrostáticas y verificación de conexiones.
+            </p>
+            <ul className="space-y-3 text-muted-foreground">
+              {[
+                "Inspección visual y prueba hidrostática de cilindros",
+                "Revisión y reemplazo de válvulas de alta presión",
+                "Verificación de mangueras y conexiones del manifold",
+                "Prueba de fugas en todo el sistema",
+                "Recarga de cilindros con aire respirable certificado",
+                "Logística y maniobras para traslado de equipos",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5">
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <span className="text-sm">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Cascade Gallery */}
+          <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-muted">
+            <img
+              src={CASCADE_IMAGES[currentCascadeImage].src}
+              alt={CASCADE_IMAGES[currentCascadeImage].alt}
+              className="w-full h-full object-cover transition-opacity duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+              <p className="text-sm text-white/90 font-medium drop-shadow-lg">
+                {CASCADE_IMAGES[currentCascadeImage].alt}
+              </p>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={prevCascade}
+                  className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={nextCascade}
+                  className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="absolute bottom-14 left-4 flex gap-1.5">
+              {CASCADE_IMAGES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentCascadeImage(i)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300",
+                    i === currentCascadeImage ? "w-6 bg-white" : "w-1.5 bg-white/40"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">
