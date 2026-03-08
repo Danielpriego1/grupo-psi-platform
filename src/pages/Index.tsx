@@ -87,6 +87,9 @@ const Index = () => {
           ))}
         </div>
       </main>
+
+      <AboutSection />
+      <CTASection />
     </div>
   );
 };

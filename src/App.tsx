@@ -30,6 +30,7 @@ const App = () => (
             <Route path="/mantenimiento" element={<Mantenimiento />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Footer />
           <ChatWidget />
         </CartProvider>
       </BrowserRouter>
