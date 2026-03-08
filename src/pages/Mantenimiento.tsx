@@ -149,9 +149,14 @@ const Mantenimiento = () => {
       toast.error("Por favor completa todos los campos correctamente");
       return;
     }
-    const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
+    const hasValidEquipment = equipmentItems.some(item => {
+      if (item.category === "extintores") return item.type && item.weight && item.quantity > 0;
+      if (item.category === "scba") return item.scbaPsi && item.scbaMinutes && item.quantity > 0;
+      if (item.category === "detector-multigas") return item.detectorBrand && item.quantity > 0;
+      return false;
+    });
     if (!hasValidEquipment) {
-      setEquipmentError("Agrega al menos un equipo con tipo y peso");
+      setEquipmentError("Agrega al menos un equipo con todos los campos requeridos");
       setStep(1);
       return;
     }
