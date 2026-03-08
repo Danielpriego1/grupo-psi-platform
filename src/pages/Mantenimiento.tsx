@@ -565,7 +565,7 @@ const Mantenimiento = () => {
               </Button>
             </div>
           ) : (
-            <div className="mx-auto max-w-2xl">
+            <div className={cn("mx-auto", step === 3 ? "max-w-5xl" : "max-w-2xl")}>
               {/* Progress steps */}
               <div className="mx-auto mb-10 flex items-center justify-center gap-2">
                 {[{ n: 1, label: "Datos" }, { n: 2, label: "Fecha" }, { n: 3, label: "Ubicación" }].map(({ n, label }) => (
