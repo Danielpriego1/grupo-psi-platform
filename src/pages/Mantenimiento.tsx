@@ -81,6 +81,7 @@ const Mantenimiento = () => {
   const [contact, setContact] = useState<ContactData>({ name: "", phone: "", email: "" });
   const [contactErrors, setContactErrors] = useState<Partial<Record<keyof ContactData, string>>>({});
   const [step, setStep] = useState(1);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   // Equipment state
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ type: "", weight: "", quantity: 1 }]);
@@ -149,7 +150,6 @@ const Mantenimiento = () => {
 
   const hasValidEquipment = equipmentItems.some(item => item.type && item.weight && item.quantity > 0);
   const isStep1Complete = contact.name.length >= 2 && contact.phone.length >= 10 && contact.email.includes("@") && hasValidEquipment;
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   // Calculate slot availability when date changes
   const slotAvailabilities = useMemo(() => {
