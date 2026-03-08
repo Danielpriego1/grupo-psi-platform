@@ -536,12 +536,6 @@ const Mantenimiento = () => {
                     </div>
                   ))}
                 </div>
-                          <span className="text-xs text-muted-foreground">unidades</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
                 <Button
                   variant="outline"
