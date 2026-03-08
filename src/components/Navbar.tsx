@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -14,6 +14,10 @@ export function Navbar() {
         <nav className="flex items-center gap-4">
           <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Catálogo
+          </Link>
+          <Link to="/mantenimiento" className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Wrench className="h-3.5 w-3.5" />
+            Agendar Mantenimiento
           </Link>
           <Button variant="outline" size="icon" className="relative">
             <ShoppingCart className="h-4 w-4" />
