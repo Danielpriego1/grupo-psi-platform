@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
+import { motion, useInView } from "framer-motion";
 
 const stories = [
   {
@@ -31,13 +32,6 @@ const stories = [
   },
 ];
 
-const gradients = [
-  "from-primary via-orange-400 to-yellow-500",
-  "from-blue-500 via-purple-500 to-primary",
-  "from-emerald-400 via-cyan-500 to-blue-500",
-  "from-primary via-rose-500 to-purple-500",
-];
-
 const patterns = [
   "repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.03) 60px, rgba(255,255,255,0.03) 61px)",
   "repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.03) 40px, rgba(255,255,255,0.03) 41px)",
@@ -45,65 +39,115 @@ const patterns = [
   "repeating-linear-gradient(45deg, transparent, transparent 80px, rgba(255,255,255,0.02) 80px, rgba(255,255,255,0.02) 81px)",
 ];
 
-function StoryCard({ story, index }: { story: (typeof stories)[0]; index: number }) {
-  // Each card sticks a little lower so they peek from behind
-  const stickyTop = 80 + index * 20;
+function StoryCard({
+  story,
+  index,
+  activeIndex,
+  setActiveIndex,
+}: {
+  story: (typeof stories)[0];
+  index: number;
+  activeIndex: number;
+  setActiveIndex: (i: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, {
+    margin: "-45% 0px -45% 0px",
+  });
+
+  useEffect(() => {
+    if (isInView) {
+      setActiveIndex(index);
+    }
+  }, [isInView, index, setActiveIndex]);
+
+  const isActive = activeIndex === index;
 
   return (
-    <div
-      className="sticky h-[420px] sm:h-[440px]"
-      style={{ top: stickyTop, zIndex: index + 1 }}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-10%" }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+      className="relative"
     >
-      <div className="group cursor-pointer h-full">
-        {/* Gradient border glow on hover */}
-        <div
-          className={`relative h-full p-[2px] rounded-2xl transition-all duration-500
-            bg-gradient-to-br ${gradients[index % gradients.length]}
-            opacity-40 group-hover:opacity-100
-            shadow-lg group-hover:shadow-2xl group-hover:shadow-primary/10`}
-        >
-          <div className="relative h-full rounded-[14px] overflow-hidden bg-gradient-to-br from-[hsl(220,25%,7%)] via-[hsl(220,20%,11%)] to-[hsl(220,15%,15%)]">
-            {/* Pattern */}
-            <div
-              className="absolute inset-0 opacity-[0.06]"
-              style={{ backgroundImage: patterns[index % patterns.length] }}
-            />
+      {/* Gradient glow border */}
+      <div
+        className="absolute -inset-[2px] rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-primary transition-opacity duration-500 blur-[1px]"
+        style={{ opacity: isActive ? 0.8 : 0 }}
+      />
+      <div
+        className="absolute -inset-[2px] rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-primary transition-opacity duration-500"
+        style={{ opacity: isActive ? 1 : 0 }}
+      />
 
-            {/* Tag */}
-            <span className="absolute top-6 left-8 sm:top-8 sm:left-12 inline-block rounded-md border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1.5 text-xs font-mono font-medium text-white/70 group-hover:border-primary/40 group-hover:text-white/90 transition-all duration-300">
-              {story.tag}
-            </span>
+      {/* Card */}
+      <div
+        className={`relative rounded-2xl overflow-hidden transition-all duration-400
+          ${isActive ? "shadow-2xl shadow-primary/15 scale-[1.01]" : "shadow-lg scale-100"}`}
+      >
+        <div className="relative min-h-[340px] sm:min-h-[380px] p-8 sm:p-12 flex flex-col justify-end bg-gradient-to-br from-[hsl(220,25%,7%)] via-[hsl(220,20%,11%)] to-[hsl(220,15%,15%)]">
+          {/* Pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.06]"
+            style={{ backgroundImage: patterns[index % patterns.length] }}
+          />
 
-            {/* Content pinned to bottom */}
-            <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-12">
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-3">
-                {story.company}
-              </h3>
-              <p className="text-base sm:text-lg text-white/70 leading-relaxed mb-2 max-w-2xl group-hover:text-white/90 transition-colors duration-300">
-                {story.quote}
-              </p>
-              <p className="text-sm text-white/40 mb-4 group-hover:text-white/60 transition-colors duration-300">
-                {story.contact}
-              </p>
+          {/* Tag */}
+          <span
+            className={`absolute top-6 left-8 sm:top-8 sm:left-12 inline-block rounded-md border px-3 py-1.5 text-xs font-mono font-medium backdrop-blur-sm transition-all duration-300
+              ${isActive ? "border-primary/50 bg-white/15 text-white/90" : "border-white/15 bg-white/5 text-white/50"}`}
+          >
+            {story.tag}
+          </span>
 
-              {/* Arrow with text reveal on hover */}
-              <div className="flex items-center gap-0 text-primary">
-                <span className="text-sm font-medium max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-[200px] transition-all duration-500 ease-out">
-                  Más información&nbsp;
-                </span>
-                <span className="text-lg group-hover:translate-x-1 transition-transform duration-300">
-                  →
-                </span>
-              </div>
+          {/* Content */}
+          <div className="relative z-10">
+            <h3
+              className={`text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-3 transition-colors duration-300
+                ${isActive ? "text-white" : "text-white/60"}`}
+            >
+              {story.company}
+            </h3>
+            <p
+              className={`text-base sm:text-lg leading-relaxed mb-2 max-w-2xl transition-colors duration-300
+                ${isActive ? "text-white/85" : "text-white/40"}`}
+            >
+              {story.quote}
+            </p>
+            <p
+              className={`text-sm mb-5 transition-colors duration-300
+                ${isActive ? "text-white/55" : "text-white/25"}`}
+            >
+              {story.contact}
+            </p>
+
+            {/* Arrow */}
+            <div className="flex items-center gap-0 text-primary">
+              <span
+                className="text-sm font-medium overflow-hidden whitespace-nowrap transition-all duration-500 ease-out"
+                style={{ maxWidth: isActive ? 200 : 0 }}
+              >
+                Más información&nbsp;
+              </span>
+              <span
+                className="text-lg transition-transform duration-300"
+                style={{ transform: isActive ? "translateX(4px)" : "translateX(0)" }}
+              >
+                →
+              </span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function CustomerStories() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
   return (
     <section className="py-24 relative">
       <div className="container mx-auto px-4">
@@ -125,9 +169,15 @@ export function CustomerStories() {
           </p>
         </motion.div>
 
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto space-y-8">
           {stories.map((story, i) => (
-            <StoryCard key={story.company} story={story} index={i} />
+            <StoryCard
+              key={story.company}
+              story={story}
+              index={i}
+              activeIndex={activeIndex}
+              setActiveIndex={setActiveIndex}
+            />
           ))}
         </div>
       </div>
