@@ -111,7 +111,7 @@ const MantenimientoCompresores = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                 <p className="text-sm text-white/90 font-medium drop-shadow-lg">
-                  {SERVICE_IMAGES[currentImage].alt}
+                  {COMPRESSOR_IMAGES[currentImage].alt}
                 </p>
                 <div className="flex gap-1.5">
                   <button
