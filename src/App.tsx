@@ -14,7 +14,7 @@ import MantenimientoCompresores from "./pages/MantenimientoCompresores";
 import MantenimientoExtintores from "./pages/MantenimientoExtintores";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
