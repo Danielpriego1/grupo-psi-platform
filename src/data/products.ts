@@ -543,8 +543,12 @@ export const products: Product[] = [
   },
 ];
 
+export const isProductVisible = (p: Product) => p.inStock && !!p.purchaseUrl;
+
+export const visibleProducts = products.filter(isProductVisible);
+
 export const getProductById = (id: string) => products.find(p => p.id === id);
 
-export const getProductsByCategory = (category: string) => products.filter(p => p.category === category);
+export const getProductsByCategory = (category: string) => visibleProducts.filter(p => p.category === category);
 
-export const getCategories = () => [...new Set(products.map(p => p.category))];
+export const getCategories = () => [...new Set(visibleProducts.map(p => p.category))];

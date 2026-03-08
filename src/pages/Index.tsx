@@ -43,7 +43,7 @@ const Index = () => {
             Todos ({visibleProducts.length})
           </button>
           {categories.map((cat) => {
-            const count = products.filter((p) => p.category === cat).length;
+            const count = visibleProducts.filter((p) => p.category === cat).length;
             return (
               <button
                 key={cat}
