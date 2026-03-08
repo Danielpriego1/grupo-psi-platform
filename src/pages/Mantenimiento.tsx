@@ -81,6 +81,7 @@ const Mantenimiento = () => {
   const [contact, setContact] = useState<ContactData>({ name: "", phone: "", email: "" });
   const [contactErrors, setContactErrors] = useState<Partial<Record<keyof ContactData, string>>>({});
   const [step, setStep] = useState(1);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   // Equipment state
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ type: "", weight: "", quantity: 1 }]);
