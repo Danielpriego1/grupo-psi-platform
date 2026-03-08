@@ -1,63 +1,45 @@
 import { Link } from "react-router-dom";
 import { Product } from "@/data/products";
-import { ArrowRight, Tag } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const hasDiscount = product.discount && product.discount > 0;
-  const discountedPrice = hasDiscount
-    ? product.priceOriginalMxn * (1 - product.discount!)
-    : product.priceOriginalMxn;
-
   return (
     <Link to={`/product/${product.id}`} className="block w-full">
-      <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_0_40px_-10px_hsl(var(--primary)/0.25)]">
-        {/* Top gradient line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
-        {/* Discount badge */}
-        {hasDiscount && (
-          <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full bg-destructive px-2.5 py-1 text-[10px] font-bold text-destructive-foreground">
-            <Tag className="h-3 w-3" />
-            -{(product.discount! * 100).toFixed(0)}%
-          </div>
-        )}
-
-        <div className="aspect-square overflow-hidden bg-secondary/30 p-6">
-          <img
-            src={product.image || "/placeholder.svg"}
+      <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card p-6 transition-all duration-500 hover:-translate-y-1 hover:border-primary/50 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)]">
+        {/* Glow effect background */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/0 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:from-primary/10 group-hover:opacity-100" />
+        
+        <div className="aspect-square mb-6 overflow-hidden rounded-lg bg-muted/50 p-4">
+          <img 
+            src={product.image || "/placeholder.svg"} 
             alt={product.name}
-            className="h-full w-full object-contain transition-transform duration-700 group-hover:scale-110"
+            className="h-full w-full object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
           />
         </div>
-
-        <div className="p-5 space-y-3">
-          <div className="text-[11px] font-semibold uppercase tracking-widest text-primary">
+        
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             {product.category}
           </div>
-          <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-semibold leading-snug text-card-foreground">
+          <h3 className="line-clamp-2 min-h-[3rem] font-semibold text-card-foreground">
             {product.name}
           </h3>
-
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-extrabold text-foreground">
-              ${discountedPrice.toFixed(2)}
-            </span>
-            <span className="text-xs text-muted-foreground">MXN</span>
-            {hasDiscount && (
-              <span className="text-xs text-muted-foreground line-through">
-                ${product.priceOriginalMxn.toFixed(2)}
-              </span>
-            )}
+          <div className="text-lg font-bold text-primary">
+            ${product.priceOriginalMxn.toFixed(2)} MXN
           </div>
+        </div>
 
-          {/* Hover action */}
-          <div className="flex items-center pt-2 text-xs font-medium text-primary opacity-0 transition-all duration-300 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0">
-            Ver detalles
-            <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+        {/* Action arrow with text reveal */}
+        <div className="mt-6 flex items-center overflow-hidden text-sm font-medium text-primary">
+          <div className="flex items-center transition-all duration-300 group-hover:translate-x-0 -translate-x-4">
+            <ArrowRight className="h-4 w-4 mr-2" />
+            <span className="opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              Más información
+            </span>
           </div>
         </div>
       </div>
