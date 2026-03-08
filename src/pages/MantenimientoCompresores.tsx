@@ -130,7 +130,7 @@ const MantenimientoCompresores = () => {
               </div>
               {/* Dots */}
               <div className="absolute bottom-14 left-4 flex gap-1.5">
-                {SERVICE_IMAGES.map((_, i) => (
+                {COMPRESSOR_IMAGES.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentImage(i)}
