@@ -93,8 +93,8 @@ const Mantenimiento = () => {
       toast.error("Por favor completa todos los campos correctamente");
       return;
     }
-    if (!date) {
-      toast.error("Selecciona una fecha para la recolección");
+    if (!date || !selectedTimeSlot) {
+      toast.error("Selecciona una fecha y horario para la recolección");
       setStep(2);
       return;
     }
@@ -102,7 +102,8 @@ const Mantenimiento = () => {
       toast.error("Fija tu ubicación en el mapa");
       return;
     }
-    toast.success("¡Solicitud enviada! Nos pondremos en contacto contigo para confirmar la recolección.");
+    const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
+    toast.success(`¡Solicitud enviada! Recolección programada el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}. Nos pondremos en contacto para confirmar.`);
   };
 
   const isStep1Complete = form.name.length >= 2 && form.phone.length >= 10 && form.email.includes("@") && form.equipmentDescription.length >= 5;
