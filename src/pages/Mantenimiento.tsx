@@ -72,9 +72,19 @@ const getSimulatedBookings = (dateStr: string): Record<string, number> => {
 type SlotAvailability = "available" | "limited" | "unavailable";
 
 interface EquipmentItem {
+  category: string;
+  // Extintores fields
   type: string;
   weight: string;
   quantity: number;
+  // SCBA fields
+  scbaLastMaintenance: string;
+  scbaPsi: string;
+  scbaMinutes: string;
+  // Detector multigas fields
+  detectorBrand: string;
+  detectorGases: string;
+  detectorLastMaintenance: string;
 }
 
 const contactSchema = z.object({
