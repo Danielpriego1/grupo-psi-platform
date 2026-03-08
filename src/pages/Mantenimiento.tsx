@@ -368,7 +368,11 @@ const Mantenimiento = () => {
                               )}
                             >
                               <span className="flex items-center gap-1.5 text-sm font-medium">
-                                <span>{cat.icon}</span>
+                                {cat.image ? (
+                                  <img src={cat.image} alt={cat.label} className="h-5 w-5 rounded object-cover" />
+                                ) : (
+                                  <span>{cat.icon}</span>
+                                )}
                                 {cat.label}
                               </span>
                               <span className="text-[10px] text-muted-foreground leading-tight pl-5">{cat.description}</span>
