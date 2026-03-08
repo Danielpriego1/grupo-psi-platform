@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navbar } from "./components/Navbar";
 import { ChatWidget } from "./components/ChatWidget";
+import { CartDrawer } from "./components/CartDrawer";
+import { CartProvider } from "./contexts/CartContext";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
 import Mantenimiento from "./pages/Mantenimiento";
@@ -20,16 +22,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/mantenimiento" element={<Mantenimiento />} />
-          <Route path="/mantenimiento-compresores" element={<MantenimientoCompresores />} />
-          <Route path="/mantenimiento-extintores" element={<MantenimientoExtintores />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <ChatWidget />
+        <CartProvider>
+          <Navbar />
+          <CartDrawer />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/mantenimiento" element={<Mantenimiento />} />
+            <Route path="/mantenimiento-compresores" element={<MantenimientoCompresores />} />
+            <Route path="/mantenimiento-extintores" element={<MantenimientoExtintores />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <ChatWidget />
+        </CartProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
