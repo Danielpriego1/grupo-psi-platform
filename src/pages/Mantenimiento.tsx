@@ -387,7 +387,7 @@ const Mantenimiento = () => {
   }, [date]);
 
   const isStep2Complete = !!date && !!selectedTimeSlot;
-  const isLocationComplete = !!location;
+  const isLocationComplete = !!location && locationConfirmed;
 
   const handleSelectState = (state: MexicoState) => {
     setSelectedState(state); setSelectedMunicipality(null); setSelectedPostalCode(null); setAddress(""); setLocation(null); setLocationConfirmed(false); setLocationSubStep(2);
