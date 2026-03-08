@@ -43,7 +43,7 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
               muted
               playsInline
               onEnded={handleLogoEnd}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain pt-16"
             >
               <source src="/videos/logo-animation.mp4" type="video/mp4" />
             </video>
