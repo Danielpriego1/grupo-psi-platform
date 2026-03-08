@@ -22,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/mantenimiento" element={<Mantenimiento />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatWidget />
