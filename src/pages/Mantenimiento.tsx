@@ -250,13 +250,13 @@ const Mantenimiento = () => {
                   </Label>
                   <Input
                     id="name"
-                    value={form.name}
-                    onChange={(e) => updateField("name", e.target.value)}
+                    value={contact.name}
+                    onChange={(e) => updateContact("name", e.target.value)}
                     placeholder="Juan Pérez"
                     maxLength={100}
-                    className={cn(errors.name && "border-destructive")}
+                    className={cn(contactErrors.name && "border-destructive")}
                   />
-                  {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+                  {contactErrors.name && <p className="text-xs text-destructive">{contactErrors.name}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -265,13 +265,13 @@ const Mantenimiento = () => {
                   </Label>
                   <Input
                     id="phone"
-                    value={form.phone}
-                    onChange={(e) => updateField("phone", e.target.value)}
+                    value={contact.phone}
+                    onChange={(e) => updateContact("phone", e.target.value)}
                     placeholder="55 1234 5678"
                     maxLength={15}
-                    className={cn(errors.phone && "border-destructive")}
+                    className={cn(contactErrors.phone && "border-destructive")}
                   />
-                  {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+                  {contactErrors.phone && <p className="text-xs text-destructive">{contactErrors.phone}</p>}
                 </div>
               </div>
 
@@ -282,44 +282,161 @@ const Mantenimiento = () => {
                 <Input
                   id="email"
                   type="email"
-                  value={form.email}
-                  onChange={(e) => updateField("email", e.target.value)}
+                  value={contact.email}
+                  onChange={(e) => updateContact("email", e.target.value)}
                   placeholder="correo@ejemplo.com"
                   maxLength={255}
-                  className={cn(errors.email && "border-destructive")}
+                  className={cn(contactErrors.email && "border-destructive")}
                 />
-                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                {contactErrors.email && <p className="text-xs text-destructive">{contactErrors.email}</p>}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="equipment" className="flex items-center gap-2 text-sm font-medium">
-                  <Package className="h-3.5 w-3.5 text-muted-foreground" /> Descripción del equipo
-                </Label>
-                <Textarea
-                  id="equipment"
-                  value={form.equipmentDescription}
-                  onChange={(e) => updateField("equipmentDescription", e.target.value)}
-                  placeholder="Ej: 3 extintores PQS de 4.5 kg que necesitan recarga..."
-                  maxLength={500}
-                  rows={3}
-                  className={cn(errors.equipmentDescription && "border-destructive")}
-                />
-                {errors.equipmentDescription && <p className="text-xs text-destructive">{errors.equipmentDescription}</p>}
-                <p className="text-xs text-muted-foreground text-right">{form.equipmentDescription.length}/500</p>
+              {/* Equipment questionnaire */}
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Flame className="h-5 w-5 text-primary" /> Equipo a recolectar
+                  </h2>
+                  <span className="text-xs text-muted-foreground">{equipmentItems.length} equipo(s)</span>
+                </div>
+
+                {equipmentError && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3.5 w-3.5" /> {equipmentError}
+                  </p>
+                )}
+
+                <div className="space-y-4">
+                  {equipmentItems.map((item, index) => (
+                    <div key={index} className="rounded-xl border border-border bg-muted/30 p-4 space-y-4 relative">
+                      {equipmentItems.length > 1 && (
+                        <button
+                          onClick={() => removeEquipmentItem(index)}
+                          className="absolute top-3 right-3 h-6 w-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                      )}
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Equipo {index + 1}
+                      </span>
+
+                      {/* Tipo de extintor */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Tipo de extintor</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {EXTINGUISHER_TYPES.map((type) => (
+                            <button
+                              key={type.id}
+                              onClick={() => updateEquipmentItem(index, "type", type.id)}
+                              className={cn(
+                                "flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-200",
+                                item.type === type.id
+                                  ? "border-primary bg-primary/10 text-primary shadow-sm"
+                                  : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                              )}
+                            >
+                              <span className="flex items-center gap-1.5 text-sm font-medium">
+                                <span className={cn(
+                                  "h-2 w-2 rounded-full",
+                                  item.type === type.id ? "bg-primary" : "bg-muted-foreground/30"
+                                )} />
+                                {type.label}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground leading-tight pl-3.5">{type.description}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Peso / Capacidad */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Peso / Capacidad</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {WEIGHT_OPTIONS.map((w) => (
+                            <button
+                              key={w}
+                              onClick={() => updateEquipmentItem(index, "weight", w)}
+                              className={cn(
+                                "rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                item.weight === w
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                              )}
+                            >
+                              {w}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Cantidad */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Cantidad</Label>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => updateEquipmentItem(index, "quantity", Math.max(1, item.quantity - 1))}
+                            className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
+                          <span className="min-w-[2rem] text-center text-lg font-bold">{item.quantity}</span>
+                          <button
+                            onClick={() => updateEquipmentItem(index, "quantity", Math.min(50, item.quantity + 1))}
+                            className="h-8 w-8 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                          <span className="text-xs text-muted-foreground">unidades</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addEquipmentItem}
+                  className="w-full border-dashed"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Agregar otro equipo
+                </Button>
+
+                {/* Notas adicionales */}
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="flex items-center gap-2 text-sm font-medium">
+                    <Package className="h-3.5 w-3.5 text-muted-foreground" /> Notas adicionales (opcional)
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    value={additionalNotes}
+                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    placeholder="Ej: Algunos extintores tienen daño en la manguera, necesito factura..."
+                    maxLength={500}
+                    rows={2}
+                  />
+                  <p className="text-xs text-muted-foreground text-right">{additionalNotes.length}/500</p>
+                </div>
               </div>
 
               <Button className="w-full transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={() => {
-                const result = formSchema.safeParse(form);
+                const result = contactSchema.safeParse(contact);
                 if (!result.success) {
-                  const fieldErrors: Partial<Record<keyof FormData, string>> = {};
+                  const fieldErrors: Partial<Record<keyof ContactData, string>> = {};
                   result.error.errors.forEach((e) => {
-                    const field = e.path[0] as keyof FormData;
+                    const field = e.path[0] as keyof ContactData;
                     if (!fieldErrors[field]) fieldErrors[field] = e.message;
                   });
-                  setErrors(fieldErrors);
+                  setContactErrors(fieldErrors);
                   return;
                 }
-                setErrors({});
+                if (!hasValidEquipment) {
+                  setEquipmentError("Selecciona tipo y peso de al menos un equipo");
+                  return;
+                }
+                setContactErrors({});
+                setEquipmentError(null);
                 setStep(2);
               }}>
                 Siguiente → Seleccionar fecha
