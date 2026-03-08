@@ -9,6 +9,11 @@ import { toast } from "sonner";
 
 const SERVICE_IMAGES = [
   { src: "/images/services/compresores-linea.jpeg", alt: "Línea de compresores de aire respirable" },
+  { src: "/images/services/maniobra-grua-cilindros.jpg", alt: "Maniobra con grúa – traslado de cilindros y compresor" },
+  { src: "/images/services/compresor-campo-psi.jpg", alt: "Compresor portátil PSI en campo" },
+  { src: "/images/services/cilindros-operador.jpeg", alt: "Operador revisando rack de cilindros de aire respirable" },
+  { src: "/images/services/cilindros-detalle.jpeg", alt: "Detalle de válvulas y conexiones en cilindros" },
+  { src: "/images/services/cilindros-rack-1.jpeg", alt: "Rack de cilindros de aire respirable" },
   { src: "/images/services/compresor-desarme-1.jpg", alt: "Desarme de compresor – cabezal" },
   { src: "/images/services/compresor-desarme-2.jpg", alt: "Compresor con filtro secador" },
   { src: "/images/services/compresor-filtro.jpg", alt: "Mantenimiento de filtro catalizador Bauer" },
