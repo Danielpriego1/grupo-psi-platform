@@ -106,7 +106,26 @@ const Mantenimiento = () => {
   };
 
   const isStep1Complete = form.name.length >= 2 && form.phone.length >= 10 && form.email.includes("@") && form.equipmentDescription.length >= 5;
-  const isStep2Complete = !!date;
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+
+  // Calculate slot availability when date changes
+  const slotAvailabilities = useMemo(() => {
+    if (!date) return {};
+    const dateStr = format(date, "yyyy-MM-dd");
+    const bookings = getSimulatedBookings(dateStr);
+    const result: Record<string, { availability: SlotAvailability; remaining: number; total: number; booked: number }> = {};
+    TIME_SLOTS.forEach((slot) => {
+      const booked = bookings[slot.id] || 0;
+      const remaining = slot.maxCapacity - booked;
+      let availability: SlotAvailability = "available";
+      if (remaining <= 0) availability = "unavailable";
+      else if (remaining === 1) availability = "limited";
+      result[slot.id] = { availability, remaining, total: slot.maxCapacity, booked };
+    });
+    return result;
+  }, [date]);
+
+  const isStep2Complete = !!date && !!selectedTimeSlot;
   const isLocationComplete = !!location;
 
   const handleSelectState = (state: MexicoState) => {
