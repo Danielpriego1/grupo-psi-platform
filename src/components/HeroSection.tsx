@@ -107,16 +107,11 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
       {introDone && (
         <>
           <div className="absolute inset-0 z-0">
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
+            <img
+              src="/images/logo_fondo_negro.png"
+              alt="Grupo PSI"
               className="h-full w-full object-cover"
-              poster="/images/logo_fondo_negro.png"
-            >
-              <source src="/videos/sora-2.mp4" type="video/mp4" />
-            </video>
+            />
             <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/5" />
           </div>
