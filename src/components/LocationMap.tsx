@@ -38,7 +38,7 @@ export function LocationMap({ onLocationSelect, className }: LocationMapProps) {
       });
 
       // Center on Mexico City
-      const map = L.map(mapContainer.current).setView([19.4326, -99.1332], 11);
+      const map = L.map(mapContainer.current).setView([17.9869, -92.9303], 13);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
       }).addTo(map);
