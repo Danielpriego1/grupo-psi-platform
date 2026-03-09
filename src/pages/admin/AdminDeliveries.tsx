@@ -83,7 +83,7 @@ export default function AdminDeliveries() {
     }
   };
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: DeliveryStatus) => {
     const update: any = { status };
     if (status === "delivered") update.delivered_at = new Date().toISOString();
     await supabase.from("deliveries").update(update).eq("id", id);
