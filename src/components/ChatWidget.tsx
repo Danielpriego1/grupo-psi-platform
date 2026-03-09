@@ -14,7 +14,7 @@ const INITIAL_MESSAGES: Message[] = [
   {
     id: "welcome",
     role: "assistant",
-    content: "¡Hola! 👋 Soy Sora, asistente de Grupo PSI. Pregúntame sobre productos, precios, tallas o disponibilidad. También puedo ayudarte a encontrar lo que necesitas.",
+    content: "¡Hola! 👋 Soy Sora, Ejecutiva y Asistente Personal de Grupo PSI. Estoy aquí para apoyarte con lo que necesites: productos, precios, normatividad, manuales de seguridad o cualquier duda técnica. ¿En qué te ayudo?",
   },
 ];
 
