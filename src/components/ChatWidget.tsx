@@ -569,7 +569,7 @@ export function ChatWidget() {
               <video src="/videos/sora.mp4" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-white">Sora · Grupo PSI</div>
+              <div className="text-sm font-bold text-white">Sora · Ejecutiva Grupo PSI</div>
               <div className="flex items-center gap-1.5 text-xs text-white/70">
                 <span className="h-2 w-2 rounded-full bg-green-400 animate-bounce-soft" />
                 En línea
