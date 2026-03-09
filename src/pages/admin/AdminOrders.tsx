@@ -186,7 +186,7 @@ export default function AdminOrders() {
                     <span className="font-bold text-foreground">
                       ${Number(order.total).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                     </span>
-                    <Select value={order.status} onValueChange={(v) => updateStatus(order.id, v)}>
+                    <Select value={order.status} onValueChange={(v) => updateStatus(order.id, v as OrderStatus)}>
                       <SelectTrigger className="w-[140px] h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
