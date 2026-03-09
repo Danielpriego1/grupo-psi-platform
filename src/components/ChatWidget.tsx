@@ -500,7 +500,7 @@ function getSmartResponse(input: string): string {
 
   // Greetings
   if (lower.match(/^(hola|hey|buenas|buenos|qué tal|que tal)/)) {
-    return "¡Hola! 👋 ¿En qué te puedo ayudar? Puedo buscar productos, darte precios, verificar disponibilidad, o informarte sobre **normas y especificaciones técnicas** de extintores, SCBA, detectores, EPP y más.";
+    return "¡Hola! 👋 Soy Sora, Ejecutiva de Grupo PSI. ¿En qué te puedo apoyar? Manejo productos, precios, disponibilidad, **normas**, **manuales de seguridad** y asesoría técnica.";
   }
 
   // Generic product search
