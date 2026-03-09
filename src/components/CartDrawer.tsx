@@ -1,15 +1,25 @@
+import { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Minus, Plus, Trash2, ShoppingBag, ExternalLink, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, clearCart, totalItems, totalPrice } = useCart();
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   // Build WhatsApp message from cart
-  const buildWhatsAppMessage = () => {
-    let msg = "¡Hola! Me gustaría cotizar los siguientes productos:\n\n";
+  const buildWhatsAppMessage = (orderNumber?: string) => {
+    let msg = orderNumber 
+      ? `¡Hola! Mi pedido ${orderNumber}. Me gustaría cotizar los siguientes productos:\n\n`
+      : "¡Hola! Me gustaría cotizar los siguientes productos:\n\n";
     items.forEach((item, i) => {
       const price = item.product.discount
         ? item.product.priceOriginalMxn * (1 - item.product.discount)
@@ -20,7 +30,58 @@ export function CartDrawer() {
       msg += ` x${item.quantity} ($${(price * item.quantity).toFixed(2)} MXN)\n`;
     });
     msg += `\nTotal estimado: $${totalPrice.toFixed(2)} MXN`;
+    if (clientName) msg += `\n\nNombre: ${clientName}`;
+    if (clientPhone) msg += `\nTeléfono: ${clientPhone}`;
     return encodeURIComponent(msg);
+  };
+
+  const handleQuoteRequest = async () => {
+    setIsSubmitting(true);
+    try {
+      // Save quote to database
+      const { data, error } = await supabase.functions.invoke("create-quote-order", {
+        body: {
+          items,
+          total: totalPrice,
+          clientName,
+          clientPhone,
+        },
+      });
+
+      if (error) throw error;
+
+      const orderNumber = data?.orderNumber;
+
+      toast({
+        title: "Cotización registrada",
+        description: `Tu pedido ${orderNumber} ha sido guardado. Te contactaremos pronto.`,
+      });
+
+      // Open WhatsApp with order number
+      window.open(
+        `https://wa.me/5215512345678?text=${buildWhatsAppMessage(orderNumber)}`,
+        "_blank"
+      );
+
+      clearCart();
+      setClientName("");
+      setClientPhone("");
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Error creating quote:", error);
+      // Fallback: open WhatsApp without saving
+      window.open(
+        `https://wa.me/5215512345678?text=${buildWhatsAppMessage()}`,
+        "_blank"
+      );
+      toast({
+        title: "Cotización enviada",
+        description: "Tu solicitud fue enviada por WhatsApp.",
+        variant: "default",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Check if all items have purchaseUrl for direct Stripe checkout
@@ -128,16 +189,41 @@ export function CartDrawer() {
                 </div>
               )}
 
-              {/* WhatsApp cotización */}
-              <a
-                href={`https://wa.me/5215512345678?text=${buildWhatsAppMessage()}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              {/* Client info for quote */}
+              <div className="space-y-2 pt-2 border-t border-border/50">
+                <Label htmlFor="clientName" className="text-xs text-muted-foreground">
+                  Datos de contacto (opcional)
+                </Label>
+                <Input
+                  id="clientName"
+                  placeholder="Tu nombre"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  className="h-9"
+                />
+                <Input
+                  id="clientPhone"
+                  placeholder="Tu teléfono"
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+
+              {/* WhatsApp cotización - now saves to DB */}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleQuoteRequest}
+                disabled={isSubmitting}
               >
-                <Button variant="outline" className="w-full">
-                  💬 Cotizar por WhatsApp
-                </Button>
-              </a>
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  "💬"
+                )}
+                {isSubmitting ? "Guardando..." : "Cotizar por WhatsApp"}
+              </Button>
 
               <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={clearCart}>
                 Vaciar carrito
