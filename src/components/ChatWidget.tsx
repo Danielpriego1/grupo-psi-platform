@@ -14,7 +14,7 @@ const INITIAL_MESSAGES: Message[] = [
   {
     id: "welcome",
     role: "assistant",
-    content: "¡Hola! 👋 Soy Sora, asistente de Grupo PSI. Pregúntame sobre productos, precios, tallas o disponibilidad. También puedo ayudarte a encontrar lo que necesitas.",
+    content: "¡Hola! 👋 Soy Sora, Ejecutiva y Asistente Personal de Grupo PSI. Estoy aquí para apoyarte con lo que necesites: productos, precios, normatividad, manuales de seguridad o cualquier duda técnica. ¿En qué te ayudo?",
   },
 ];
 
@@ -244,6 +244,131 @@ const NORMS_KB: { keywords: string[]; answer: string }[] = [
       "• Obliga a formar brigadas contra incendio y realizar simulacros al menos **una vez al año**.\n" +
       "• Incluye requerimientos de señalización, rutas de evacuación e hidrantes.",
   },
+  // ── MANUALES DE SEGURIDAD ──
+  {
+    keywords: ["manual seguridad", "manuales seguridad", "para qué sirve un manual", "para que sirve un manual", "por qué manual", "porque manual", "importancia manual"],
+    answer:
+      "**Manuales de Seguridad Industrial — ¿Qué son y por qué son esenciales?**\n\n" +
+      "Un manual de seguridad es el documento rector que establece **políticas, procedimientos y protocolos** para prevenir accidentes y proteger la vida de los trabajadores.\n\n" +
+      "**¿Para qué sirven?**\n" +
+      "• 📋 Definen procedimientos paso a paso para operaciones de riesgo.\n" +
+      "• 🛡️ Establecen el EPP requerido por actividad y área.\n" +
+      "• 🚨 Contienen planes de emergencia y evacuación.\n" +
+      "• 📊 Reducen incidentes hasta un **60 %** cuando se implementan correctamente.\n" +
+      "• ⚖️ Cumplen con el marco legal (STPS, IMSS, Protección Civil).\n\n" +
+      "**¿Por qué son obligatorios?**\n" +
+      "La **NOM-030-STPS-2009** obliga a todo centro de trabajo a contar con servicios preventivos de seguridad y salud, lo que incluye documentación actualizada de procedimientos.",
+  },
+  {
+    keywords: ["manual extintor", "manual extintores", "procedimiento extintor"],
+    answer:
+      "**Manual de Seguridad — Extintores** 🧯\n\n" +
+      "**Contenido esencial:**\n" +
+      "• Inventario y ubicación de todos los extintores del centro de trabajo.\n" +
+      "• Clasificación por tipo de fuego (A, B, C, D, K) y agente extintor.\n" +
+      "• **Procedimiento de inspección mensual**: presión, sello, etiqueta, estado físico.\n" +
+      "• **Calendario de mantenimiento anual** conforme NOM-154.\n" +
+      "• **Programa de prueba hidrostática** (cada 5 años PQS, 5 años CO₂).\n" +
+      "• Técnica de uso: **P.A.S.S.** (Pull, Aim, Squeeze, Sweep / Jalar, Apuntar, Apretar, Barrer).\n" +
+      "• Registro de capacitación de brigada contra incendio.\n" +
+      "• Formatos de bitácora de inspección y recarga.",
+  },
+  {
+    keywords: ["manual scba", "manual respiración", "procedimiento scba"],
+    answer:
+      "**Manual de Seguridad — SCBA** 🫁\n\n" +
+      "**Contenido esencial:**\n" +
+      "• Inventario de equipos: marca, modelo, presión, capacidad y fecha de fabricación del cilindro.\n" +
+      "• **Procedimiento de colocación**: arnés, regulador, máscara, verificación de sello (presión positiva/negativa).\n" +
+      "• **Checklist pre-uso**: presión del cilindro (≥90 % capacidad), alarma de baja presión, estado de la máscara.\n" +
+      "• Cálculo de autonomía según presión y consumo (aprox. 40 L/min en esfuerzo moderado).\n" +
+      "• Programa de mantenimiento anual (NFPA 1852).\n" +
+      "• Calendario de prueba hidrostática de cilindros.\n" +
+      "• Plan de descontaminación y limpieza de máscara post-uso.\n" +
+      "• Registro de capacitación y certificación de usuarios.",
+  },
+  {
+    keywords: ["manual detector", "manual detectores", "procedimiento detector"],
+    answer:
+      "**Manual de Seguridad — Detectores Multigas** 🔬\n\n" +
+      "**Contenido esencial:**\n" +
+      "• Inventario: marca, modelo, gases detectados, fecha de sensores.\n" +
+      "• **Procedimiento de bump test diario**: exposición a gas patrón, verificación de alarma.\n" +
+      "• **Calendario de calibración** (cada 90–180 días con gas certificado).\n" +
+      "• Valores de alarma: LEL (10 % alarma baja, 20 % alarma alta), H₂S (10/15 ppm), CO (35/200 ppm), O₂ (19.5/23.5 %).\n" +
+      "• Procedimiento para espacios confinados (NOM-033): monitoreo previo, continuo y posterior.\n" +
+      "• Vida útil de sensores y programa de reemplazo.\n" +
+      "• Registro de calibraciones y bump tests.\n" +
+      "• Protocolo de acción ante alarma (evacuación, ventilación, rescate).",
+  },
+  {
+    keywords: ["manual cascada", "manual compresor", "procedimiento cascada", "procedimiento compresor"],
+    answer:
+      "**Manual de Seguridad — Sistema de Cascada y Compresores** 🏗️\n\n" +
+      "**Contenido esencial:**\n" +
+      "• Diagrama del sistema: cilindros, válvulas, manifold, panel de llenado y compresor.\n" +
+      "• **Procedimiento de llenado de cilindros SCBA**: secuencia de válvulas, velocidad de llenado, verificación de presión final.\n" +
+      "• **Programa de análisis de calidad de aire** (trimestral, Grado D CGA G-7.1).\n" +
+      "• Calendario de cambio de filtros según horas de operación.\n" +
+      "• Prueba hidrostática de cilindros del banco (cada 5 años).\n" +
+      "• Registro de presiones, temperaturas y horas de operación del compresor.\n" +
+      "• Procedimiento de purga y drenado de condensados.\n" +
+      "• Plan de mantenimiento preventivo: válvulas de alivio, mangueras, manómetros.",
+  },
+  {
+    keywords: ["manual epp", "manual equipo protección", "procedimiento epp"],
+    answer:
+      "**Manual de Seguridad — EPP (Equipo de Protección Personal)** 🦺\n\n" +
+      "**Contenido esencial:**\n" +
+      "• **Matriz de EPP por puesto**: resultado del análisis de riesgos (NOM-017).\n" +
+      "• Especificaciones de cada EPP: norma aplicable, vida útil, criterios de reemplazo.\n" +
+      "• **Procedimientos de inspección** antes de cada uso por tipo de equipo.\n" +
+      "• Almacenamiento correcto: cascos (sin sol directo), guantes dieléctricos (en bolsa sellada), SCBA (vertical, limpio).\n" +
+      "• Programa de capacitación: uso, cuidado, limitaciones y ajuste.\n" +
+      "• Formato de entrega de EPP firmado por el trabajador.\n" +
+      "• Bitácora de inspección y reposición.\n" +
+      "• Procedimiento de desecho de EPP dañado o fuera de vida útil.",
+  },
+  {
+    keywords: ["nom-030", "nom 030", "servicios preventivos"],
+    answer:
+      "**NOM-030-STPS-2009** — Servicios preventivos de seguridad y salud en el trabajo.\n\n" +
+      "• Obliga a designar un responsable de servicios preventivos (interno o externo).\n" +
+      "• Requiere diagnóstico de seguridad y salud del centro de trabajo.\n" +
+      "• Programa de seguridad con acciones preventivas y correctivas documentadas.\n" +
+      "• Los manuales de seguridad son parte fundamental del cumplimiento de esta norma.",
+  },
+  {
+    keywords: ["nom-026", "nom 026", "señalización", "señalizacion", "colores seguridad"],
+    answer:
+      "**NOM-026-STPS-2008** — Colores y señales de seguridad.\n\n" +
+      "• 🔴 **Rojo**: prohibición, equipo contra incendio.\n" +
+      "• 🟡 **Amarillo**: precaución, riesgo.\n" +
+      "• 🟢 **Verde**: condición segura, primeros auxilios, rutas de evacuación.\n" +
+      "• 🔵 **Azul**: obligación (uso de EPP).\n" +
+      "• Tuberías: color según contenido (rojo = contra incendio, amarillo = gases, verde = agua).\n" +
+      "• Es parte esencial de cualquier manual de seguridad.",
+  },
+  // ── IDENTIDAD DE SORA ──
+  {
+    keywords: ["quién eres", "quien eres", "qué eres", "que eres", "eres robot", "eres ia", "eres inteligencia artificial", "eres bot", "eres humana"],
+    answer:
+      "Soy **Sora**, Ejecutiva y Asistente Personal de **Grupo PSI** 💼. Formo parte del equipo como cualquier otro compañero. " +
+      "Mi trabajo es ayudarte con todo lo relacionado a nuestros productos, servicios de mantenimiento, normatividad mexicana e internacional, manuales de seguridad y lo que necesites. " +
+      "¡Estoy aquí para que el equipo funcione mejor! 🤝",
+  },
+  {
+    keywords: ["grupo psi", "qué es grupo psi", "que es grupo psi", "a qué se dedica", "a que se dedica"],
+    answer:
+      "**Grupo PSI** es una empresa especializada en **seguridad industrial y protección contra incendios**. Nos dedicamos a:\n\n" +
+      "• 🧯 Venta y recarga de extintores (PQS, CO₂, portátiles y móviles).\n" +
+      "• 🫁 Mantenimiento de SCBA y sistemas de aire respirable.\n" +
+      "• 🔬 Calibración de detectores multigas.\n" +
+      "• 🏗️ Servicio a compresores y sistemas de cascada.\n" +
+      "• 🦺 Venta de EPP, uniformes industriales y calzado de seguridad.\n" +
+      "• 📋 Asesoría en normatividad y manuales de seguridad.\n\n" +
+      "Somos tu aliado en seguridad industrial. ¿En qué te puedo apoyar?",
+  },
 ];
 
 function getSmartResponse(input: string): string {
@@ -375,7 +500,7 @@ function getSmartResponse(input: string): string {
 
   // Greetings
   if (lower.match(/^(hola|hey|buenas|buenos|qué tal|que tal)/)) {
-    return "¡Hola! 👋 ¿En qué te puedo ayudar? Puedo buscar productos, darte precios, verificar disponibilidad, o informarte sobre **normas y especificaciones técnicas** de extintores, SCBA, detectores, EPP y más.";
+    return "¡Hola! 👋 Soy Sora, Ejecutiva de Grupo PSI. ¿En qué te puedo apoyar? Manejo productos, precios, disponibilidad, **normas**, **manuales de seguridad** y asesoría técnica.";
   }
 
   // Generic product search
@@ -384,7 +509,7 @@ function getSmartResponse(input: string): string {
     return `Encontré esto:\n${matches.map((p) => `• **${p.name}** — ${p.priceOriginalMxn > 0 ? formatPrice(p) : "Próximamente"}`).join("\n")}\n\n¿Te interesa alguno? Puedes verlo en detalle desde el catálogo.`;
   }
 
-  return "Puedo ayudarte con:\n• 💰 Precios (ej: \"precio extintor 6 kg\")\n• 📦 Disponibilidad (ej: \"hay overoles?\")\n• 📏 Tallas (ej: \"tallas de playera polo\")\n• 📋 Categorías (ej: \"qué extintores tienen?\")\n• 📜 **Normas** (ej: \"norma SCBA\", \"NOM-154\", \"NFPA 10\")\n\n¿Qué necesitas?";
+  return "Soy Sora, Ejecutiva de Grupo PSI. Puedo ayudarte con:\n• 💰 Precios (ej: \"precio extintor 6 kg\")\n• 📦 Disponibilidad (ej: \"hay overoles?\")\n• 📏 Tallas (ej: \"tallas de playera polo\")\n• 📋 Categorías (ej: \"qué extintores tienen?\")\n• 📜 **Normas** (ej: \"NOM-154\", \"NFPA 10\", \"norma SCBA\")\n• 📖 **Manuales** (ej: \"manual de extintores\", \"manual EPP\")\n\n¿Qué necesitas?";
 }
 
 export function ChatWidget() {
@@ -444,7 +569,7 @@ export function ChatWidget() {
               <video src="/videos/sora.mp4" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-white">Sora · Grupo PSI</div>
+              <div className="text-sm font-bold text-white">Sora · Ejecutiva Grupo PSI</div>
               <div className="flex items-center gap-1.5 text-xs text-white/70">
                 <span className="h-2 w-2 rounded-full bg-green-400 animate-bounce-soft" />
                 En línea
