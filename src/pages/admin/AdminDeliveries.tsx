@@ -162,7 +162,7 @@ export default function AdminDeliveries() {
                     {d.assigned_driver && <p className="text-xs text-muted-foreground">🚛 {d.assigned_driver}</p>}
                     {d.scheduled_date && <p className="text-xs text-muted-foreground">📅 {d.scheduled_date}</p>}
                   </div>
-                  <Select value={d.status} onValueChange={(v) => updateStatus(d.id, v)}>
+                  <Select value={d.status} onValueChange={(v) => updateStatus(d.id, v as DeliveryStatus)}>
                     <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(statusLabels).map(([k, v]) => (
