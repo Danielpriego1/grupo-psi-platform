@@ -509,7 +509,7 @@ function getSmartResponse(input: string): string {
     return `Encontré esto:\n${matches.map((p) => `• **${p.name}** — ${p.priceOriginalMxn > 0 ? formatPrice(p) : "Próximamente"}`).join("\n")}\n\n¿Te interesa alguno? Puedes verlo en detalle desde el catálogo.`;
   }
 
-  return "Puedo ayudarte con:\n• 💰 Precios (ej: \"precio extintor 6 kg\")\n• 📦 Disponibilidad (ej: \"hay overoles?\")\n• 📏 Tallas (ej: \"tallas de playera polo\")\n• 📋 Categorías (ej: \"qué extintores tienen?\")\n• 📜 **Normas** (ej: \"norma SCBA\", \"NOM-154\", \"NFPA 10\")\n\n¿Qué necesitas?";
+  return "Soy Sora, Ejecutiva de Grupo PSI. Puedo ayudarte con:\n• 💰 Precios (ej: \"precio extintor 6 kg\")\n• 📦 Disponibilidad (ej: \"hay overoles?\")\n• 📏 Tallas (ej: \"tallas de playera polo\")\n• 📋 Categorías (ej: \"qué extintores tienen?\")\n• 📜 **Normas** (ej: \"NOM-154\", \"NFPA 10\", \"norma SCBA\")\n• 📖 **Manuales** (ej: \"manual de extintores\", \"manual EPP\")\n\n¿Qué necesitas?";
 }
 
 export function ChatWidget() {
