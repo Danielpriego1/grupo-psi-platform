@@ -208,16 +208,25 @@ export default function AdminInventory() {
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-muted/50 gap-3 cursor-pointer hover:bg-muted/80 transition-colors"
                     onClick={() => openEdit(item)}
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-foreground text-sm">{item.product_name}</p>
-                        {isLow && (
-                          <Badge variant="destructive" className="text-[10px] gap-1">
-                            <AlertTriangle className="w-3 h-3" />Stock bajo
-                          </Badge>
-                        )}
+                    <div className="flex items-center gap-3">
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.product_name} className="w-10 h-10 rounded object-cover border border-border flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-foreground text-sm">{item.product_name}</p>
+                          {isLow && (
+                            <Badge variant="destructive" className="text-[10px] gap-1">
+                              <AlertTriangle className="w-3 h-3" />Stock bajo
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{item.category} · {item.product_id}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">{item.category} · {item.product_id}</p>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <div className="text-center">
