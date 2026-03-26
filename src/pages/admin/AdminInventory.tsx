@@ -39,7 +39,9 @@ export default function AdminInventory() {
 
   const openNew = () => {
     setEditItem(null);
-    setForm({ product_id: "", product_name: "", category: "", stock: "", min_stock: "5", unit_price: "", location: "" });
+    setForm({ product_id: "", product_name: "", category: "", stock: "", min_stock: "5", unit_price: "", location: "", image_url: "" });
+    setImageFile(null);
+    setImagePreview(null);
     setDialogOpen(true);
   };
 
@@ -53,12 +55,45 @@ export default function AdminInventory() {
       min_stock: String(item.min_stock),
       unit_price: String(item.unit_price),
       location: item.location ?? "",
+      image_url: item.image_url ?? "",
     });
+    setImageFile(null);
+    setImagePreview(item.image_url ?? null);
     setDialogOpen(true);
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setForm({ ...form, image_url: "" });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return form.image_url || null;
+    setUploading(true);
+    const ext = imageFile.name.split(".").pop();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, imageFile);
+    setUploading(false);
+    if (error) {
+      toast({ title: "Error al subir imagen", description: error.message, variant: "destructive" });
+      return null;
+    }
+    const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
   const saveItem = async () => {
-    const payload = {
+    const imageUrl = await uploadImage();
+    const payload: any = {
       product_id: form.product_id,
       product_name: form.product_name,
       category: form.category || null,
@@ -66,6 +101,7 @@ export default function AdminInventory() {
       min_stock: parseInt(form.min_stock) || 5,
       unit_price: parseFloat(form.unit_price) || 0,
       location: form.location || null,
+      image_url: imageUrl || null,
     };
 
     if (editItem) {
@@ -134,7 +170,25 @@ export default function AdminInventory() {
               <Label>Ubicación</Label>
               <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Almacén A" />
             </div>
-            <Button onClick={saveItem} className="w-full">{editItem ? "Guardar Cambios" : "Agregar"}</Button>
+            {/* Image upload */}
+            <div className="space-y-2">
+              <Label>Foto del producto</Label>
+              <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} className="hidden" />
+              {imagePreview ? (
+                <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border bg-muted">
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-7 h-7" onClick={removeImage}>
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ) : (
+                <Button type="button" variant="outline" className="w-full h-24 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Seleccionar imagen</span>
+                </Button>
+              )}
+            </div>
+            <Button onClick={saveItem} className="w-full" disabled={uploading}>{uploading ? "Subiendo..." : editItem ? "Guardar Cambios" : "Agregar"}</Button>
           </div>
         </DialogContent>
       </Dialog>
