@@ -371,10 +371,178 @@ const NORMS_KB: { keywords: string[]; answer: string }[] = [
   },
 ];
 
+// ── Recomendación inteligente de EPP según tipo de trabajo/riesgo ──
+const EPP_RECOMMENDATIONS: { keywords: string[]; risk: string; epp: string }[] = [
+  {
+    keywords: ["soldadura", "soldar", "soldador"],
+    risk: "Soldadura",
+    epp:
+      "🦺 **EPP recomendado para Soldadura:**\n\n" +
+      "• **Careta de soldador** con filtro según proceso (sombra 10–13 para arco eléctrico).\n" +
+      "• **Guantes de carnaza** largos (hasta codo).\n" +
+      "• **Peto y mangas de carnaza** para protección contra chispas.\n" +
+      "• **Overol FR ignífugo** (NFPA 2112) o ropa 100 % algodón.\n" +
+      "• **Botas de seguridad** con casquillo (NOM-113).\n" +
+      "• **Respirador con filtros P100** para humos metálicos.\n" +
+      "• **Tapones auditivos** NRR ≥ 25 dB.\n\n" +
+      "⚠️ En espacios confinados agregar: detector multigas + SCBA disponible.",
+  },
+  {
+    keywords: ["altura", "trabajos en altura", "andamio", "arnés", "arnes", "caída", "caida"],
+    risk: "Trabajos en Altura",
+    epp:
+      "🦺 **EPP recomendado para Trabajos en Altura** (NOM-009-STPS):\n\n" +
+      "• **Arnés de cuerpo completo** con anillo dorsal.\n" +
+      "• **Línea de vida** con absorbedor de impacto (≤ 1.8 m).\n" +
+      "• **Casco Tipo II Clase E** con barbiquejo (NOM-115).\n" +
+      "• **Botas antiderrapantes** con casquillo (NOM-113).\n" +
+      "• **Guantes antideslizantes**.\n" +
+      "• **Lentes de seguridad** claros o ámbar.\n\n" +
+      "⚠️ A partir de 1.80 m de altura, el arnés y línea de vida son OBLIGATORIOS.",
+  },
+  {
+    keywords: ["espacio confinado", "confinado", "tanque", "cisterna", "registro", "alcantarilla"],
+    risk: "Espacios Confinados",
+    epp:
+      "🦺 **EPP recomendado para Espacios Confinados** (NOM-033-STPS):\n\n" +
+      "• **Detector multigas** (LEL, O₂, H₂S, CO) — monitoreo continuo.\n" +
+      "• **SCBA** o línea de aire con escape de 5 min.\n" +
+      "• **Arnés de rescate** con anillo dorsal y esternal.\n" +
+      "• **Trípode de rescate** con malacate.\n" +
+      "• **Casco con lámpara** intrínsecamente segura.\n" +
+      "• **Overol antiestático**.\n" +
+      "• **Botas con casquillo** antichispa.\n\n" +
+      "⚠️ Obligatorio: permiso de trabajo, vigía externo y plan de rescate.",
+  },
+  {
+    keywords: ["químico", "quimico", "sustancia", "ácido", "acido", "solvente", "corrosivo"],
+    risk: "Manejo de Químicos",
+    epp:
+      "🦺 **EPP recomendado para Manejo de Químicos:**\n\n" +
+      "• **Gogles** antisalpicadura (sellados).\n" +
+      "• **Respirador media cara** con cartuchos según sustancia (orgánico, ácido, multigas).\n" +
+      "• **Guantes de nitrilo o neopreno** resistentes al químico específico.\n" +
+      "• **Mandil o traje Tyvek** según nivel de exposición.\n" +
+      "• **Botas de PVC** o neopreno.\n" +
+      "• **Regadera de emergencia** y lavaojos accesibles.\n\n" +
+      "⚠️ Consultar la Hoja de Datos de Seguridad (HDS) del producto para EPP específico.",
+  },
+  {
+    keywords: ["eléctrico", "electrico", "electricidad", "alta tensión", "tension", "tablero", "arco"],
+    risk: "Riesgo Eléctrico",
+    epp:
+      "🦺 **EPP recomendado para Riesgo Eléctrico** (NOM-029-STPS):\n\n" +
+      "• **Casco dieléctrico Clase E** (hasta 20,000 V).\n" +
+      "• **Guantes dieléctricos** clase según voltaje (00 a 4) + sobreguante de carnaza.\n" +
+      "• **Lentes con protección UV** y anti-arco.\n" +
+      "• **Ropa FR** con rating ATPV según categoría de arco (NFPA 70E).\n" +
+      "• **Botas dieléctricas** (NOM-113).\n" +
+      "• **Tapete aislante** y pértiga.\n" +
+      "• **Detector de voltaje sin contacto**.\n\n" +
+      "⚠️ Realizar análisis de riesgo de arco eléctrico antes de intervenir equipos energizados.",
+  },
+  {
+    keywords: ["incendio", "bombero", "brigada", "fuego", "emergencia contra incendio"],
+    risk: "Combate de Incendios / Brigada",
+    epp:
+      "🦺 **EPP recomendado para Brigada Contra Incendio:**\n\n" +
+      "• **SCBA** con cilindro de 30–45 min (NFPA 1981).\n" +
+      "• **Traje de bombero** (bunker gear) o ropa FR Cat 4.\n" +
+      "• **Casco de bombero** con visor (NOM-115 / NFPA 1971).\n" +
+      "• **Guantes de bombero** resistentes a calor.\n" +
+      "• **Botas de bombero** con puntera y plantilla.\n" +
+      "• **Radio comunicación**.\n" +
+      "• Extintores PQS y/o CO₂ según clase de fuego.\n\n" +
+      "⚠️ Todo brigadista debe estar capacitado y realizar simulacros anuales (NOM-002).",
+  },
+  {
+    keywords: ["ruido", "audición", "oído", "oido", "decibel", "db", "tapones"],
+    risk: "Exposición a Ruido",
+    epp:
+      "🦺 **EPP recomendado para Protección Auditiva** (NOM-011-STPS):\n\n" +
+      "• **85–95 dB**: tapones auditivos NRR ≥ 25 dB.\n" +
+      "• **95–105 dB**: orejeras NRR ≥ 30 dB.\n" +
+      "• **> 105 dB**: doble protección (tapones + orejeras).\n\n" +
+      "📋 La exposición máxima permitida es **90 dB por 8 horas** (cada +5 dB reduce el tiempo a la mitad).\n" +
+      "Se requiere estudio de ruido y programa de conservación auditiva.",
+  },
+  {
+    keywords: ["corte", "sierra", "esmeril", "amoladora", "rebaba", "metal"],
+    risk: "Corte y Esmerilado",
+    epp:
+      "🦺 **EPP recomendado para Corte/Esmerilado:**\n\n" +
+      "• **Careta facial completa** o gogles de seguridad.\n" +
+      "• **Guantes anticorte** nivel ANSI A4–A6.\n" +
+      "• **Mandil de carnaza**.\n" +
+      "• **Overol FR** o ropa de algodón (sin poliéster).\n" +
+      "• **Botas con casquillo** (NOM-113).\n" +
+      "• **Tapones auditivos** NRR ≥ 25 dB.\n" +
+      "• **Respirador** con filtro P100 para partículas metálicas.\n\n" +
+      "⚠️ Verificar guardas de la herramienta y bloqueo de energía (LOTO) antes de cambiar disco.",
+  },
+  {
+    keywords: ["pintura", "pintar", "cabina pintura", "solvente pintura", "aerosol"],
+    risk: "Aplicación de Pintura",
+    epp:
+      "🦺 **EPP recomendado para Pintura Industrial:**\n\n" +
+      "• **Respirador cara completa** con cartuchos para vapores orgánicos (OV) + P100.\n" +
+      "• **Traje Tyvek** desechable o overol de algodón.\n" +
+      "• **Guantes de nitrilo** resistentes a solventes.\n" +
+      "• **Gogles** antisalpicadura (si no usa careta completa).\n" +
+      "• **Botas de seguridad** con casquillo.\n\n" +
+      "⚠️ En cabinas cerradas puede requerirse línea de aire o SCBA. Ventilación obligatoria.",
+  },
+  {
+    keywords: ["construcción", "construccion", "obra", "albañil", "albañilería"],
+    risk: "Construcción General",
+    epp:
+      "🦺 **EPP básico para Construcción:**\n\n" +
+      "• **Casco Tipo I Clase E** (NOM-115).\n" +
+      "• **Lentes de seguridad** claros.\n" +
+      "• **Chaleco de alta visibilidad**.\n" +
+      "• **Guantes de carnaza** o multifuncionales.\n" +
+      "• **Botas con casquillo** antiderrapantes (NOM-113).\n" +
+      "• **Tapones auditivos** si hay maquinaria.\n" +
+      "• **Arnés** si trabaja a más de 1.80 m (NOM-009).\n\n" +
+      "📋 Complementar con análisis de riesgos por actividad específica (NOM-017).",
+  },
+];
+
 function getSmartResponse(input: string): string {
   const lower = input.toLowerCase();
 
-  // ── Check norms/technical knowledge first ──
+  // ── Check EPP recommendations first ──
+  if (lower.includes("epp") || lower.includes("protección") || lower.includes("proteccion") || lower.includes("equipo") || lower.includes("qué necesito") || lower.includes("que necesito") || lower.includes("recomienda")) {
+    for (const rec of EPP_RECOMMENDATIONS) {
+      if (rec.keywords.some((kw) => lower.includes(kw))) {
+        return rec.epp;
+      }
+    }
+    // Generic EPP recommendation question
+    if (lower.includes("recomienda") || lower.includes("qué epp") || lower.includes("que epp") || lower.includes("qué necesito") || lower.includes("que necesito")) {
+      return "Para recomendarte el EPP adecuado, dime **qué tipo de trabajo** vas a realizar. Por ejemplo:\n\n" +
+        "• ⚡ Trabajo eléctrico\n" +
+        "• 🔥 Soldadura\n" +
+        "• 🏗️ Altura\n" +
+        "• 🕳️ Espacio confinado\n" +
+        "• 🧪 Manejo de químicos\n" +
+        "• 🔨 Corte/esmerilado\n" +
+        "• 🎨 Pintura industrial\n" +
+        "• 🏗️ Construcción general\n" +
+        "• 🔊 Exposición a ruido\n" +
+        "• 🧯 Brigada contra incendio\n\n" +
+        "Describe tu actividad y te doy la recomendación completa con normas aplicables.";
+    }
+  }
+
+  // ── Check EPP by work description (without EPP keyword) ──
+  for (const rec of EPP_RECOMMENDATIONS) {
+    if (rec.keywords.some((kw) => lower.includes(kw)) && (lower.includes("necesito") || lower.includes("requiero") || lower.includes("usar") || lower.includes("llevar") || lower.includes("trabajo"))) {
+      return rec.epp;
+    }
+  }
+
+  // ── Check norms/technical knowledge ──
   for (const entry of NORMS_KB) {
     if (entry.keywords.some((kw) => lower.includes(kw))) {
       return entry.answer;

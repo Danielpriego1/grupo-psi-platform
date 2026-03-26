@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Package, AlertTriangle } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminInventory() {
@@ -14,6 +14,10 @@ export default function AdminInventory() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     product_id: "",
     product_name: "",
@@ -22,6 +26,7 @@ export default function AdminInventory() {
     min_stock: "5",
     unit_price: "",
     location: "",
+    image_url: "",
   });
   const { toast } = useToast();
 
