@@ -11,11 +11,6 @@ import { LocationMap } from "@/components/LocationMap";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { useInventoryImages } from "@/hooks/useInventoryImages";
-import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { LocationMap } from "@/components/LocationMap";
-import { toast } from "sonner";
-import { useCart } from "@/contexts/CartContext";
 
 const ProductDetail = () => {
   const { id } = useParams();
