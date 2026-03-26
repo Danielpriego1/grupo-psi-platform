@@ -10,11 +10,13 @@ import { cn } from "@/lib/utils";
 import { LocationMap } from "@/components/LocationMap";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
+import { useInventoryImages } from "@/hooks/useInventoryImages";
 
 const ProductDetail = () => {
   const { id } = useParams();
   const product = getProductById(id || "");
   const { addItem } = useCart();
+  const inventoryImages = useInventoryImages();
   const [date, setDate] = useState<Date>();
   const [serviceType, setServiceType] = useState<"delivery" | "maintenance">("delivery");
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -33,7 +35,9 @@ const ProductDetail = () => {
     );
   }
 
-  const allImages = product.images?.length ? product.images : [product.image || "/placeholder.svg"];
+  const invImage = inventoryImages[product.id];
+  const baseImages = product.images?.length ? product.images : [product.image || "/placeholder.svg"];
+  const allImages = invImage ? [invImage, ...baseImages] : baseImages;
   const allSizes = product.sizes ? Object.values(product.sizes).flat() : [];
 
   const basePrice = getProductPrice(product, selectedSize || undefined);

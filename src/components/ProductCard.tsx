@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Product } from "@/data/products";
 import { ArrowRight } from "lucide-react";
+import { useInventoryImages } from "@/hooks/useInventoryImages";
 
 interface ProductCardProps {
   product: Product;
@@ -8,6 +9,9 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
+  const inventoryImages = useInventoryImages();
+  const displayImage = inventoryImages[product.id] || product.image || "/placeholder.svg";
+
   return (
     <Link to={`/product/${product.id}`} className="block w-full">
       {/* Outer wrapper for glow border effect */}
@@ -24,7 +28,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           {/* Product image */}
           <div className="aspect-[4/3] mb-5 overflow-hidden rounded-xl">
             <img
-              src={product.image || "/placeholder.svg"}
+              src={displayImage}
               alt={product.name}
               className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
             />
