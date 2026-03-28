@@ -4,10 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const SUBCATEGORY_OPTIONS = [
+  "EPP-Guantes",
+  "EPP-Protección-Pies",
+  "EPP-Protección-Cabeza",
+  "EPP-Protección-Visual",
+  "EPP-Protección-Respiratoria",
+  "EPP-Protección-Auditiva",
+  "EPP-Protección-Caídas",
+  "EPP-Overoles",
+  "EPP-Señalización",
+  "EPP-General",
+  "Extintores-Accesorios",
+  "Contra-Incendio",
+  "Detección-Emergencia",
+  "Primeros-Auxilios",
+  "Señalización-Vial",
+];
 
 export default function AdminInventory() {
   const [items, setItems] = useState<any[]>([]);
@@ -16,17 +34,22 @@ export default function AdminInventory() {
   const [editItem, setEditItem] = useState<any>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfName, setPdfName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     product_id: "",
     product_name: "",
     category: "",
+    subcategory: "",
     stock: "",
     min_stock: "5",
     unit_price: "",
     location: "",
     image_url: "",
+    spec_pdf_url: "",
   });
   const { toast } = useToast();
 
@@ -39,9 +62,11 @@ export default function AdminInventory() {
 
   const openNew = () => {
     setEditItem(null);
-    setForm({ product_id: "", product_name: "", category: "", stock: "", min_stock: "5", unit_price: "", location: "", image_url: "" });
+    setForm({ product_id: "", product_name: "", category: "", subcategory: "", stock: "", min_stock: "5", unit_price: "", location: "", image_url: "", spec_pdf_url: "" });
     setImageFile(null);
     setImagePreview(null);
+    setPdfFile(null);
+    setPdfName(null);
     setDialogOpen(true);
   };
 
@@ -51,14 +76,18 @@ export default function AdminInventory() {
       product_id: item.product_id,
       product_name: item.product_name,
       category: item.category ?? "",
+      subcategory: item.subcategory ?? "",
       stock: String(item.stock),
       min_stock: String(item.min_stock),
       unit_price: String(item.unit_price),
       location: item.location ?? "",
       image_url: item.image_url ?? "",
+      spec_pdf_url: item.spec_pdf_url ?? "",
     });
     setImageFile(null);
     setImagePreview(item.image_url ?? null);
+    setPdfFile(null);
+    setPdfName(item.spec_pdf_url ? "Ficha técnica cargada" : null);
     setDialogOpen(true);
   };
 
@@ -69,6 +98,13 @@ export default function AdminInventory() {
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const handlePdfSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPdfFile(file);
+    setPdfName(file.name);
+  };
+
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
@@ -76,15 +112,19 @@ export default function AdminInventory() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const uploadImage = async (): Promise<string | null> => {
-    if (!imageFile) return form.image_url || null;
-    setUploading(true);
-    const ext = imageFile.name.split(".").pop();
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("product-images").upload(path, imageFile);
-    setUploading(false);
+  const removePdf = () => {
+    setPdfFile(null);
+    setPdfName(null);
+    setForm({ ...form, spec_pdf_url: "" });
+    if (pdfInputRef.current) pdfInputRef.current.value = "";
+  };
+
+  const uploadFile = async (file: File, prefix: string): Promise<string | null> => {
+    const ext = file.name.split(".").pop();
+    const path = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file);
     if (error) {
-      toast({ title: "Error al subir imagen", description: error.message, variant: "destructive" });
+      toast({ title: "Error al subir archivo", description: error.message, variant: "destructive" });
       return null;
     }
     const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
@@ -92,16 +132,33 @@ export default function AdminInventory() {
   };
 
   const saveItem = async () => {
-    const imageUrl = await uploadImage();
+    setUploading(true);
+
+    let imageUrl = form.image_url || null;
+    if (imageFile) {
+      const url = await uploadFile(imageFile, "img");
+      if (url) imageUrl = url;
+    }
+
+    let specPdfUrl = form.spec_pdf_url || null;
+    if (pdfFile) {
+      const url = await uploadFile(pdfFile, "spec");
+      if (url) specPdfUrl = url;
+    }
+
+    setUploading(false);
+
     const payload: any = {
       product_id: form.product_id,
       product_name: form.product_name,
       category: form.category || null,
+      subcategory: form.subcategory || null,
       stock: parseInt(form.stock) || 0,
       min_stock: parseInt(form.min_stock) || 5,
       unit_price: parseFloat(form.unit_price) || 0,
       location: form.location || null,
-      image_url: imageUrl || null,
+      image_url: imageUrl,
+      spec_pdf_url: specPdfUrl,
     };
 
     if (editItem) {
@@ -119,9 +176,10 @@ export default function AdminInventory() {
 
   const filtered = items.filter(
     (i) =>
-      i.product_name.toLowerCase().includes(search.toLowerCase()) ||
-      i.product_id.toLowerCase().includes(search.toLowerCase()) ||
-      i.category?.toLowerCase().includes(search.toLowerCase())
+      i.product_name?.toLowerCase().includes(search.toLowerCase()) ||
+      i.product_id?.toLowerCase().includes(search.toLowerCase()) ||
+      i.category?.toLowerCase().includes(search.toLowerCase()) ||
+      i.subcategory?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -135,7 +193,7 @@ export default function AdminInventory() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editItem ? "Editar Producto" : "Agregar Producto"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -145,8 +203,22 @@ export default function AdminInventory() {
               </div>
               <div className="space-y-2">
                 <Label>Categoría</Label>
-                <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Extintores" />
+                <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="EPP" />
               </div>
+            </div>
+            {/* Subcategory selector */}
+            <div className="space-y-2">
+              <Label>Subcategoría</Label>
+              <select
+                value={form.subcategory}
+                onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Seleccionar subcategoría...</option>
+                {SUBCATEGORY_OPTIONS.map((sc) => (
+                  <option key={sc} value={sc}>{sc}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Nombre</Label>
@@ -182,9 +254,28 @@ export default function AdminInventory() {
                   </Button>
                 </div>
               ) : (
-                <Button type="button" variant="outline" className="w-full h-24 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()}>
+                <Button type="button" variant="outline" className="w-full h-20 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()}>
                   <Upload className="w-5 h-5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">Seleccionar imagen</span>
+                </Button>
+              )}
+            </div>
+            {/* PDF upload */}
+            <div className="space-y-2">
+              <Label>Ficha Técnica (PDF)</Label>
+              <input type="file" ref={pdfInputRef} accept=".pdf" onChange={handlePdfSelect} className="hidden" />
+              {pdfName ? (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2">
+                  <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span className="text-sm text-foreground truncate flex-1">{pdfName}</span>
+                  <Button variant="ghost" size="icon" className="w-6 h-6 flex-shrink-0" onClick={removePdf}>
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ) : (
+                <Button type="button" variant="outline" className="w-full h-14 border-dashed flex flex-col gap-1" onClick={() => pdfInputRef.current?.click()}>
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Subir ficha técnica PDF</span>
                 </Button>
               )}
             </div>
@@ -225,7 +316,15 @@ export default function AdminInventory() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">{item.category} · {item.product_id}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">{item.category} · {item.product_id}</p>
+                          {item.subcategory && (
+                            <Badge variant="secondary" className="text-[10px]">{item.subcategory}</Badge>
+                          )}
+                          {item.spec_pdf_url && (
+                            <FileText className="w-3 h-3 text-primary" />
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
