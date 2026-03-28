@@ -2,8 +2,8 @@ import { useParams, Link } from "react-router-dom";
 import { getProductById, getProductPrice } from "@/data/products";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { ShoppingCart, Truck, Wrench, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { ShoppingCart, Truck, Wrench, ArrowLeft, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -11,10 +11,11 @@ import { LocationMap } from "@/components/LocationMap";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { useInventoryImages } from "@/hooks/useInventoryImages";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = getProductById(id || "");
+  const staticProduct = getProductById(id || "");
   const { addItem } = useCart();
   const inventoryImages = useInventoryImages();
   const [date, setDate] = useState<Date>();
@@ -23,6 +24,33 @@ const ProductDetail = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
+  const [inventoryItem, setInventoryItem] = useState<any>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    supabase
+      .from("inventory")
+      .select("*")
+      .eq("product_id", id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setInventoryItem(data);
+      });
+  }, [id]);
+
+  // Build product from inventory if no static product
+  const product: import("@/data/products").Product | null = staticProduct || (inventoryItem ? {
+    id: inventoryItem.product_id,
+    name: inventoryItem.product_name,
+    category: (inventoryItem as any).subcategory || inventoryItem.category || "EPP",
+    description: inventoryItem.product_name,
+    priceOriginalMxn: Number(inventoryItem.unit_price),
+    discount: null,
+    purchaseUrl: null,
+    purchaseStatus: "Available",
+    inStock: inventoryItem.stock > 0,
+    image: inventoryItem.image_url || undefined,
+  } : null);
 
   if (!product) {
     return (
@@ -35,15 +63,15 @@ const ProductDetail = () => {
     );
   }
 
-  const invImage = inventoryImages[product.id];
+  const invImage = inventoryImages[product.id] || inventoryItem?.image_url;
   const baseImages = product.images?.length ? product.images : [product.image || "/placeholder.svg"];
-  const allImages = invImage ? [invImage, ...baseImages] : baseImages;
+  const allImages = invImage ? [invImage, ...baseImages.filter(img => img !== invImage)] : baseImages;
   const allSizes = product.sizes ? Object.values(product.sizes).flat() : [];
 
   const basePrice = getProductPrice(product, selectedSize || undefined);
-  const finalPrice = product.discount
-    ? basePrice * (1 - product.discount)
-    : basePrice;
+  const finalPrice = product.discount ? basePrice * (1 - product.discount) : basePrice;
+
+  const specPdfUrl = (inventoryItem as any)?.spec_pdf_url;
 
   const handleAddToCart = () => {
     if (allSizes.length > 0 && !selectedSize) {
@@ -72,7 +100,7 @@ const ProductDetail = () => {
         </Link>
 
         <div className="flex flex-col gap-8 lg:flex-row">
-          {/* ─── LEFT: Images, Description, Map ─── */}
+          {/* ─── LEFT: Images, Description, Spec PDF, Map ─── */}
           <div className="flex-1 space-y-8">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/30">
               <img
@@ -121,6 +149,22 @@ const ProductDetail = () => {
               )}
             </div>
 
+            {/* Spec PDF */}
+            {specPdfUrl && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold tracking-tight">Ficha Técnica</h2>
+                <a
+                  href={specPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-5 py-3 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                >
+                  <FileText className="h-5 w-5" />
+                  Ver / Descargar Ficha Técnica (PDF)
+                </a>
+              </div>
+            )}
+
             <div className="space-y-4">
               <h2 className="text-2xl font-bold tracking-tight">
                 {serviceType === "delivery" ? "Ubicación de entrega" : "Ubicación de recolección"}
@@ -147,6 +191,9 @@ const ProductDetail = () => {
                 </div>
                 {!product.inStock && (
                   <span className="inline-block rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">Agotado</span>
+                )}
+                {inventoryItem && (
+                  <span className="text-xs text-muted-foreground">Stock: {inventoryItem.stock} unidades</span>
                 )}
               </div>
 
