@@ -811,7 +811,7 @@ const Mantenimiento = () => {
                             const isUnavailable = info.availability === "unavailable";
                             const isLimited = info.availability === "limited";
                             return (
-                              <button key={slot.id} disabled={isUnavailable} onClick={() => setSelectedTimeSlot(slot.id)} className={cn(
+                              <button key={slot.id} disabled={isUnavailable} onClick={() => { setSelectedTimeSlot(slot.id); setTimeout(() => { if (date) setStep(3); }, 600); }} className={cn(
                                 "relative flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-300",
                                 isUnavailable ? "border-border/50 bg-muted/50 text-muted-foreground cursor-not-allowed opacity-60"
                                   : isSelected ? "border-primary bg-primary text-primary-foreground shadow-lg scale-105"
