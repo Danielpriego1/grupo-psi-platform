@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { visibleProducts, getCategories } from "@/data/products";
+import { useState, useRef, useMemo } from "react";
+import { visibleProducts, getCategories, products as allStaticProducts } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 import { cn } from "@/lib/utils";
 import { HeroSection } from "@/components/HeroSection";
@@ -7,15 +7,34 @@ import { AboutSection } from "@/components/AboutSection";
 import { CTASection } from "@/components/CTASection";
 import { CustomerStories } from "@/components/CustomerStories";
 import { motion } from "framer-motion";
+import { useInventoryCatalog, type InventoryProduct } from "@/hooks/useInventoryCatalog";
+import type { Product } from "@/data/products";
 
 const Index = () => {
-  const categories = getCategories();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const catalogRef = useRef<HTMLDivElement>(null);
+  const { inventoryProducts } = useInventoryCatalog();
+
+  // Merge: static visible products + inventory products not already in static list
+  const mergedProducts = useMemo(() => {
+    const staticIds = new Set(allStaticProducts.map((p) => p.id));
+    const extraFromInventory: Product[] = inventoryProducts
+      .filter((ip) => !staticIds.has(ip.id))
+      .map((ip) => ({
+        ...ip,
+        // For catalog display, use subcategory as category label
+        category: ip.subcategory || ip.category || "EPP",
+      }));
+    return [...visibleProducts, ...extraFromInventory];
+  }, [inventoryProducts]);
+
+  const categories = useMemo(() => {
+    return [...new Set(mergedProducts.map((p) => p.category))].sort();
+  }, [mergedProducts]);
 
   const filtered = activeCategory
-    ? visibleProducts.filter((p) => p.category === activeCategory)
-    : visibleProducts;
+    ? mergedProducts.filter((p) => p.category === activeCategory)
+    : mergedProducts;
 
   const scrollToProducts = () => {
     catalogRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,10 +72,10 @@ const Index = () => {
                 : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
             )}
           >
-            Todos ({visibleProducts.length})
+            Todos ({mergedProducts.length})
           </button>
           {categories.map((cat) => {
-            const count = visibleProducts.filter((p) => p.category === cat).length;
+            const count = mergedProducts.filter((p) => p.category === cat).length;
             return (
               <button
                 key={cat}
