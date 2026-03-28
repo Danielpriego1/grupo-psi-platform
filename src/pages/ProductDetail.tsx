@@ -39,7 +39,7 @@ const ProductDetail = () => {
   }, [id]);
 
   // Build product from inventory if no static product
-  const product = staticProduct || (inventoryItem ? {
+  const product: import("@/data/products").Product | null = staticProduct || (inventoryItem ? {
     id: inventoryItem.product_id,
     name: inventoryItem.product_name,
     category: (inventoryItem as any).subcategory || inventoryItem.category || "EPP",
