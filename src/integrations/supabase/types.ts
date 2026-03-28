@@ -113,7 +113,9 @@ export type Database = {
           min_stock: number
           product_id: string
           product_name: string
+          spec_pdf_url: string | null
           stock: number
+          subcategory: string | null
           unit_price: number
           updated_at: string
         }
@@ -126,7 +128,9 @@ export type Database = {
           min_stock?: number
           product_id: string
           product_name: string
+          spec_pdf_url?: string | null
           stock?: number
+          subcategory?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -139,7 +143,9 @@ export type Database = {
           min_stock?: number
           product_id?: string
           product_name?: string
+          spec_pdf_url?: string | null
           stock?: number
+          subcategory?: string | null
           unit_price?: number
           updated_at?: string
         }
