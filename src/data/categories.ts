@@ -52,7 +52,18 @@ export const categories: CategoryConfig[] = [
     name: "Mantenimiento",
     icon: Wrench,
     description: "Servicio de recarga, inspección y certificación",
-    subcategories: ["Recarga de extintores", "Inspección", "Certificación"],
+    subcategories: [
+      "Extintores",
+      "Compresores",
+      "Sistemas de Cascada",
+      "SCBA",
+      "Equipo de Escape Rápido",
+      "Cajas de Filtración",
+      "Detectores Multigas",
+      "Certificaciones",
+      "Prueba Hidrostática",
+      "Prueba de Pureza de Aire",
+    ],
   },
 ];
 

@@ -3,11 +3,12 @@ import { getCategoryBySlug, mapStaticCategory, mapInventorySubcategory } from "@
 import { products as allStaticProducts } from "@/data/products";
 import { useInventoryCatalog } from "@/hooks/useInventoryCatalog";
 import { ProductCard } from "@/components/ProductCard";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/data/products";
+import { SERVICES } from "@/pages/ServiceDetail";
 
 interface CatalogProduct extends Product {
   mainCategory: string;
@@ -20,10 +21,11 @@ const CategoryPage = () => {
   const { inventoryProducts } = useInventoryCatalog();
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
 
-  const categoryProducts = useMemo(() => {
-    if (!category) return [];
+  const isMantenimiento = category?.slug === "mantenimiento";
 
-    // Map static products
+  const categoryProducts = useMemo(() => {
+    if (!category || isMantenimiento) return [];
+
     const seenIds = new Set<string>();
     const result: CatalogProduct[] = [];
 
@@ -35,7 +37,6 @@ const CategoryPage = () => {
       }
     }
 
-    // Map inventory products
     for (const ip of inventoryProducts) {
       if (seenIds.has(ip.id)) continue;
       const mapped = mapInventorySubcategory(
@@ -53,9 +54,8 @@ const CategoryPage = () => {
     }
 
     return result;
-  }, [category, inventoryProducts]);
+  }, [category, inventoryProducts, isMantenimiento]);
 
-  // Get actual subcategories that have products
   const activeSubcategories = useMemo(() => {
     const subs = [...new Set(categoryProducts.map((p) => p.displaySubcategory))].sort();
     return subs;
@@ -110,59 +110,98 @@ const CategoryPage = () => {
           </div>
         </motion.div>
 
-        {/* Subcategory filters */}
-        {activeSubcategories.length > 1 && (
-          <div className="mb-8 flex flex-wrap gap-2">
-            <button
-              onClick={() => setActiveSubcategory(null)}
-              className={cn(
-                "rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
-                !activeSubcategory
-                  ? "border-primary bg-primary text-primary-foreground glow-primary"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
-              )}
-            >
-              Todos ({categoryProducts.length})
-            </button>
-            {activeSubcategories.map((sub) => {
-              const count = categoryProducts.filter((p) => p.displaySubcategory === sub).length;
+        {/* Mantenimiento: show service cards */}
+        {isMantenimiento ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {SERVICES.map((service, i) => {
+              const SIcon = service.icon;
               return (
-                <button
-                  key={sub}
-                  onClick={() => setActiveSubcategory(sub)}
-                  className={cn(
-                    "rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
-                    activeSubcategory === sub
-                      ? "border-primary bg-primary text-primary-foreground glow-primary"
-                      : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                  )}
+                <motion.div
+                  key={service.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.3) }}
                 >
-                  {sub} ({count})
-                </button>
+                  <Link
+                    to={`/mantenimiento/${service.id}`}
+                    className="group flex flex-col rounded-2xl border border-border bg-card p-6 hover:border-primary/40 hover:shadow-lg transition-all duration-300 h-full"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <SIcon className="h-5 w-5" />
+                      </div>
+                      <h3 className="text-lg font-bold">{service.label}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground flex-1 mb-4 line-clamp-2">
+                      {service.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-primary">{service.price}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </Link>
+                </motion.div>
               );
             })}
           </div>
-        )}
-
-        {/* Products grid */}
-        {filtered.length === 0 ? (
-          <div className="py-20 text-center text-muted-foreground">
-            <p className="text-lg">Próximamente más productos en esta categoría</p>
-          </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((product, i) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.3) }}
-              >
-                <ProductCard product={product} index={i} />
-              </motion.div>
-            ))}
-          </div>
+          <>
+            {/* Subcategory filters */}
+            {activeSubcategories.length > 1 && (
+              <div className="mb-8 flex flex-wrap gap-2">
+                <button
+                  onClick={() => setActiveSubcategory(null)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
+                    !activeSubcategory
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                  )}
+                >
+                  Todos ({categoryProducts.length})
+                </button>
+                {activeSubcategories.map((sub) => {
+                  const count = categoryProducts.filter((p) => p.displaySubcategory === sub).length;
+                  return (
+                    <button
+                      key={sub}
+                      onClick={() => setActiveSubcategory(sub)}
+                      className={cn(
+                        "rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
+                        activeSubcategory === sub
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      )}
+                    >
+                      {sub} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Products grid */}
+            {filtered.length === 0 ? (
+              <div className="py-20 text-center text-muted-foreground">
+                <p className="text-lg">Próximamente más productos en esta categoría</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filtered.map((product, i) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.3) }}
+                  >
+                    <ProductCard product={product} index={i} />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -22,6 +22,7 @@ import AdminDeliveries from "./pages/admin/AdminDeliveries";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminClients from "./pages/admin/AdminClients";
 import CategoryPage from "./pages/CategoryPage";
+import ServiceDetail from "./pages/ServiceDetail";
 
 const queryClient = new QueryClient({});
 
@@ -66,6 +67,18 @@ const App = () => (
                     <Navbar />
                     <CartDrawer />
                     <ProductDetail />
+                    <Footer />
+                    <ChatWidget />
+                  </>
+                }
+              />
+              <Route
+                path="/mantenimiento/:serviceId"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <ServiceDetail />
                     <Footer />
                     <ChatWidget />
                   </>
