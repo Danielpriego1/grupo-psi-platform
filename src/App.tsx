@@ -73,6 +73,18 @@ const App = () => (
                 }
               />
               <Route
+                path="/mantenimiento/:serviceId"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <ServiceDetail />
+                    <Footer />
+                    <ChatWidget />
+                  </>
+                }
+              />
+              <Route
                 path="/mantenimiento"
                 element={
                   <>
