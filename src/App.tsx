@@ -47,6 +47,18 @@ const App = () => (
                 }
               />
               <Route
+                path="/categoria/:slug"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <CategoryPage />
+                    <Footer />
+                    <ChatWidget />
+                  </>
+                }
+              />
+              <Route
                 path="/product/:id"
                 element={
                   <>
