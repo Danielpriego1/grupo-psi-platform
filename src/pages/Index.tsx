@@ -1,40 +1,14 @@
-import { useState, useRef, useMemo } from "react";
-import { visibleProducts, getCategories, products as allStaticProducts } from "@/data/products";
-import { ProductCard } from "@/components/ProductCard";
-import { cn } from "@/lib/utils";
+import { useRef } from "react";
+import { Link } from "react-router-dom";
 import { HeroSection } from "@/components/HeroSection";
 import { AboutSection } from "@/components/AboutSection";
 import { CTASection } from "@/components/CTASection";
 import { CustomerStories } from "@/components/CustomerStories";
+import { categories } from "@/data/categories";
 import { motion } from "framer-motion";
-import { useInventoryCatalog, type InventoryProduct } from "@/hooks/useInventoryCatalog";
-import type { Product } from "@/data/products";
 
 const Index = () => {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const catalogRef = useRef<HTMLDivElement>(null);
-  const { inventoryProducts } = useInventoryCatalog();
-
-  // Merge: static visible products + inventory products not already in static list
-  const mergedProducts = useMemo(() => {
-    const staticIds = new Set(allStaticProducts.map((p) => p.id));
-    const extraFromInventory: Product[] = inventoryProducts
-      .filter((ip) => !staticIds.has(ip.id))
-      .map((ip) => ({
-        ...ip,
-        // For catalog display, use subcategory as category label
-        category: ip.subcategory || ip.category || "EPP",
-      }));
-    return [...visibleProducts, ...extraFromInventory];
-  }, [inventoryProducts]);
-
-  const categories = useMemo(() => {
-    return [...new Set(mergedProducts.map((p) => p.category))].sort();
-  }, [mergedProducts]);
-
-  const filtered = activeCategory
-    ? mergedProducts.filter((p) => p.category === activeCategory)
-    : mergedProducts;
 
   const scrollToProducts = () => {
     catalogRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -44,14 +18,14 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <HeroSection onScrollToProducts={scrollToProducts} />
 
-      {/* Catalog section */}
+      {/* Category cards section */}
       <main ref={catalogRef} className="container mx-auto px-4 py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mb-12 text-center"
+          className="mb-14 text-center"
         >
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">
             Nuestro <span className="text-primary">Catálogo</span>
@@ -61,50 +35,33 @@ const Index = () => {
           </p>
         </motion.div>
 
-        {/* Category filters */}
-        <div className="mb-8 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => setActiveCategory(null)}
-            className={cn(
-              "rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
-              !activeCategory
-                ? "border-primary bg-primary text-primary-foreground glow-primary"
-                : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
-            )}
-          >
-            Todos ({mergedProducts.length})
-          </button>
-          {categories.map((cat) => {
-            const count = mergedProducts.filter((p) => p.category === cat).length;
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
+          {categories.map((cat, i) => {
+            const Icon = cat.icon;
             return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200",
-                  activeCategory === cat
-                    ? "border-primary bg-primary text-primary-foreground glow-primary"
-                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                )}
+              <motion.div
+                key={cat.slug}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
               >
-                {cat} ({count})
-              </button>
+                <Link to={`/categoria/${cat.slug}`} className="block group">
+                  <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center transition-all duration-300 hover:border-primary/50 hover:shadow-[0_8px_40px_-8px_hsl(15,90%,55%,0.15)] hover:-translate-y-1">
+                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                      <Icon className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-lg font-bold text-card-foreground mb-2">
+                      {cat.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {cat.description}
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
             );
           })}
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((product, i) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.3) }}
-            >
-              <ProductCard product={product} index={i} />
-            </motion.div>
-          ))}
         </div>
       </main>
 
