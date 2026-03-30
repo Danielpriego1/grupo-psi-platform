@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { motion, useInView } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const stories = [
@@ -34,111 +34,6 @@ const stories = [
   },
 ];
 
-function StoryCardStep({
-  story,
-  index,
-  activeIndex,
-  setActiveIndex,
-}: {
-  story: (typeof stories)[0];
-  index: number;
-  activeIndex: number;
-  setActiveIndex: (i: number) => void;
-}) {
-  const stepRef = useRef<HTMLDivElement>(null);
-  const isStepInView = useInView(stepRef, {
-    margin: "-35% 0px -40% 0px",
-  });
-
-  useEffect(() => {
-    if (isStepInView) setActiveIndex(index);
-  }, [isStepInView, index, setActiveIndex]);
-
-  const isActive = activeIndex === index;
-
-  return (
-    <div
-      ref={stepRef}
-      className={cn(
-        "relative min-h-[78vh]",
-        index === 0 ? "" : "-mt-[48vh]"
-      )}
-    >
-      <motion.article
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-8%" }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="sticky top-24"
-        style={{ zIndex: index + 1 }}
-      >
-        <motion.div
-          animate={{
-            y: isActive ? 0 : 14,
-            scale: isActive ? 1 : 0.985,
-            opacity: isActive ? 1 : 0.9,
-          }}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-[1.6rem] p-[1.5px]"
-          style={{
-            background: isActive
-              ? "linear-gradient(135deg, hsl(220 85% 62%), hsl(258 84% 67%), hsl(var(--primary)))"
-              : "hsl(var(--border))",
-            boxShadow: isActive
-              ? "0 14px 38px hsl(220 85% 60% / 0.24), 0 0 0 1px hsl(258 84% 67% / 0.35)"
-              : "0 10px 22px hsl(var(--foreground) / 0.12)",
-          }}
-        >
-          <div className="overflow-hidden rounded-[1.5rem]">
-            <div
-              className="relative min-h-[340px] sm:min-h-[400px] flex flex-col justify-end p-8 sm:p-10"
-              style={{
-                background: "linear-gradient(160deg, hsl(220 22% 8%), hsl(220 18% 12%), hsl(225 15% 14%))",
-              }}
-            >
-              {/* Pattern overlay */}
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{ backgroundImage: story.pattern }}
-              />
-
-              {/* Tag */}
-              <span className="absolute left-6 top-6 sm:left-8 sm:top-8 rounded-md border border-background/15 bg-background/10 px-2.5 py-1 text-[11px] font-mono font-medium text-background/70 backdrop-blur-sm">
-                {story.tag}
-              </span>
-
-              {/* Content */}
-              <div className="relative z-10">
-                <h3 className="mb-3 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
-                  {story.company}
-                </h3>
-                <p className="mb-5 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
-                  {story.quote}
-                </p>
-
-                <div className="inline-flex items-center gap-2 text-primary">
-                  <span
-                    className="overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-400 ease-out"
-                    style={{ maxWidth: isActive ? 160 : 0, opacity: isActive ? 1 : 0 }}
-                  >
-                    Más información
-                  </span>
-                  <motion.span
-                    animate={{ x: isActive ? 4 : 0 }}
-                    transition={{ duration: 0.24, ease: "easeOut" }}
-                  >
-                    <ArrowRight size={18} />
-                  </motion.span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </motion.article>
-    </div>
-  );
-}
-
 export function CustomerStories() {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -159,20 +54,98 @@ export function CustomerStories() {
             Historias de <span className="text-primary">nuestros clientes</span>
           </h2>
           <p className="mx-auto max-w-xl text-muted-foreground">
-            Tarjetas apiladas que se activan una por una al hacer scroll
+            Empresas que confían en Grupo PSI para su seguridad industrial
           </p>
         </motion.div>
 
-        <div className="mx-auto max-w-5xl pb-12">
-          {stories.map((story, index) => (
-            <StoryCardStep
-              key={story.company}
-              story={story}
-              index={index}
-              activeIndex={activeIndex}
-              setActiveIndex={setActiveIndex}
-            />
-          ))}
+        <div className="mx-auto max-w-4xl">
+          {/* Card display */}
+          <div className="relative min-h-[380px] sm:min-h-[420px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeIndex}
+                initial={{ opacity: 0, y: 24, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -24, scale: 0.97 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="rounded-[1.6rem] p-[1.5px]"
+                style={{
+                  background: "linear-gradient(135deg, hsl(220 85% 62%), hsl(258 84% 67%), hsl(var(--primary)))",
+                  boxShadow: "0 14px 38px hsl(220 85% 60% / 0.24), 0 0 0 1px hsl(258 84% 67% / 0.35)",
+                }}
+              >
+                <div className="overflow-hidden rounded-[1.5rem]">
+                  <div
+                    className="relative min-h-[340px] sm:min-h-[400px] flex flex-col justify-end p-8 sm:p-10"
+                    style={{
+                      background: "linear-gradient(160deg, hsl(220 22% 8%), hsl(220 18% 12%), hsl(225 15% 14%))",
+                    }}
+                  >
+                    {/* Pattern overlay */}
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{ backgroundImage: stories[activeIndex].pattern }}
+                    />
+
+                    {/* Tag */}
+                    <span className="absolute left-6 top-6 sm:left-8 sm:top-8 rounded-md border border-background/15 bg-background/10 px-2.5 py-1 text-[11px] font-mono font-medium text-background/70 backdrop-blur-sm">
+                      {stories[activeIndex].tag}
+                    </span>
+
+                    {/* Content */}
+                    <div className="relative z-10">
+                      <h3 className="mb-3 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+                        {stories[activeIndex].company}
+                      </h3>
+                      <p className="mb-5 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
+                        "{stories[activeIndex].quote}"
+                      </p>
+
+                      <div className="inline-flex items-center gap-2 text-primary">
+                        <span className="text-sm font-medium">Más información</span>
+                        <ArrowRight size={18} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Navigation dots + buttons */}
+          <div className="mt-8 flex items-center justify-center gap-3">
+            {stories.map((story, i) => (
+              <button
+                key={story.company}
+                onClick={() => setActiveIndex(i)}
+                className={cn(
+                  "rounded-full transition-all duration-300",
+                  i === activeIndex
+                    ? "h-3 w-10 bg-primary shadow-lg shadow-primary/30"
+                    : "h-3 w-3 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                )}
+                aria-label={`Ver historia de ${story.company}`}
+              />
+            ))}
+          </div>
+
+          {/* Company names as tabs */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            {stories.map((story, i) => (
+              <button
+                key={story.company}
+                onClick={() => setActiveIndex(i)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-medium transition-all duration-300",
+                  i === activeIndex
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-muted text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
+                )}
+              >
+                {story.company}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
