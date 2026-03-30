@@ -33,10 +33,60 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
       const map = mapRef.current;
       if (!L || !map) return;
       if (markerRef.current) {
-        markerRef.current.setLatLng([lat, lng]);
-      } else {
-        markerRef.current = L.marker([lat, lng]).addTo(map);
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
       }
+      // Create marker above the target and animate it falling with bounce
+      const startLat = lat + 0.008;
+      const marker = L.marker([startLat, lng], { 
+        bounceOnAdd: false,
+        riseOnHover: true,
+      }).addTo(map);
+      markerRef.current = marker;
+
+      // Animate the drop with 3 bounces
+      const duration = 800;
+      const startTime = performance.now();
+      const bounceHeight = 0.008;
+
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Bounce easing: 3 bounces that decrease in height
+        let bounce: number;
+        if (progress < 0.36) {
+          // First drop
+          const t = progress / 0.36;
+          bounce = bounceHeight * (1 - t * t);
+        } else if (progress < 0.56) {
+          // First bounce up/down
+          const t = (progress - 0.36) / 0.20;
+          const peak = bounceHeight * 0.4;
+          bounce = peak * Math.sin(t * Math.PI);
+        } else if (progress < 0.72) {
+          // Second bounce
+          const t = (progress - 0.56) / 0.16;
+          const peak = bounceHeight * 0.18;
+          bounce = peak * Math.sin(t * Math.PI);
+        } else if (progress < 0.85) {
+          // Third bounce
+          const t = (progress - 0.72) / 0.13;
+          const peak = bounceHeight * 0.06;
+          bounce = peak * Math.sin(t * Math.PI);
+        } else {
+          bounce = 0;
+        }
+
+        marker.setLatLng([lat + bounce, lng]);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      requestAnimationFrame(animate);
+
       setSelectedLocation({ lat, lng });
       onLocationSelect?.(lat, lng);
     }, [onLocationSelect]);
