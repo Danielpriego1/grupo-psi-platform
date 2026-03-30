@@ -775,6 +775,7 @@ const Mantenimiento = () => {
                     }
                     if (!hasValidEquipment) { setEquipmentError("Completa los campos requeridos de al menos un equipo"); return; }
                     setContactErrors({}); setEquipmentError(null); setStep(2);
+                    setTimeout(() => document.getElementById("agendar-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
                   }}>
                     Siguiente → Seleccionar fecha
                   </Button>
@@ -811,7 +812,7 @@ const Mantenimiento = () => {
                             const isUnavailable = info.availability === "unavailable";
                             const isLimited = info.availability === "limited";
                             return (
-                              <button key={slot.id} disabled={isUnavailable} onClick={() => { setSelectedTimeSlot(slot.id); setTimeout(() => { if (date) setStep(3); }, 600); }} className={cn(
+                              <button key={slot.id} disabled={isUnavailable} onClick={() => { setSelectedTimeSlot(slot.id); setTimeout(() => { if (date) { setStep(3); setTimeout(() => document.getElementById("agendar-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); } }, 600); }} className={cn(
                                 "relative flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-300",
                                 isUnavailable ? "border-border/50 bg-muted/50 text-muted-foreground cursor-not-allowed opacity-60"
                                   : isSelected ? "border-primary bg-primary text-primary-foreground shadow-lg scale-105"
@@ -842,6 +843,7 @@ const Mantenimiento = () => {
                       if (!date) { toast.error("Selecciona una fecha"); return; }
                       if (!selectedTimeSlot) { toast.error("Selecciona un horario disponible"); return; }
                       setStep(3);
+                      setTimeout(() => document.getElementById("agendar-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
                     }}>Siguiente → Ubicación</Button>
                   </div>
                 </div>
