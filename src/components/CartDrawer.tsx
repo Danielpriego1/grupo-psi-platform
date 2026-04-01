@@ -71,7 +71,7 @@ export function CartDrawer() {
       console.error("Error creating quote:", error);
       // Fallback: open WhatsApp without saving
       window.open(
-        `https://wa.me/5215512345678?text=${buildWhatsAppMessage()}`,
+        `https://wa.me/5219931684717?text=${buildWhatsAppMessage()}`,
         "_blank"
       );
       toast({
