@@ -40,9 +40,21 @@ export function Footer() {
           <div>
             <h4 className="font-semibold text-foreground mb-4">Contacto</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>+52 55 1234 5678</li>
-              <li>ventas@grupopsi.com</li>
-              <li>Ciudad de México, México</li>
+              <li>
+                <a href="https://wa.me/5219931684717" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  +52 1 993 168 4717
+                </a>
+              </li>
+              <li>
+                <a href="mailto:daniel@grupopsi.com" className="hover:text-primary transition-colors">
+                  daniel@grupopsi.com
+                </a>
+              </li>
+              <li className="pt-2 border-t border-border/20">
+                <Link to="/admin/login" className="hover:text-primary transition-colors text-xs opacity-60 hover:opacity-100">
+                  Acceso administrativo
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
