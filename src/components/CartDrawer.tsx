@@ -59,7 +59,7 @@ export function CartDrawer() {
 
       // Open WhatsApp with order number
       window.open(
-        `https://wa.me/5215512345678?text=${buildWhatsAppMessage(orderNumber)}`,
+        `https://wa.me/5219931684717?text=${buildWhatsAppMessage(orderNumber)}`,
         "_blank"
       );
 
