@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { X, Send } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { X, Send, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,23 +8,25 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  isTyping?: boolean;
 }
 
 const INITIAL_MESSAGES: Message[] = [
   {
     id: "welcome",
     role: "assistant",
-    content: "¡Hola! 👋 Soy Sora, Ejecutiva y Asistente Personal de Grupo PSI. Estoy aquí para apoyarte con lo que necesites: productos, precios, normatividad, manuales de seguridad o cualquier duda técnica. ¿En qué te ayudo?",
+    content: "¡Hola! 👋 Soy Sora, Ejecutiva de Grupo PSI. ¿En qué te puedo ayudar hoy?",
   },
 ];
 
+const WHATSAPP_NUMBER = "5219931684717";
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+
 function renderMarkdown(text: string) {
-  // Split by bold markers and render
   return text.split(/(\*\*.*?\*\*)/).map((part, idx) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={idx}>{part.slice(2, -2)}</strong>;
     }
-    // Handle bullet points
     if (part.includes("\n")) {
       return (
         <span key={idx}>
@@ -45,25 +47,47 @@ export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messages]);
+
+  // Simulate typing effect - reveals characters gradually
+  const typeMessage = useCallback((fullText: string, messageId: string) => {
+    let charIndex = 0;
+    const speed = 18 + Math.random() * 12; // 18-30ms per char (human-like)
+    
+    typingIntervalRef.current = setInterval(() => {
+      charIndex += 1 + Math.floor(Math.random() * 2); // 1-2 chars at a time
+      if (charIndex >= fullText.length) {
+        charIndex = fullText.length;
+        if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+        typingIntervalRef.current = null;
+      }
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === messageId
+            ? { ...m, content: fullText.slice(0, charIndex), isTyping: charIndex < fullText.length }
+            : m
+        )
+      );
+    }, speed);
+  }, []);
 
   const handleSend = async () => {
-    if (!input.trim() || isTyping) return;
+    if (!input.trim() || isLoading) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: input.trim() };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
-    setIsTyping(true);
+    setIsLoading(true);
 
     try {
-      // Send conversation history (last 10 messages for context)
       const historyForApi = updatedMessages
         .filter(m => m.id !== "welcome")
         .slice(-10)
@@ -76,25 +100,38 @@ export function ChatWidget() {
       if (error) throw error;
 
       const reply = data?.reply || "Disculpa, no pude procesar tu solicitud. ¿Podrías intentar de nuevo?";
+      const msgId = (Date.now() + 1).toString();
       
+      // Add empty message first, then type it out
       setMessages(prev => [
         ...prev,
-        { id: (Date.now() + 1).toString(), role: "assistant", content: reply },
+        { id: msgId, role: "assistant", content: "", isTyping: true },
       ]);
+      setIsLoading(false);
+      
+      // Start typing effect
+      typeMessage(reply, msgId);
     } catch (err) {
       console.error("Sora chat error:", err);
+      const msgId = (Date.now() + 1).toString();
+      const fallback = "Disculpa, tengo un pequeño inconveniente. ¿Podrías intentar de nuevo? Si es urgente, escríbenos por WhatsApp.";
       setMessages(prev => [
         ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Disculpa, tengo un pequeño inconveniente. ¿Podrías intentar de nuevo? Si es urgente, llámanos al 811 389 9658.",
-        },
+        { id: msgId, role: "assistant", content: "", isTyping: true },
       ]);
-    } finally {
-      setIsTyping(false);
+      setIsLoading(false);
+      typeMessage(fallback, msgId);
     }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+    };
+  }, []);
+
+  const anyTyping = messages.some(m => m.isTyping);
 
   return (
     <>
@@ -129,6 +166,15 @@ export function ChatWidget() {
                 En línea
               </div>
             </div>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/70 hover:text-green-400 transition-colors mr-1"
+              title="Escribir por WhatsApp"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </a>
             <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white transition-colors">
               <X className="h-5 w-5" />
             </button>
@@ -151,10 +197,13 @@ export function ChatWidget() {
                 )}
               >
                 {renderMarkdown(msg.content)}
+                {msg.isTyping && (
+                  <span className="inline-block w-0.5 h-4 bg-foreground/60 animate-pulse ml-0.5 align-text-bottom" />
+                )}
               </div>
             </div>
           ))}
-          {isTyping && (
+          {isLoading && (
             <div className="flex justify-start animate-fade-in">
               <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
                 <span className="inline-flex gap-1">
@@ -167,6 +216,18 @@ export function ChatWidget() {
           )}
         </div>
 
+        {/* WhatsApp fallback banner */}
+        <div className="border-t border-border/50 bg-muted/30 px-4 py-2 text-center">
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            ¿Prefieres WhatsApp? Escríbenos →
+          </a>
+        </div>
+
         <div className="border-t border-border p-3">
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
             <input
@@ -174,9 +235,9 @@ export function ChatWidget() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Pregunta sobre productos, precios..."
               className="flex-1 rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none ring-ring transition-all duration-200 focus:ring-2 focus:border-primary"
-              disabled={isTyping}
+              disabled={isLoading || anyTyping}
             />
-            <Button type="submit" size="icon" className="shrink-0 rounded-xl transition-transform hover:scale-105 active:scale-95" disabled={isTyping}>
+            <Button type="submit" size="icon" className="shrink-0 rounded-xl transition-transform hover:scale-105 active:scale-95" disabled={isLoading || anyTyping}>
               <Send className="h-4 w-4" />
             </Button>
           </form>
