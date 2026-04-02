@@ -86,6 +86,8 @@ export function CartDrawer() {
 
   // Check if all items have purchaseUrl for direct Stripe checkout
   const stripeItems = items.filter((i) => i.product.purchaseUrl);
+  const BULK_THRESHOLD = 10;
+  const isBulkOrder = items.some((i) => i.quantity >= BULK_THRESHOLD);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
