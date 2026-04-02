@@ -6,7 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 const SUBCATEGORY_OPTIONS = [
@@ -51,6 +61,7 @@ export default function AdminInventory() {
     image_url: "",
     spec_pdf_url: "",
   });
+  const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const { toast } = useToast();
 
   const fetchItems = async () => {
@@ -171,6 +182,17 @@ export default function AdminInventory() {
       toast({ title: "Producto agregado" });
     }
     setDialogOpen(false);
+    fetchItems();
+  };
+
+  const deleteItem = async (item: any) => {
+    const { error } = await supabase.from("inventory").delete().eq("id", item.id);
+    if (error) {
+      toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Producto eliminado", description: `"${item.product_name}" fue eliminado del inventario.` });
+    setDeleteConfirm(null);
     fetchItems();
   };
 
@@ -342,6 +364,14 @@ export default function AdminInventory() {
                           <p className="text-[10px] text-muted-foreground">Ubicación</p>
                         </div>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10 h-8 w-8"
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(item); }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 );
@@ -350,6 +380,24 @@ export default function AdminInventory() {
           )}
         </CardContent>
       </Card>
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará <strong>"{deleteConfirm?.product_name}"</strong> del inventario. 
+              El producto dejará de aparecer en el catálogo público automáticamente. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteItem(deleteConfirm)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

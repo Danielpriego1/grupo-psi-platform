@@ -47,8 +47,8 @@ const Index = () => {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
               >
                 <Link to={`/categoria/${cat.slug}`} className="block group">
-                  <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center transition-all duration-300 hover:border-primary/50 hover:shadow-[0_8px_40px_-8px_hsl(15,90%,55%,0.15)] hover:-translate-y-1">
-                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                  <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_48px_-12px_hsl(var(--primary)/0.2)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-primary before:scale-x-0 before:transition-transform before:duration-300 group-hover:before:scale-x-100">
+                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)]">
                       <Icon className="h-8 w-8" />
                     </div>
                     <h3 className="text-lg font-bold text-card-foreground mb-2">

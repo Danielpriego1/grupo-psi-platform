@@ -86,6 +86,8 @@ export function CartDrawer() {
 
   // Check if all items have purchaseUrl for direct Stripe checkout
   const stripeItems = items.filter((i) => i.product.purchaseUrl);
+  const BULK_THRESHOLD = 10;
+  const isBulkOrder = items.some((i) => i.quantity >= BULK_THRESHOLD);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -169,8 +171,19 @@ export function CartDrawer() {
                 <span>${totalPrice.toFixed(2)} MXN</span>
               </div>
 
-              {/* Stripe checkout for products with purchaseUrl */}
-              {stripeItems.length > 0 && stripeItems.length === items.length && (
+              {/* Bulk order alert */}
+              {isBulkOrder && (
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                  <p className="font-semibold text-primary mb-1">📦 Pedido por volumen detectado</p>
+                  <p className="text-muted-foreground text-xs">
+                    Para compras de {BULK_THRESHOLD}+ unidades, te recomendamos solicitar cotización especial 
+                    con descuentos por volumen y fechas de entrega personalizadas.
+                  </p>
+                </div>
+              )}
+
+              {/* Stripe checkout for products with purchaseUrl - only for non-bulk */}
+              {!isBulkOrder && stripeItems.length > 0 && stripeItems.length === items.length && (
                 <div className="space-y-2">
                   {items.map((item) => (
                     <a
@@ -192,7 +205,7 @@ export function CartDrawer() {
               {/* Client info for quote */}
               <div className="space-y-2 pt-2 border-t border-border/50">
                 <Label htmlFor="clientName" className="text-xs text-muted-foreground">
-                  Datos de contacto (opcional)
+                  Datos de contacto {isBulkOrder ? "(requerido para cotización)" : "(opcional)"}
                 </Label>
                 <Input
                   id="clientName"
@@ -212,17 +225,17 @@ export function CartDrawer() {
 
               {/* WhatsApp cotización - now saves to DB */}
               <Button
-                variant="outline"
+                variant={isBulkOrder ? "default" : "outline"}
                 className="w-full"
                 onClick={handleQuoteRequest}
-                disabled={isSubmitting}
+                disabled={isSubmitting || (isBulkOrder && !clientName.trim())}
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   "💬"
                 )}
-                {isSubmitting ? "Guardando..." : "Cotizar por WhatsApp"}
+                {isSubmitting ? "Guardando..." : isBulkOrder ? "Solicitar cotización por volumen" : "Cotizar por WhatsApp"}
               </Button>
 
               <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={clearCart}>
