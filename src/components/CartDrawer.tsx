@@ -225,17 +225,17 @@ export function CartDrawer() {
 
               {/* WhatsApp cotización - now saves to DB */}
               <Button
-                variant="outline"
+                variant={isBulkOrder ? "default" : "outline"}
                 className="w-full"
                 onClick={handleQuoteRequest}
-                disabled={isSubmitting}
+                disabled={isSubmitting || (isBulkOrder && !clientName.trim())}
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   "💬"
                 )}
-                {isSubmitting ? "Guardando..." : "Cotizar por WhatsApp"}
+                {isSubmitting ? "Guardando..." : isBulkOrder ? "Solicitar cotización por volumen" : "Cotizar por WhatsApp"}
               </Button>
 
               <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={clearCart}>
