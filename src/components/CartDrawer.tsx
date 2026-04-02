@@ -171,8 +171,19 @@ export function CartDrawer() {
                 <span>${totalPrice.toFixed(2)} MXN</span>
               </div>
 
-              {/* Stripe checkout for products with purchaseUrl */}
-              {stripeItems.length > 0 && stripeItems.length === items.length && (
+              {/* Bulk order alert */}
+              {isBulkOrder && (
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                  <p className="font-semibold text-primary mb-1">📦 Pedido por volumen detectado</p>
+                  <p className="text-muted-foreground text-xs">
+                    Para compras de {BULK_THRESHOLD}+ unidades, te recomendamos solicitar cotización especial 
+                    con descuentos por volumen y fechas de entrega personalizadas.
+                  </p>
+                </div>
+              )}
+
+              {/* Stripe checkout for products with purchaseUrl - only for non-bulk */}
+              {!isBulkOrder && stripeItems.length > 0 && stripeItems.length === items.length && (
                 <div className="space-y-2">
                   {items.map((item) => (
                     <a
@@ -194,7 +205,7 @@ export function CartDrawer() {
               {/* Client info for quote */}
               <div className="space-y-2 pt-2 border-t border-border/50">
                 <Label htmlFor="clientName" className="text-xs text-muted-foreground">
-                  Datos de contacto (opcional)
+                  Datos de contacto {isBulkOrder ? "(requerido para cotización)" : "(opcional)"}
                 </Label>
                 <Input
                   id="clientName"
