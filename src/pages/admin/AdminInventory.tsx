@@ -364,6 +364,14 @@ export default function AdminInventory() {
                           <p className="text-[10px] text-muted-foreground">Ubicación</p>
                         </div>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10 h-8 w-8"
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(item); }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 );
