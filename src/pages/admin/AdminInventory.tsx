@@ -185,6 +185,17 @@ export default function AdminInventory() {
     fetchItems();
   };
 
+  const deleteItem = async (item: any) => {
+    const { error } = await supabase.from("inventory").delete().eq("id", item.id);
+    if (error) {
+      toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Producto eliminado", description: `"${item.product_name}" fue eliminado del inventario.` });
+    setDeleteConfirm(null);
+    fetchItems();
+  };
+
   const filtered = items.filter(
     (i) =>
       i.product_name?.toLowerCase().includes(search.toLowerCase()) ||
