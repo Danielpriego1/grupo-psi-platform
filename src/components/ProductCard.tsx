@@ -14,17 +14,12 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   return (
     <Link to={`/product/${product.id}`} className="block w-full">
-      {/* Outer wrapper for glow border effect */}
       <div
-        className="group relative rounded-2xl p-[2px] transition-all duration-500 hover:-translate-y-1 animate-slide-up"
+        className="group relative rounded-2xl overflow-hidden border border-border bg-card transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_48px_-12px_hsl(var(--primary)/0.2)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-primary before:scale-x-0 before:transition-transform before:duration-300 before:z-20 group-hover:before:scale-x-100 animate-slide-up"
         style={{ animationDelay: `${index * 100}ms` }}
       >
-        {/* Gradient glow border — only visible on hover */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[hsl(270,80%,65%)] via-[hsl(210,90%,60%)] to-[hsl(180,80%,55%)] opacity-0 blur-[2px] transition-opacity duration-500 group-hover:opacity-80" />
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[hsl(270,80%,65%)] via-[hsl(210,90%,60%)] to-[hsl(180,80%,55%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
         {/* Card content */}
-        <div className="relative z-10 overflow-hidden rounded-2xl bg-card p-5 transition-shadow duration-500 group-hover:shadow-[0_8px_40px_-8px_hsl(210,90%,60%,0.2)]">
+        <div className="relative z-10 p-5">
           {/* Product image */}
           <div className="aspect-[4/3] mb-5 overflow-hidden rounded-xl">
             <img
