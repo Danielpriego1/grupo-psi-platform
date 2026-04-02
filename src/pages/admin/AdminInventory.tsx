@@ -61,6 +61,7 @@ export default function AdminInventory() {
     image_url: "",
     spec_pdf_url: "",
   });
+  const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const { toast } = useToast();
 
   const fetchItems = async () => {
