@@ -92,12 +92,22 @@ const ProductDetail = () => {
   const nextImg = () => setCurrentImage((prev) => (prev + 1) % allImages.length);
   const prevImg = () => setCurrentImage((prev) => (prev - 1 + allImages.length) % allImages.length);
 
+  // Determine category slug for back navigation
+  const categorySlug = (() => {
+    if (inventoryItem) {
+      const mapped = mapInventorySubcategory(inventoryItem.category, inventoryItem.subcategory);
+      return mapped.mainCategory;
+    }
+    const mapped = mapStaticCategory(product.category);
+    return mapped.mainCategory;
+  })();
+
   return (
     <div className="min-h-screen bg-background pt-20 pb-12">
       <div className="container mx-auto px-4">
-        <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link to={`/categoria/${categorySlug}`} className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Volver al catálogo
+          Volver a la categoría
         </Link>
 
         <div className="flex flex-col gap-8 lg:flex-row">
