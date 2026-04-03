@@ -15,6 +15,7 @@ import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
 import Mantenimiento from "./pages/Mantenimiento";
 import NotFound from "./pages/NotFound";
+import PagoExitoso from "./pages/PagoExitoso";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -96,6 +97,7 @@ const App = () => (
                   </>
                 }
               />
+                      <Route path="/pago-exitoso" element={<PagoExitoso />} />
 
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
