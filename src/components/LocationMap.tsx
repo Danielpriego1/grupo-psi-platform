@@ -142,6 +142,7 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
 
         leafletRef.current = L;
         mapRef.current = map;
+        setMapReady(true);
         setTimeout(() => map.invalidateSize(), 200);
       });
 
