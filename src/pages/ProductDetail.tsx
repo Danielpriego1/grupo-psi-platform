@@ -180,7 +180,7 @@ const ProductDetail = () => {
               <h2 className="text-2xl font-bold tracking-tight">
                 {serviceType === "delivery" ? "Ubicación de entrega" : "Ubicación de recolección"}
               </h2>
-              <LocationMap onLocationSelect={(lat, lng) => setLocation({ lat, lng })} />
+              <LocationMap onLocationSelect={(lat, lng) => setLocation({ lat, lng })} scrollWheelZoom={false} />
             </div>
           </div>
 
