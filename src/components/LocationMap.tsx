@@ -17,10 +17,11 @@ interface LocationMapProps {
   interactive?: boolean;
   showGpsButton?: boolean;
   pinLabel?: string;
+  scrollWheelZoom?: boolean;
 }
 
 export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
-  ({ onLocationSelect, className, defaultCenter = [23.6345, -102.5528], defaultZoom = 5, interactive = true, showGpsButton = false, pinLabel }, ref) => {
+  ({ onLocationSelect, className, defaultCenter = [23.6345, -102.5528], defaultZoom = 5, interactive = true, showGpsButton = false, pinLabel, scrollWheelZoom = true }, ref) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<any>(null);
     const markerRef = useRef<any>(null);
@@ -135,7 +136,7 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
           shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
         });
 
-        const map = L.map(mapContainer.current).setView(defaultCenter, defaultZoom);
+        const map = L.map(mapContainer.current, { scrollWheelZoom }).setView(defaultCenter, defaultZoom);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
         }).addTo(map);
