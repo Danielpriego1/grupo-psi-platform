@@ -30,7 +30,7 @@ export function CTASection() {
               className="text-base px-8 py-6 glow-primary hover:scale-105 transition-transform"
               asChild
             >
-              <a href="https://wa.me/5215512345678" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/5219931684717" target="_blank" rel="noopener noreferrer">
                 <Phone className="h-5 w-5 mr-2" />
                 Solicitar cotización
               </a>
@@ -56,7 +56,7 @@ export function CTASection() {
               className="flex flex-col items-center gap-2"
             >
               <Phone className="h-5 w-5 text-primary" />
-              <span className="text-muted-foreground">+52 (993) 650 2842</span>
+              <span className="text-muted-foreground">+52 1 993 168 4717</span>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
