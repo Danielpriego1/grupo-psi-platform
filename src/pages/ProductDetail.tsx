@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getProductById, getProductPrice } from "@/data/products";
+import { mapStaticCategory, mapInventorySubcategory } from "@/data/categories";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { ShoppingCart, Truck, Wrench, ArrowLeft, ChevronLeft, ChevronRight, FileText } from "lucide-react";
