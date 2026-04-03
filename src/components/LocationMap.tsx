@@ -27,6 +27,7 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
     const leafletRef = useRef<any>(null);
     const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [gpsLoading, setGpsLoading] = useState(false);
+    const [mapReady, setMapReady] = useState(false);
 
     const placeMarker = useCallback((lat: number, lng: number) => {
       const L = leafletRef.current;
