@@ -8,7 +8,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-3 mb-4">
-              <img src="/images/logo_fondo_negro.png" alt="Grupo Psi" className="h-10 w-auto" />
+              <img src="/images/logo_fondo_negro.png" alt="" className="h-10 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground">
               Soluciones integrales en seguridad industrial y equipamiento para tu empresa.
@@ -45,8 +45,8 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="mailto:daniel@grupopsi.com" className="hover:text-primary transition-colors">
-                  daniel@grupopsi.com
+                <a href="mailto:ventas@grupopsi.com" className="hover:text-primary transition-colors">
+                  ventas@grupopsi.com
                 </a>
               </li>
               <li className="pt-2 border-t border-border/20">
