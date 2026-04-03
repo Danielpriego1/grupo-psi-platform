@@ -433,7 +433,7 @@ const Mantenimiento = () => {
           alt="Servicios de mantenimiento industrial – plataforma offshore"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/60 to-foreground/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/80 to-foreground/50" />
         <div className="relative z-10 h-full flex flex-col items-center justify-end pb-12 px-4 text-center">
           <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl text-primary-foreground mb-3">
             Centro de Servicios y Mantenimiento
