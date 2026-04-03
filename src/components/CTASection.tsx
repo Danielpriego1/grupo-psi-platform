@@ -56,7 +56,7 @@ export function CTASection() {
               className="flex flex-col items-center gap-2"
             >
               <Phone className="h-5 w-5 text-primary" />
-              <span className="text-muted-foreground">+52 55 1234 5678</span>
+              <span className="text-muted-foreground">+52 (993) 650 2842</span>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
