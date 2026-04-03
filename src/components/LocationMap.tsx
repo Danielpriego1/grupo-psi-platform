@@ -115,6 +115,7 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
       );
     };
 
+    // Initialize map once
     useEffect(() => {
       if (!document.querySelector(`link[href="${LEAFLET_CSS}"]`)) {
         const link = document.createElement("link");
@@ -138,12 +139,6 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
         }).addTo(map);
 
-        if (interactive) {
-          map.on("click", (e: any) => {
-            placeMarker(e.latlng.lat, e.latlng.lng);
-          });
-        }
-
         leafletRef.current = L;
         mapRef.current = map;
         setTimeout(() => map.invalidateSize(), 200);
@@ -157,6 +152,24 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
         }
       };
     }, []);
+
+    // Update click handler reactively when interactive prop changes
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      const onClick = (e: any) => {
+        placeMarker(e.latlng.lat, e.latlng.lng);
+      };
+
+      if (interactive) {
+        map.on("click", onClick);
+      }
+
+      return () => {
+        map.off("click", onClick);
+      };
+    }, [interactive, placeMarker]);
 
     return (
       <div className={className}>
