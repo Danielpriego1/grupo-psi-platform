@@ -9,7 +9,6 @@ export function Footer() {
           <div>
             <Link to="/" className="flex items-center gap-3 mb-4">
               <img src="/images/logo_fondo_negro.png" alt="Grupo Psi" className="h-10 w-auto" />
-              <span className="text-lg font-bold">Grupo Psi</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Soluciones integrales en seguridad industrial y equipamiento para tu empresa.

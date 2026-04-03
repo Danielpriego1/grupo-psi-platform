@@ -136,7 +136,7 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
           shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
         });
 
-        const map = L.map(mapContainer.current).setView(defaultCenter, defaultZoom);
+        const map = L.map(mapContainer.current, { scrollWheelZoom }).setView(defaultCenter, defaultZoom);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
         }).addTo(map);
