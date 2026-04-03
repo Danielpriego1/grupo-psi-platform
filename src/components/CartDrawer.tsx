@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus, Trash2, ShoppingBag, ExternalLink, Loader2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, CreditCard, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,11 +13,15 @@ export function CartDrawer() {
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const { toast } = useToast();
+
+  const BULK_THRESHOLD = 10;
+  const isBulkOrder = items.some((i) => i.quantity >= BULK_THRESHOLD);
 
   // Build WhatsApp message from cart
   const buildWhatsAppMessage = (orderNumber?: string) => {
-    let msg = orderNumber 
+    let msg = orderNumber
       ? `¡Hola! Mi pedido ${orderNumber}. Me gustaría cotizar los siguientes productos:\n\n`
       : "¡Hola! Me gustaría cotizar los siguientes productos:\n\n";
     items.forEach((item, i) => {
@@ -35,45 +39,60 @@ export function CartDrawer() {
     return encodeURIComponent(msg);
   };
 
-  const handleQuoteRequest = async () => {
-    setIsSubmitting(true);
+  // Stripe checkout — real payment
+  const handleStripeCheckout = async () => {
+    if (items.length === 0) return;
+    setIsCheckingOut(true);
     try {
-      // Save quote to database
-      const { data, error } = await supabase.functions.invoke("create-quote-order", {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           items,
-          total: totalPrice,
           clientName,
           clientPhone,
+          successUrl: `${window.location.origin}/pago-exitoso`,
+          cancelUrl: `${window.location.origin}/`,
         },
       });
 
       if (error) throw error;
+      if (!data?.url) throw new Error("No se recibió URL de pago");
 
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+      clearCart();
+    } catch (error: any) {
+      console.error("Error en checkout:", error);
+      toast({
+        title: "Error al procesar pago",
+        description: "Hubo un problema al iniciar el pago. Intenta de nuevo o cotiza por WhatsApp.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
+  // WhatsApp quote — save to DB
+  const handleQuoteRequest = async () => {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-quote-order", {
+        body: { items, total: totalPrice, clientName, clientPhone },
+      });
+      if (error) throw error;
       const orderNumber = data?.orderNumber;
-
       toast({
         title: "Cotización registrada",
         description: `Tu pedido ${orderNumber} ha sido guardado. Te contactaremos pronto.`,
       });
-
-      // Open WhatsApp with order number
-      window.open(
-        `https://wa.me/5219931684717?text=${buildWhatsAppMessage(orderNumber)}`,
-        "_blank"
-      );
-
+      window.open(`https://wa.me/5219931684717?text=${buildWhatsAppMessage(orderNumber)}`, "_blank");
       clearCart();
       setClientName("");
       setClientPhone("");
       setIsOpen(false);
     } catch (error) {
       console.error("Error creating quote:", error);
-      // Fallback: open WhatsApp without saving
-      window.open(
-        `https://wa.me/5219931684717?text=${buildWhatsAppMessage()}`,
-        "_blank"
-      );
+      window.open(`https://wa.me/5219931684717?text=${buildWhatsAppMessage()}`, "_blank");
       toast({
         title: "Cotización enviada",
         description: "Tu solicitud fue enviada por WhatsApp.",
@@ -83,11 +102,6 @@ export function CartDrawer() {
       setIsSubmitting(false);
     }
   };
-
-  // Check if all items have purchaseUrl for direct Stripe checkout
-  const stripeItems = items.filter((i) => i.product.purchaseUrl);
-  const BULK_THRESHOLD = 10;
-  const isBulkOrder = items.some((i) => i.quantity >= BULK_THRESHOLD);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -176,34 +190,14 @@ export function CartDrawer() {
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
                   <p className="font-semibold text-primary mb-1">📦 Pedido por volumen detectado</p>
                   <p className="text-muted-foreground text-xs">
-                    Para compras de {BULK_THRESHOLD}+ unidades, te recomendamos solicitar cotización especial 
+                    Para compras de {BULK_THRESHOLD}+ unidades, te recomendamos solicitar cotización especial
                     con descuentos por volumen y fechas de entrega personalizadas.
                   </p>
                 </div>
               )}
 
-              {/* Stripe checkout for products with purchaseUrl - only for non-bulk */}
-              {!isBulkOrder && stripeItems.length > 0 && stripeItems.length === items.length && (
-                <div className="space-y-2">
-                  {items.map((item) => (
-                    <a
-                      key={item.product.id}
-                      href={item.product.purchaseUrl!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block"
-                    >
-                      <Button variant="default" className="w-full text-sm" size="sm">
-                        <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                        Pagar {item.product.name.substring(0, 30)}…
-                      </Button>
-                    </a>
-                  ))}
-                </div>
-              )}
-
-              {/* Client info for quote */}
-              <div className="space-y-2 pt-2 border-t border-border/50">
+              {/* Contact info */}
+              <div className="space-y-2 pt-1">
                 <Label htmlFor="clientName" className="text-xs text-muted-foreground">
                   Datos de contacto {isBulkOrder ? "(requerido para cotización)" : "(opcional)"}
                 </Label>
@@ -223,19 +217,39 @@ export function CartDrawer() {
                 />
               </div>
 
-              {/* WhatsApp cotización - now saves to DB */}
+              {/* Stripe Payment Button — shown for non-bulk orders */}
+              {!isBulkOrder && (
+                <Button
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-semibold"
+                  onClick={handleStripeCheckout}
+                  disabled={isCheckingOut || isSubmitting}
+                >
+                  {isCheckingOut ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CreditCard className="h-4 w-4 mr-2" />
+                  )}
+                  {isCheckingOut ? "Procesando..." : `Pagar $${totalPrice.toFixed(2)} MXN`}
+                </Button>
+              )}
+
+              {/* WhatsApp quote */}
               <Button
                 variant={isBulkOrder ? "default" : "outline"}
                 className="w-full"
                 onClick={handleQuoteRequest}
-                disabled={isSubmitting || (isBulkOrder && !clientName.trim())}
+                disabled={isSubmitting || isCheckingOut || (isBulkOrder && !clientName.trim())}
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   "💬"
                 )}
-                {isSubmitting ? "Guardando..." : isBulkOrder ? "Solicitar cotización por volumen" : "Cotizar por WhatsApp"}
+                {isSubmitting
+                  ? "Guardando..."
+                  : isBulkOrder
+                  ? "Solicitar cotización por volumen"
+                  : "Cotizar por WhatsApp"}
               </Button>
 
               <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={clearCart}>
