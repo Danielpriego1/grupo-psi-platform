@@ -18,8 +18,8 @@ export function useInventoryCatalog() {
       const { data } = await supabase
         .from("inventory")
         .select("*")
-        .gt("stock", 0)
-        .gt("unit_price", 0)
+        
+        
         .order("product_name");
 
       if (data) {
