@@ -21,7 +21,7 @@ interface LocationMapProps {
 }
 
 export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
-  ({ onLocationSelect, className, defaultCenter = [23.6345, -102.5528], defaultZoom = 5, interactive = true, showGpsButton = false, pinLabel }, ref) => {
+  ({ onLocationSelect, className, defaultCenter = [23.6345, -102.5528], defaultZoom = 5, interactive = true, showGpsButton = false, pinLabel, scrollWheelZoom = true }, ref) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<any>(null);
     const markerRef = useRef<any>(null);
