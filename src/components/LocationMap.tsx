@@ -17,6 +17,7 @@ interface LocationMapProps {
   interactive?: boolean;
   showGpsButton?: boolean;
   pinLabel?: string;
+  scrollWheelZoom?: boolean;
 }
 
 export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
