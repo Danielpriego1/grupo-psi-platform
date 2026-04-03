@@ -76,7 +76,7 @@ export function CTASection() {
               className="flex flex-col items-center gap-2"
             >
               <MapPin className="h-5 w-5 text-primary" />
-              <span className="text-muted-foreground">Ciudad de México, México</span>
+              <span className="text-muted-foreground">Nacajuca, Tabasco, México</span>
             </motion.div>
           </div>
         </motion.div>
