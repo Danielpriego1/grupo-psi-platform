@@ -171,7 +171,7 @@ export const LocationMap = forwardRef<LocationMapHandle, LocationMapProps>(
       return () => {
         map.off("click", onClick);
       };
-    }, [interactive, placeMarker]);
+    }, [interactive, placeMarker, mapReady]);
 
     return (
       <div className={className}>
