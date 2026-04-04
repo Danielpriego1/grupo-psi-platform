@@ -18,8 +18,7 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/30 bg-background/60 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-3">
-          <img src="/images/logo_fondo_negro.png" alt="" className="h-14 w-auto" />
-          <span className="hidden text-lg font-bold sm:inline leading-none">Grupo Psi</span>
+          <img src="/images/logo_fondo_negro.png" alt="Grupo Psi" className="h-14 w-auto" />
         </Link>
 
         {/* Desktop nav */}
