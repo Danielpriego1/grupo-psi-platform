@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { items, total, clientName, clientPhone } = await req.json();
+    const { items, total, clientName = 'Sin nombre', clientPhone = 'Sin teléfono' } = await req.json();
 
     // Generate order number
     const orderNumber = `COT-${Date.now()}`;
