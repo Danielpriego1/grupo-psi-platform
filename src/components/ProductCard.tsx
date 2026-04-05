@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Product } from "@/data/products";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Flame, HardHat, Shield, Package } from "lucide-react";
 import { useInventoryImages } from "@/hooks/useInventoryImages";
 
 interface ProductCardProps {
@@ -11,6 +11,14 @@ interface ProductCardProps {
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const inventoryImages = useInventoryImages();
   const displayImage = inventoryImages[product.id] || product.image || "/placeholder.svg";
+    const hasRealImage = !!(inventoryImages[product.id] || product.image);
+    const getCategoryIcon = () => {
+          const cat = (product.category || '').toLowerCase();
+          if (cat.includes('fuego') || cat.includes('extintor')) return <Flame className="w-16 h-16 text-orange-400" />;
+          if (cat.includes('epp') || cat.includes('proteccion')) return <Shield className="w-16 h-16 text-blue-400" />;
+          if (cat.includes('uniforme')) return <HardHat className="w-16 h-16 text-yellow-400" />;
+          return <Package className="w-16 h-16 text-gray-400" />;
+        };
 
   return (
     <Link to={`/product/${product.id}`} className="block w-full">
@@ -22,11 +30,17 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         <div className="relative z-10 p-5">
           {/* Product image */}
           <div className="aspect-[4/3] mb-5 overflow-hidden rounded-xl">
+                      {hasRealImage ? (
             <img
               src={displayImage}
               alt={product.name}
               className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
             />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center bg-gray-800">
+              {getCategoryIcon()}
+            </div>
+          )}
           </div>
 
           {/* Text content */}
