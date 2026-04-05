@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { items, total, clientName, clientPhone } = await req.json();
+    const { items, total, clientName = 'Sin nombre', clientPhone = 'Sin teléfono' } = await req.json();
 
     // Generate order number
     const orderNumber = `COT-${Date.now()}`;
@@ -61,7 +61,6 @@ Deno.serve(async (req) => {
         product_name: productName,
         quantity: item.quantity,
         unit_price: unitPrice,
-        subtotal: unitPrice * item.quantity,
       };
     });
 
@@ -75,9 +74,11 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, orderNumber }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
+    const message = error?.message || JSON.stringify(error);
+    console.error("create-quote-order error:", message);
     return new Response(
-      JSON.stringify({ success: false, error: String(error) }),
+      JSON.stringify({ success: false, error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
