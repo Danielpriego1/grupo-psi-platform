@@ -75,9 +75,11 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, orderNumber }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
+    const message = error?.message || JSON.stringify(error);
+    console.error("create-quote-order error:", message);
     return new Response(
-      JSON.stringify({ success: false, error: String(error) }),
+      JSON.stringify({ success: false, error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
