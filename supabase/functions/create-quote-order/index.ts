@@ -61,7 +61,6 @@ Deno.serve(async (req) => {
         product_name: productName,
         quantity: item.quantity,
         unit_price: unitPrice,
-        subtotal: unitPrice * item.quantity,
       };
     });
 
