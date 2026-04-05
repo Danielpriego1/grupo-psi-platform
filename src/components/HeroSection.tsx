@@ -17,12 +17,13 @@ const categories = [
 ];
 
 export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => void }) {
-  const [introDone, setIntroDone] = useState(false);
-  const [showContent, setShowContent] = useState(false);
+  const [introDone, setIntroDone] = useState(() => sessionStorage.getItem('heroIntroDone') === 'true');
+  const [showContent, setShowContent] = useState(() => sessionStorage.getItem('heroIntroDone') === 'true');
   const logoVideoRef = useRef<HTMLVideoElement>(null);
 
   const handleLogoEnd = () => {
     setIntroDone(true);
+        sessionStorage.setItem('heroIntroDone', 'true');
     // After the epic text fades in, show main content
     setTimeout(() => setShowContent(true), 2800);
   };
