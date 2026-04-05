@@ -71,3 +71,17 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Keep-Alive (Anti-Pausa Supabase)
+
+Para evitar que el proyecto de Supabase entre en pausa por inactividad, usa el script `scripts/keep-alive.sh`.
+
+### Instalación en VPS
+
+```sh
+chmod +x /ruta/al/proyecto/scripts/keep-alive.sh
+
+crontab -e
+# Agregar la siguiente línea (ping cada 5 días a medianoche):
+0 0 */5 * * /ruta/al/proyecto/scripts/keep-alive.sh >> /var/log/supabase-keepalive.log 2>&1
+```
