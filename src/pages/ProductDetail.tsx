@@ -26,6 +26,7 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [inventoryItem, setInventoryItem] = useState<any>(null);
+  const [priceRevealed, setPriceRevealed] = useState(false);
 
   useEffect(() => {
     if (!id) return;
