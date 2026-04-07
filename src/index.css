@@ -74,12 +74,12 @@
   }
 }
 
-/* Force dark mode */
+/* Color scheme follows class */
 html {
   color-scheme: dark;
 }
-html:not(.light) {
-  @apply dark;
+html.light {
+  color-scheme: light;
 }
 
 /* Custom scrollbar */
