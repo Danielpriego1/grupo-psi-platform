@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ShoppingCart, Wrench, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
@@ -33,6 +34,7 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          <ThemeToggle />
           <Button variant="outline" size="icon" className="relative" onClick={() => setIsOpen(true)}>
             <ShoppingCart className="h-4 w-4" />
             {totalItems > 0 && (
@@ -45,6 +47,7 @@ export function Navbar() {
 
         {/* Mobile: cart + menu */}
         <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle />
           <Button variant="outline" size="icon" className="relative" onClick={() => setIsOpen(true)}>
             <ShoppingCart className="h-4 w-4" />
             {totalItems > 0 && (
