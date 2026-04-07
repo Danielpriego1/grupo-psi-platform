@@ -319,7 +319,7 @@ const ProductDetail = () => {
               {/* Add to cart */}
               <Button size="lg" className="w-full text-base" onClick={handleAddToCart} disabled={!product.inStock}>
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Agregar al carrito — ${(finalPrice * quantity).toFixed(2)}
+                {priceRevealed ? `Agregar al carrito — $${(finalPrice * quantity).toFixed(2)}` : "Agregar al carrito"}
               </Button>
 
               {product.purchaseUrl && (
