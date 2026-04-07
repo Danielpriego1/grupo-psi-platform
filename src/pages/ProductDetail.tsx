@@ -3,7 +3,7 @@ import { getProductById, getProductPrice } from "@/data/products";
 import { mapStaticCategory, mapInventorySubcategory } from "@/data/categories";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { ShoppingCart, Truck, Wrench, ArrowLeft, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { ShoppingCart, Truck, Wrench, ArrowLeft, ChevronLeft, ChevronRight, FileText, Eye, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -191,16 +191,37 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <div className="text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</div>
                 <h1 className="text-xl font-bold text-card-foreground leading-tight">{product.name}</h1>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold">${finalPrice.toFixed(2)}</span>
-                  {product.sizePricing && selectedSize && (
-                    <span className="text-xs text-muted-foreground ml-1">(precio por talla)</span>
-                  )}
-                  <span className="text-sm text-muted-foreground">MXN</span>
-                  {product.discount && (
-                    <span className="text-sm text-muted-foreground line-through">${product.priceOriginalMxn.toFixed(2)}</span>
-                  )}
-                </div>
+                {!priceRevealed ? (
+                  <button
+                    onClick={() => setPriceRevealed(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Ver precio
+                  </button>
+                ) : (
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-extrabold">${finalPrice.toFixed(2)}</span>
+                      {product.sizePricing && selectedSize && (
+                        <span className="text-xs text-muted-foreground ml-1">(precio por talla)</span>
+                      )}
+                      <span className="text-sm text-muted-foreground">MXN</span>
+                      {product.discount && (
+                        <span className="text-sm text-muted-foreground line-through">${product.priceOriginalMxn.toFixed(2)}</span>
+                      )}
+                    </div>
+                    <a
+                      href={`https://wa.me/5219931684717?text=${encodeURIComponent(`Hola, me interesa cotizar: ${product.name}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm font-medium transition-colors"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Cotizar por WhatsApp
+                    </a>
+                  </div>
+                )}
                 {!product.inStock && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
                     <span className="h-2 w-2 rounded-full bg-destructive" />
