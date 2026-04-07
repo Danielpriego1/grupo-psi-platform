@@ -201,10 +201,22 @@ const ProductDetail = () => {
                   )}
                 </div>
                 {!product.inStock && (
-                  <span className="inline-block rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">Agotado</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
+                    <span className="h-2 w-2 rounded-full bg-destructive" />
+                    Agotado
+                  </span>
                 )}
-                {inventoryItem && (
-                  <span className="text-xs text-muted-foreground">Stock: {inventoryItem.stock} unidades</span>
+                {inventoryItem && product.inStock && (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                    Stock: {inventoryItem.stock} unidades
+                  </span>
+                )}
+                {inventoryItem && !product.inStock && !inventoryItem.stock && (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-destructive" />
+                    Sin stock
+                  </span>
                 )}
               </div>
 
