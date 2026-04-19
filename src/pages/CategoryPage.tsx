@@ -137,7 +137,7 @@ const CategoryPage = () => {
                       {service.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-primary">{service.price}</span>
+                      <span className="text-xs font-medium text-green-500 flex items-center gap-1">💬 Cotizar por WhatsApp</span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </div>
                   </Link>

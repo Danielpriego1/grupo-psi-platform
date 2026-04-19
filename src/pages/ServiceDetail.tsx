@@ -32,7 +32,7 @@ const SERVICES = [
       "Cambio de válvulas, mangueras, manómetros y pintura electrostática",
       "Atendemos desde 1 kg hasta unidades móviles de 70 kg",
     ],
-    price: "Desde $150 MXN por unidad",
+    price: "Cotización por WhatsApp",
   },
   {
     id: "compresores",
@@ -92,7 +92,7 @@ const SERVICES = [
       "Prueba de fuga y ajuste de válvulas de demanda",
       "Etiqueta de servicio con fecha y próximo mantenimiento",
     ],
-    price: "Desde $800 MXN por equipo",
+    price: "Cotización por WhatsApp",
   },
   {
     id: "escape-rapido",
@@ -142,7 +142,7 @@ const SERVICES = [
       "Reemplazo de sensores electroquímicos y catalíticos",
       "Marcas: Honeywell, MSA, Dräger, Industrial Scientific",
     ],
-    price: "Desde $1,200 MXN por detector",
+    price: "Cotización por WhatsApp",
   },
   {
     id: "certificaciones",
@@ -157,7 +157,7 @@ const SERVICES = [
       "Etiquetas de servicio para SCBA, extintores y detectores",
       "Registros de mantenimiento y bitácoras de equipo",
     ],
-    price: "Desde $500 MXN por certificado",
+    price: "Cotización por WhatsApp",
   },
   {
     id: "prueba-hidrostatica",
@@ -172,7 +172,7 @@ const SERVICES = [
       "Prueba a cilindros de sistemas de cascada",
       "Registro y documentación con número de serie",
     ],
-    price: "Desde $600 MXN por cilindro",
+    price: "Cotización por WhatsApp",
   },
   {
     id: "pureza-aire",
@@ -188,7 +188,7 @@ const SERVICES = [
       "Vapor de aceite: máx. 5 mg/m³",
       "Punto de rocío y ausencia de olor/sabor",
     ],
-    price: "Desde $2,500 MXN por análisis",
+    price: "Cotización por WhatsApp",
   },
 ];
 
@@ -373,10 +373,18 @@ const ServiceDetail = () => {
             </p>
 
             {/* Price */}
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-              <p className="text-sm text-muted-foreground mb-1">Precio</p>
-              <p className="text-xl font-bold text-primary">{service.price}</p>
-            </div>
+            <a
+              href="https://wa.me/5219931684717"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-xl border border-green-500/30 bg-green-500/10 p-4 hover:bg-green-500/20 transition-colors group"
+            >
+              <span className="text-2xl">💬</span>
+              <div>
+                <p className="text-sm text-muted-foreground">¿Cuánto cuesta?</p>
+                <p className="text-lg font-bold text-green-600 dark:text-green-400 group-hover:underline">Cotización por WhatsApp</p>
+              </div>
+            </a>
 
             {/* Details */}
             <div className="space-y-3">

@@ -39,25 +39,19 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
             transition={{ duration: 1.2 }}
           >
             <video
-              ref={logoVideoRef}
               autoPlay
               muted
+              loop
               playsInline
-              onEnded={handleLogoEnd}
-              onCanPlay={(e) => {
-                const v = e.currentTarget;
-                v.play().catch(() => {});
-              }}
-              className="w-full h-full object-contain pt-16"
+              className="w-full h-full object-cover"
             >
-              <source src="/videos/logo-animation.mov" type="video/quicktime" />
               <source src="/videos/logo-animation.mp4" type="video/mp4" />
             </video>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Phase 2: Epic welcome text (shows after logo, before main content) */}
+      {/* Phas	e 2: Epic welcome text (shows after logo, before main content) */}
       <AnimatePresence>
         {introDone && !showContent && (
           <motion.div

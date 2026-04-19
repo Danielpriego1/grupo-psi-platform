@@ -143,7 +143,7 @@ export function ChatWidget() {
           open && "scale-0 opacity-0 pointer-events-none"
         )}
       >
-        <video src="/videos/sora.mp4" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
+        <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
       </button>
 
       <div
@@ -154,10 +154,10 @@ export function ChatWidget() {
         )}
       >
         <div className="relative flex items-center gap-3 overflow-hidden px-4 py-3">
-          <video src="/videos/sora-2.mp4" autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover brightness-50" />
+          <video src="/videos/sora-2.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover brightness-50" />
           <div className="relative z-10 flex items-center gap-3 w-full">
             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-white/30">
-              <video src="/videos/sora.mp4" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
+              <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
             </div>
             <div className="flex-1">
               <div className="text-sm font-bold text-white">Sora · Ejecutiva Grupo PSI</div>
