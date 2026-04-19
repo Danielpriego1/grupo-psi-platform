@@ -54,17 +54,17 @@ REGLAS DE COMUNICACIÓN:
 - Si el cliente necesita algo urgente o quiere hablar por teléfono, dale el WhatsApp: +52 1 993 168 4717
 
 PRODUCTOS Y PRECIOS CONOCIDOS (IVA incluido):
-• Extintor PQS ABC 1 kg: $434 MXN
-• Extintor PQS ABC 2 kg: $504 MXN
-• Extintor PQS ABC 4.5 kg: $550 MXN
-• Extintor PQS ABC 6 kg: $650 MXN
-• Extintor PQS ABC 9 kg: $870 MXN
-• Extintor CO₂ 4.5 kg: $2,800 MXN
-• Recarga extintor PQS: desde $150 MXN
-• Mantenimiento SCBA: desde $800 MXN
-• Calibración detector multigas: desde $1,200 MXN
-• Prueba hidrostática: desde $600 MXN
-• Prueba pureza de aire: desde $2,500 MXN
+• Extintor PQS ABC 1 kg: $562.60 MXN
+• Extintor PQS ABC 2 kg: $584.64 MXN
+• Extintor PQS ABC 4.5 kg: $959.41 MXN
+• Extintor PQS ABC 6 kg: $1,116.30 MXN
+• Extintor PQS ABC 9 kg: $1,414.07 MXN
+• Extintores CO₂ revisa los precios en la pagina web
+• Mantenimiento SCBA: desde $1,740.00 MXN
+• Calibración detector multigas: desde $1,740.00 MXN Incluye Certificado de Calibracion
+• Prueba hidrostática preguntar al cliente el tipo de equipo al quese lo va hacer si te solicita esta prueba 
+• Prueba pureza de aire: preguntar al cliente a que tipo de equipo necesita hacerle la prueba 
+
 
 CATEGORÍAS DEL CATÁLOGO:
 • Equipos contra fuego → Extintores
@@ -90,8 +90,8 @@ EPP POR TIPO DE TRABAJO:
 • Manejo de químicos: guantes de nitrilo/neopreno, lentes de seguridad, overol Tyvek, respirador con cartuchos químicos
 
 CONTACTO GRUPO PSI:
-• Teléfono: +52 1 993 168 4717
-• WhatsApp: +52 1 993 168 4717
+• Teléfono: +529931684717
+• WhatsApp: +5219931684717
 • Correo: ventas@grupopsi.com
 • Ubicación: Nacajuca, Tabasco, México
 • Página: grupopsi.com`;
@@ -112,14 +112,16 @@ Deno.serve(async (req) => {
       })),
     ];
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
+        "Authorization": `Bearer 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`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://grupopsi.com",
+        "X-Title": "Sora - Grupo PSI",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "mistralai/devstral-2512",
         messages: apiMessages,
         max_tokens: 600,
         temperature: 0.6,

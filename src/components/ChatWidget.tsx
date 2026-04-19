@@ -58,12 +58,16 @@ export function ChatWidget() {
   }, [messages]);
 
   // Simulate typing effect - reveals characters gradually
-  const typeMessage = useCallback((fullText: string, messageId: string) => {
+   const typeMessage = useCallback((fullText: string, messageId: string) => {
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
     let charIndex = 0;
-    const speed = 18 + Math.random() * 12; // 18-30ms per char (human-like)
-    
+    const speed = 18 + Math.random() * 12;
+
     typingIntervalRef.current = setInterval(() => {
-      charIndex += 1 + Math.floor(Math.random() * 2); // 1-2 chars at a time
+      charIndex += 1 + Math.floor(Math.random() * 2);
       if (charIndex >= fullText.length) {
         charIndex = fullText.length;
         if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
@@ -78,7 +82,6 @@ export function ChatWidget() {
       );
     }, speed);
   }, []);
-
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: input.trim() };
