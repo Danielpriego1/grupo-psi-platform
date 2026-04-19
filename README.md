@@ -85,3 +85,4 @@ crontab -e
 # Agregar la siguiente línea (ping cada 5 días a medianoche):
 0 0 */5 * * /ruta/al/proyecto/scripts/keep-alive.sh >> /var/log/supabase-keepalive.log 2>&1
 ```
+# test deploy automatico
