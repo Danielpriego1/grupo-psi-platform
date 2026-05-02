@@ -49,10 +49,11 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
             transition={{ duration: 1.2 }}
           >
             <video
+              ref={logoVideoRef}
               autoPlay
               muted
-              loop
               playsInline
+              onEnded={handleLogoEnd}
               className="w-full h-full object-cover"
             >
               <source src="/videos/logo-animation.mp4" type="video/mp4" />
