@@ -116,6 +116,7 @@ export default function AdminOrders() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="active">Activos</SelectItem>
             <SelectItem value="all">Todos</SelectItem>
             {Object.entries(statusLabels).map(([k, v]) => (
               <SelectItem key={k} value={k}>{v}</SelectItem>
