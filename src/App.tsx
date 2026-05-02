@@ -22,6 +22,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminDeliveries from "./pages/admin/AdminDeliveries";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminClients from "./pages/admin/AdminClients";
+import AdminMaintenance from "./pages/admin/AdminMaintenance";
 import CategoryPage from "./pages/CategoryPage";
 import ServiceDetail from "./pages/ServiceDetail";
 
