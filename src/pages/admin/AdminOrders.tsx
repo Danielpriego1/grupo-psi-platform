@@ -37,7 +37,7 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("active");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newOrder, setNewOrder] = useState({ client_id: "", notes: "", total: "" });
   const { toast } = useToast();
