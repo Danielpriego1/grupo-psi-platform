@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
 import { mexicoStates, type MexicoState, type Municipality } from "@/data/mexicoLocations";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─── ALL SERVICE CATEGORIES ──────────────────────────────────
 const SERVICE_CATEGORIES = [
