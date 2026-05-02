@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
 import { mexicoStates, type MexicoState, type Municipality } from "@/data/mexicoLocations";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─── ALL SERVICE CATEGORIES ──────────────────────────────────
 const SERVICE_CATEGORIES = [
@@ -336,7 +337,7 @@ const Mantenimiento = () => {
   const addEquipmentItem = () => setEquipmentItems(prev => [...prev, { ...defaultEquipmentItem }]);
   const removeEquipmentItem = (index: number) => { if (equipmentItems.length > 1) setEquipmentItems(prev => prev.filter((_, i) => i !== index)); };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const result = contactSchema.safeParse(contact);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof ContactData, string>> = {};
@@ -358,6 +359,27 @@ const Mantenimiento = () => {
     if (!location || !locationConfirmed) { toast.error("Confirma tu ubicación en el mapa"); setStep(3); return; }
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
     const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    const { error } = await supabase.from("maintenance_requests").insert({
+      contact_name: contact.name,
+      contact_phone: contact.phone,
+      contact_email: contact.email,
+      address,
+      state: selectedState?.name ?? null,
+      municipality: selectedMunicipality?.name ?? null,
+      postal_code: selectedPostalCode,
+      latitude: location.lat,
+      longitude: location.lng,
+      scheduled_date: format(date, "yyyy-MM-dd"),
+      time_slot: slotLabel,
+      equipment_items: equipmentItems as any,
+      total_units: totalUnits,
+      additional_notes: additionalNotes || null,
+    });
+    if (error) {
+      toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
+      return;
+    }
     toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
   };
 

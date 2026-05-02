@@ -37,7 +37,7 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("active");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newOrder, setNewOrder] = useState({ client_id: "", notes: "", total: "" });
   const { toast } = useToast();
@@ -89,7 +89,12 @@ export default function AdminOrders() {
     const matchSearch =
       o.order_number?.toLowerCase().includes(search.toLowerCase()) ||
       o.clients?.company_name?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === "all" || o.status === filterStatus;
+    const matchStatus =
+      filterStatus === "all"
+        ? true
+        : filterStatus === "active"
+        ? o.status !== "cancelled"
+        : o.status === filterStatus;
     return matchSearch && matchStatus;
   });
 
@@ -111,6 +116,7 @@ export default function AdminOrders() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="active">Activos</SelectItem>
             <SelectItem value="all">Todos</SelectItem>
             {Object.entries(statusLabels).map(([k, v]) => (
               <SelectItem key={k} value={k}>{v}</SelectItem>
