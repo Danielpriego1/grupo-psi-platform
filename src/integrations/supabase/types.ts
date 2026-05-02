@@ -151,6 +151,69 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_requests: {
+        Row: {
+          additional_notes: string | null
+          address: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          equipment_items: Json
+          id: string
+          latitude: number | null
+          longitude: number | null
+          municipality: string | null
+          postal_code: string | null
+          scheduled_date: string | null
+          state: string | null
+          status: Database["public"]["Enums"]["maintenance_request_status"]
+          time_slot: string | null
+          total_units: number
+          updated_at: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          address?: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          equipment_items?: Json
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
+          postal_code?: string | null
+          scheduled_date?: string | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["maintenance_request_status"]
+          time_slot?: string | null
+          total_units?: number
+          updated_at?: string
+        }
+        Update: {
+          additional_notes?: string | null
+          address?: string | null
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          equipment_items?: Json
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
+          postal_code?: string | null
+          scheduled_date?: string | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["maintenance_request_status"]
+          time_slot?: string | null
+          total_units?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
@@ -305,6 +368,12 @@ export type Database = {
         | "in_transit"
         | "delivered"
         | "failed"
+      maintenance_request_status:
+        | "pending"
+        | "contacted"
+        | "scheduled"
+        | "completed"
+        | "cancelled"
       order_status:
         | "pending"
         | "confirmed"
@@ -446,6 +515,13 @@ export const Constants = {
         "in_transit",
         "delivered",
         "failed",
+      ],
+      maintenance_request_status: [
+        "pending",
+        "contacted",
+        "scheduled",
+        "completed",
+        "cancelled",
       ],
       order_status: [
         "pending",
