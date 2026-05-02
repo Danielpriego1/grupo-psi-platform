@@ -89,7 +89,12 @@ export default function AdminOrders() {
     const matchSearch =
       o.order_number?.toLowerCase().includes(search.toLowerCase()) ||
       o.clients?.company_name?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === "all" || o.status === filterStatus;
+    const matchStatus =
+      filterStatus === "all"
+        ? true
+        : filterStatus === "active"
+        ? o.status !== "cancelled"
+        : o.status === filterStatus;
     return matchSearch && matchStatus;
   });
 
