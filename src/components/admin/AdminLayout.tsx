@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Shield,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
   { label: "Pedidos", icon: ShoppingCart, path: "/admin/orders" },
+  { label: "Mantenimiento", icon: Wrench, path: "/admin/maintenance" },
   { label: "Entregas", icon: Truck, path: "/admin/deliveries" },
   { label: "Inventario", icon: Package, path: "/admin/inventory" },
   { label: "Clientes", icon: Users, path: "/admin/clients" },
