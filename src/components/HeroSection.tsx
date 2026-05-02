@@ -22,11 +22,21 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
   const logoVideoRef = useRef<HTMLVideoElement>(null);
 
   const handleLogoEnd = () => {
+    if (introDone) return;
     setIntroDone(true);
-        sessionStorage.setItem('heroIntroDone', 'true');
+    sessionStorage.setItem('heroIntroDone', 'true');
     // After the epic text fades in, show main content
     setTimeout(() => setShowContent(true), 2800);
   };
+
+  useEffect(() => {
+    if (introDone) return;
+    const video = logoVideoRef.current;
+    if (!video) return;
+    // Fallback: advance after video duration or 5s if onEnded never fires
+    const fallback = setTimeout(handleLogoEnd, 6000);
+    return () => clearTimeout(fallback);
+  }, [introDone]);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
