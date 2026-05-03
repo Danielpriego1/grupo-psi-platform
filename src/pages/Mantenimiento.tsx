@@ -306,6 +306,7 @@ const Mantenimiento = () => {
   const [contactErrors, setContactErrors] = useState<Partial<Record<keyof ContactData, string>>>({});
   const [step, setStep] = useState(1);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [trackingCode, setTrackingCode] = useState<string | null>(null);
 
   const defaultEquipmentItem: EquipmentItem = { category: "", type: "", weight: "", quantity: 1, scbaLastMaintenance: "", scbaPsi: "", scbaMinutes: "", detectorBrand: "", detectorGases: "", detectorLastMaintenance: "", notes: "" };
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ ...defaultEquipmentItem }]);
