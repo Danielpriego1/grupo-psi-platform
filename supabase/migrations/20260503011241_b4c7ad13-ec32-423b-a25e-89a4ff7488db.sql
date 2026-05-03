@@ -1,0 +1,1 @@
+DELETE FROM public.maintenance_requests WHERE contact_name = 'Cliente Prueba E2E';
