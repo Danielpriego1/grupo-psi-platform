@@ -170,6 +170,7 @@ export type Database = {
           status: Database["public"]["Enums"]["maintenance_request_status"]
           time_slot: string | null
           total_units: number
+          tracking_code: string | null
           updated_at: string
         }
         Insert: {
@@ -190,6 +191,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["maintenance_request_status"]
           time_slot?: string | null
           total_units?: number
+          tracking_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -210,6 +212,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["maintenance_request_status"]
           time_slot?: string | null
           total_units?: number
+          tracking_code?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -352,6 +355,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_maintenance_tracking_code: { Args: never; Returns: string }
+      get_maintenance_by_tracking_code: {
+        Args: { _code: string }
+        Returns: {
+          contact_name: string
+          created_at: string
+          municipality: string
+          scheduled_date: string
+          state: string
+          status: Database["public"]["Enums"]["maintenance_request_status"]
+          time_slot: string
+          total_units: number
+          tracking_code: string
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

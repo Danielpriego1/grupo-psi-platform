@@ -25,6 +25,7 @@ import AdminClients from "./pages/admin/AdminClients";
 import AdminMaintenance from "./pages/admin/AdminMaintenance";
 import CategoryPage from "./pages/CategoryPage";
 import ServiceDetail from "./pages/ServiceDetail";
+import RastreoMantenimiento from "./pages/RastreoMantenimiento";
 
 const queryClient = new QueryClient({});
 
@@ -99,6 +100,17 @@ const App = () => (
                 }
               />
                       <Route path="/pago-exitoso" element={<PagoExitoso />} />
+              <Route
+                path="/rastreo"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <RastreoMantenimiento />
+                    <Footer />
+                  </>
+                }
+              />
 
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />

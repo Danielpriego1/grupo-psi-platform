@@ -306,6 +306,7 @@ const Mantenimiento = () => {
   const [contactErrors, setContactErrors] = useState<Partial<Record<keyof ContactData, string>>>({});
   const [step, setStep] = useState(1);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [trackingCode, setTrackingCode] = useState<string | null>(null);
 
   const defaultEquipmentItem: EquipmentItem = { category: "", type: "", weight: "", quantity: 1, scbaLastMaintenance: "", scbaPsi: "", scbaMinutes: "", detectorBrand: "", detectorGases: "", detectorLastMaintenance: "", notes: "" };
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ ...defaultEquipmentItem }]);
@@ -360,7 +361,7 @@ const Mantenimiento = () => {
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
     const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
 
-    const { error } = await supabase.from("maintenance_requests").insert({
+    const { data: inserted, error } = await supabase.from("maintenance_requests").insert({
       contact_name: contact.name,
       contact_phone: contact.phone,
       contact_email: contact.email,
@@ -375,12 +376,14 @@ const Mantenimiento = () => {
       equipment_items: equipmentItems as any,
       total_units: totalUnits,
       additional_notes: additionalNotes || null,
-    });
+    }).select("tracking_code").single();
     if (error) {
       toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
       return;
     }
-    toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
+    setTrackingCode(inserted?.tracking_code ?? null);
+    setStep(4);
+    toast.success(`¡Solicitud enviada! Tu código de rastreo es ${inserted?.tracking_code}.`);
   };
 
   const hasValidEquipment = equipmentItems.some(item => {
@@ -1077,6 +1080,68 @@ const Mantenimiento = () => {
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Success / Tracking code */}
+              {step === 4 && trackingCode && (
+                <div className="animate-fade-in space-y-6 rounded-2xl border border-primary/30 bg-card p-8 shadow-lg text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                    <CheckCircle className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-extrabold">¡Solicitud registrada!</h2>
+                    <p className="text-muted-foreground">
+                      Guarda tu código de rastreo para dar seguimiento a tu solicitud en cualquier momento.
+                    </p>
+                  </div>
+                  <div className="mx-auto inline-flex flex-col items-center gap-2 rounded-2xl border border-border bg-muted/30 px-8 py-5">
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground">Código de rastreo</span>
+                    <span className="text-3xl font-mono font-bold text-primary tracking-widest select-all">
+                      {trackingCode}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(trackingCode);
+                        toast.success("Código copiado");
+                      }}
+                    >
+                      Copiar código
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    También enviaremos los detalles a <span className="font-medium text-foreground">{contact.email}</span>.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                    <a href={`/rastreo?code=${trackingCode}`}>
+                      <Button size="lg" className="w-full sm:w-auto">Ver estado de mi solicitud</Button>
+                    </a>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => {
+                        setShowScheduler(false);
+                        setTrackingCode(null);
+                        setStep(1);
+                        setEquipmentItems([{ ...defaultEquipmentItem }]);
+                        setContact({ name: "", phone: "", email: "" });
+                        setDate(undefined);
+                        setSelectedTimeSlot(null);
+                        setLocation(null);
+                        setLocationConfirmed(false);
+                        setSelectedState(null);
+                        setSelectedMunicipality(null);
+                        setSelectedPostalCode(null);
+                        setAddress("");
+                        setLocationSubStep(1);
+                        setAdditionalNotes("");
+                      }}
+                    >
+                      Nueva solicitud
+                    </Button>
                   </div>
                 </div>
               )}
