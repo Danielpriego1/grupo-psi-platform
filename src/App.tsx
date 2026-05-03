@@ -100,6 +100,17 @@ const App = () => (
                 }
               />
                       <Route path="/pago-exitoso" element={<PagoExitoso />} />
+              <Route
+                path="/rastreo"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <RastreoMantenimiento />
+                    <Footer />
+                  </>
+                }
+              />
 
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
