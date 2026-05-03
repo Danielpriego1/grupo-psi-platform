@@ -360,7 +360,7 @@ const Mantenimiento = () => {
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
     const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
 
-    const { error } = await supabase.from("maintenance_requests").insert({
+    const { data: inserted, error } = await supabase.from("maintenance_requests").insert({
       contact_name: contact.name,
       contact_phone: contact.phone,
       contact_email: contact.email,
@@ -375,12 +375,14 @@ const Mantenimiento = () => {
       equipment_items: equipmentItems as any,
       total_units: totalUnits,
       additional_notes: additionalNotes || null,
-    });
+    }).select("tracking_code").single();
     if (error) {
       toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
       return;
     }
-    toast.success(`¡Solicitud enviada! ${totalUnits} equipo(s) programados para recolección el ${format(date, "d 'de' MMMM", { locale: es })} de ${slotLabel}.`);
+    setTrackingCode(inserted?.tracking_code ?? null);
+    setStep(4);
+    toast.success(`¡Solicitud enviada! Tu código de rastreo es ${inserted?.tracking_code}.`);
   };
 
   const hasValidEquipment = equipmentItems.some(item => {
