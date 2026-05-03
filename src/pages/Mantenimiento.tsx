@@ -1083,6 +1083,68 @@ const Mantenimiento = () => {
                   </div>
                 </div>
               )}
+
+              {/* Step 4: Success / Tracking code */}
+              {step === 4 && trackingCode && (
+                <div className="animate-fade-in space-y-6 rounded-2xl border border-primary/30 bg-card p-8 shadow-lg text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                    <CheckCircle className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-extrabold">¡Solicitud registrada!</h2>
+                    <p className="text-muted-foreground">
+                      Guarda tu código de rastreo para dar seguimiento a tu solicitud en cualquier momento.
+                    </p>
+                  </div>
+                  <div className="mx-auto inline-flex flex-col items-center gap-2 rounded-2xl border border-border bg-muted/30 px-8 py-5">
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground">Código de rastreo</span>
+                    <span className="text-3xl font-mono font-bold text-primary tracking-widest select-all">
+                      {trackingCode}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(trackingCode);
+                        toast.success("Código copiado");
+                      }}
+                    >
+                      Copiar código
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    También enviaremos los detalles a <span className="font-medium text-foreground">{contact.email}</span>.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                    <a href={`/rastreo?code=${trackingCode}`}>
+                      <Button size="lg" className="w-full sm:w-auto">Ver estado de mi solicitud</Button>
+                    </a>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => {
+                        setShowScheduler(false);
+                        setTrackingCode(null);
+                        setStep(1);
+                        setEquipmentItems([{ ...defaultEquipmentItem }]);
+                        setContact({ name: "", phone: "", email: "" });
+                        setDate(undefined);
+                        setSelectedTimeSlot(null);
+                        setLocation(null);
+                        setLocationConfirmed(false);
+                        setSelectedState(null);
+                        setSelectedMunicipality(null);
+                        setSelectedPostalCode(null);
+                        setAddress("");
+                        setLocationSubStep(1);
+                        setAdditionalNotes("");
+                      }}
+                    >
+                      Nueva solicitud
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
