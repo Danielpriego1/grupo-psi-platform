@@ -22,8 +22,8 @@ const ORDER_STATUS_LABEL: Record<string, string> = {
 
 const MAINT_STATUS_LABEL: Record<string, string> = {
   pending: "Pendiente",
-  confirmed: "Confirmado",
-  in_progress: "En proceso",
+  scheduled: "Agendado",
+  contacted: "Contactado",
   completed: "Completado",
   cancelled: "Cancelado",
 };
