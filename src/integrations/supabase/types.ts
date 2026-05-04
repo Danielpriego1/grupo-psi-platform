@@ -257,37 +257,52 @@ export type Database = {
       }
       orders: {
         Row: {
+          address: string | null
           assigned_to: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
+          municipality: string | null
           notes: string | null
           order_number: string
+          state: string | null
           status: Database["public"]["Enums"]["order_status"]
           total: number
           updated_at: string
         }
         Insert: {
+          address?: string | null
           assigned_to?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
           notes?: string | null
           order_number: string
+          state?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
         }
         Update: {
+          address?: string | null
           assigned_to?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
           notes?: string | null
           order_number?: string
+          state?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
