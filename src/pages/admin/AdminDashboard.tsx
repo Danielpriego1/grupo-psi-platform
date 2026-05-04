@@ -8,8 +8,8 @@ import { PendingOrdersMap, type MapPin } from "@/components/admin/dashboard/Pend
 import { AppointmentsCalendar, type CalendarEvent } from "@/components/admin/dashboard/AppointmentsCalendar";
 import { RecentOrdersTable, type OrderRow } from "@/components/admin/dashboard/RecentOrdersTable";
 
-const COMPLETED_STATUSES = ["ready", "delivered"];
-const REVENUE_STATUSES = ["confirmed", "in_progress", "ready", "delivered"];
+const COMPLETED_STATUSES = ["ready", "delivered"] as const;
+const REVENUE_STATUSES: readonly string[] = ["confirmed", "in_progress", "ready", "delivered"];
 
 const ORDER_STATUS_LABEL: Record<string, string> = {
   pending: "Pendiente",
@@ -62,19 +62,19 @@ export default function AdminDashboard() {
     ] = await Promise.all([
       supabase.from("orders").select("total, status, created_at"),
       supabase.from("orders").select("id", { count: "exact", head: true }).gte("created_at", todayStart).lte("created_at", todayEnd),
-      supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["pending", "confirmed"]),
-      supabase.from("orders").select("id", { count: "exact", head: true }).in("status", COMPLETED_STATUSES).gte("created_at", monthStart.toISOString()),
+      supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["pending", "confirmed"] as const),
+      supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["ready", "delivered"] as const).gte("created_at", monthStart.toISOString()),
       supabase
         .from("orders")
         .select("id, order_number, latitude, longitude, address, clients(company_name)")
-        .in("status", ["pending", "confirmed", "in_progress", "ready"])
+        .in("status", ["pending", "confirmed", "in_progress", "ready"] as const)
         .not("latitude", "is", null)
         .not("longitude", "is", null),
       supabase.from("maintenance_requests").select("status"),
       supabase
         .from("maintenance_requests")
         .select("id, tracking_code, contact_name, latitude, longitude, address")
-        .in("status", ["pending", "confirmed", "in_progress"])
+        .in("status", ["pending", "scheduled"] as const)
         .not("latitude", "is", null)
         .not("longitude", "is", null),
       supabase
