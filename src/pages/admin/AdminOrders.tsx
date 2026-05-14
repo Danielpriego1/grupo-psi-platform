@@ -220,6 +220,14 @@ export default function AdminOrders() {
                   onChange={({ latitude, longitude }) =>
                     setNewOrder((prev) => ({ ...prev, latitude, longitude }))
                   }
+                  onAddressResolved={({ address, state, municipality }) =>
+                    setNewOrder((prev) => ({
+                      ...prev,
+                      address: prev.address || address || "",
+                      state: prev.state || state || "",
+                      municipality: prev.municipality || municipality || "",
+                    }))
+                  }
                 />
               </div>
               <div className="space-y-2">

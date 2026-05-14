@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-lea
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button } from "@/components/ui/button";
-import { MapPin, LocateFixed, CheckCircle2, AlertCircle } from "lucide-react";
+import { MapPin, LocateFixed, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 // Fix default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -13,10 +13,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+interface ResolvedAddress {
+  address: string;
+  state?: string;
+  municipality?: string;
+  postalCode?: string;
+}
+
 interface LocationPickerProps {
   latitude?: number | null;
   longitude?: number | null;
   onChange: (coords: { latitude: number; longitude: number }) => void;
+  onAddressResolved?: (info: ResolvedAddress) => void;
   height?: string;
 }
 
@@ -39,15 +47,66 @@ function Recenter({ position }: { position: [number, number] | null }) {
   return null;
 }
 
-export function LocationPicker({ latitude, longitude, onChange, height = "300px" }: LocationPickerProps) {
+export function LocationPicker({
+  latitude,
+  longitude,
+  onChange,
+  onAddressResolved,
+  height = "300px",
+}: LocationPickerProps) {
   const [pos, setPos] = useState<[number, number] | null>(
     latitude != null && longitude != null ? [latitude, longitude] : null
   );
+  const [address, setAddress] = useState<ResolvedAddress | null>(null);
+  const [loadingAddress, setLoadingAddress] = useState(false);
 
   const handlePick = (lat: number, lng: number) => {
     setPos([lat, lng]);
     onChange({ latitude: lat, longitude: lng });
   };
+
+  // Reverse geocode via Nominatim (OpenStreetMap) — debounced
+  useEffect(() => {
+    if (!pos) {
+      setAddress(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    const timer = setTimeout(async () => {
+      setLoadingAddress(true);
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos[0]}&lon=${pos[1]}&accept-language=es&zoom=18&addressdetails=1`;
+        const res = await fetch(url, {
+          signal: ctrl.signal,
+          headers: { "Accept": "application/json" },
+        });
+        if (!res.ok) throw new Error("Reverse geocode failed");
+        const data = await res.json();
+        const a = data.address ?? {};
+        const street = [a.road, a.house_number].filter(Boolean).join(" ");
+        const colonia = a.neighbourhood || a.suburb || a.quarter || a.residential || "";
+        const displayParts = [street, colonia].filter(Boolean);
+        const display = displayParts.length ? displayParts.join(", ") : data.display_name ?? "";
+        const resolved: ResolvedAddress = {
+          address: display,
+          state: a.state || undefined,
+          municipality: a.city || a.town || a.village || a.municipality || undefined,
+          postalCode: a.postcode || undefined,
+        };
+        setAddress(resolved);
+        onAddressResolved?.(resolved);
+      } catch (e) {
+        if ((e as any)?.name !== "AbortError") setAddress(null);
+      } finally {
+        setLoadingAddress(false);
+      }
+    }, 500);
+    return () => {
+      ctrl.abort();
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pos?.[0], pos?.[1]]);
 
   const useMyLocation = () => {
     if (!navigator.geolocation) return;
@@ -71,11 +130,21 @@ export function LocationPicker({ latitude, longitude, onChange, height = "300px"
         <div className="flex items-center gap-2 text-xs">
           {isSet ? (
             <>
-              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-              <div className="flex flex-col">
+              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+              <div className="flex flex-col min-w-0">
                 <span className="font-medium text-green-600 dark:text-green-400">
                   Ubicación confirmada
                 </span>
+                {loadingAddress ? (
+                  <span className="flex items-center gap-1 text-muted-foreground text-[11px]">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Buscando dirección…
+                  </span>
+                ) : address?.address ? (
+                  <span className="text-foreground text-[11px] truncate" title={address.address}>
+                    {address.address}
+                    {address.municipality ? ` · ${address.municipality}` : ""}
+                  </span>
+                ) : null}
                 <span className="text-muted-foreground font-mono text-[10px]">
                   {pos![0].toFixed(6)}, {pos![1].toFixed(6)}
                 </span>
