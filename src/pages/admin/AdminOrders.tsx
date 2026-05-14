@@ -230,7 +230,15 @@ export default function AdminOrders() {
                   placeholder="Notas adicionales..."
                 />
               </div>
-              <Button onClick={createOrder} className="w-full">Crear Pedido</Button>
+              <Button
+                onClick={createOrder}
+                className="w-full"
+                disabled={newOrder.latitude == null || newOrder.longitude == null}
+              >
+                {newOrder.latitude == null || newOrder.longitude == null
+                  ? "Marca la ubicación en el mapa"
+                  : "Crear Pedido"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
