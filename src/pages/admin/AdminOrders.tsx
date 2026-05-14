@@ -78,6 +78,11 @@ export default function AdminOrders() {
       client_id: newOrder.client_id || null,
       total: parseFloat(newOrder.total) || 0,
       notes: newOrder.notes,
+      address: newOrder.address || null,
+      state: newOrder.state || null,
+      municipality: newOrder.municipality || null,
+      latitude: newOrder.latitude,
+      longitude: newOrder.longitude,
       created_by: user?.id,
     });
     if (error) {
@@ -85,7 +90,16 @@ export default function AdminOrders() {
     } else {
       toast({ title: "Pedido creado", description: `#${orderNumber}` });
       setDialogOpen(false);
-      setNewOrder({ client_id: "", notes: "", total: "" });
+      setNewOrder({
+        client_id: "",
+        notes: "",
+        total: "",
+        address: "",
+        state: "",
+        municipality: "",
+        latitude: null,
+        longitude: null,
+      });
       fetchOrders();
     }
   };
