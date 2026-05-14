@@ -72,6 +72,14 @@ export default function AdminOrders() {
   }, []);
 
   const createOrder = async () => {
+    if (newOrder.latitude == null || newOrder.longitude == null) {
+      toast({
+        title: "Ubicación requerida",
+        description: "Marca la ubicación en el mapa antes de guardar el pedido.",
+        variant: "destructive",
+      });
+      return;
+    }
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const { error } = await supabase.from("orders").insert({
       order_number: orderNumber,
