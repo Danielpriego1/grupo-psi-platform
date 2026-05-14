@@ -72,6 +72,14 @@ export default function AdminOrders() {
   }, []);
 
   const createOrder = async () => {
+    if (newOrder.latitude == null || newOrder.longitude == null) {
+      toast({
+        title: "Ubicación requerida",
+        description: "Marca la ubicación en el mapa antes de guardar el pedido.",
+        variant: "destructive",
+      });
+      return;
+    }
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const { error } = await supabase.from("orders").insert({
       order_number: orderNumber,
@@ -203,7 +211,9 @@ export default function AdminOrders() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Ubicación en mapa</Label>
+                <Label>
+                  Ubicación en mapa <span className="text-destructive">*</span>
+                </Label>
                 <LocationPicker
                   latitude={newOrder.latitude}
                   longitude={newOrder.longitude}
@@ -220,7 +230,15 @@ export default function AdminOrders() {
                   placeholder="Notas adicionales..."
                 />
               </div>
-              <Button onClick={createOrder} className="w-full">Crear Pedido</Button>
+              <Button
+                onClick={createOrder}
+                className="w-full"
+                disabled={newOrder.latitude == null || newOrder.longitude == null}
+              >
+                {newOrder.latitude == null || newOrder.longitude == null
+                  ? "Marca la ubicación en el mapa"
+                  : "Crear Pedido"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
