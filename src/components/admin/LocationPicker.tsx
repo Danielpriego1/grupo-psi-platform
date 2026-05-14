@@ -130,11 +130,21 @@ export function LocationPicker({
         <div className="flex items-center gap-2 text-xs">
           {isSet ? (
             <>
-              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-              <div className="flex flex-col">
+              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+              <div className="flex flex-col min-w-0">
                 <span className="font-medium text-green-600 dark:text-green-400">
                   Ubicación confirmada
                 </span>
+                {loadingAddress ? (
+                  <span className="flex items-center gap-1 text-muted-foreground text-[11px]">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Buscando dirección…
+                  </span>
+                ) : address?.address ? (
+                  <span className="text-foreground text-[11px] truncate" title={address.address}>
+                    {address.address}
+                    {address.municipality ? ` · ${address.municipality}` : ""}
+                  </span>
+                ) : null}
                 <span className="text-muted-foreground font-mono text-[10px]">
                   {pos![0].toFixed(6)}, {pos![1].toFixed(6)}
                 </span>
