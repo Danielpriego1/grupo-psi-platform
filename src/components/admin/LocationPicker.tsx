@@ -47,15 +47,66 @@ function Recenter({ position }: { position: [number, number] | null }) {
   return null;
 }
 
-export function LocationPicker({ latitude, longitude, onChange, height = "300px" }: LocationPickerProps) {
+export function LocationPicker({
+  latitude,
+  longitude,
+  onChange,
+  onAddressResolved,
+  height = "300px",
+}: LocationPickerProps) {
   const [pos, setPos] = useState<[number, number] | null>(
     latitude != null && longitude != null ? [latitude, longitude] : null
   );
+  const [address, setAddress] = useState<ResolvedAddress | null>(null);
+  const [loadingAddress, setLoadingAddress] = useState(false);
 
   const handlePick = (lat: number, lng: number) => {
     setPos([lat, lng]);
     onChange({ latitude: lat, longitude: lng });
   };
+
+  // Reverse geocode via Nominatim (OpenStreetMap) — debounced
+  useEffect(() => {
+    if (!pos) {
+      setAddress(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    const timer = setTimeout(async () => {
+      setLoadingAddress(true);
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos[0]}&lon=${pos[1]}&accept-language=es&zoom=18&addressdetails=1`;
+        const res = await fetch(url, {
+          signal: ctrl.signal,
+          headers: { "Accept": "application/json" },
+        });
+        if (!res.ok) throw new Error("Reverse geocode failed");
+        const data = await res.json();
+        const a = data.address ?? {};
+        const street = [a.road, a.house_number].filter(Boolean).join(" ");
+        const colonia = a.neighbourhood || a.suburb || a.quarter || a.residential || "";
+        const displayParts = [street, colonia].filter(Boolean);
+        const display = displayParts.length ? displayParts.join(", ") : data.display_name ?? "";
+        const resolved: ResolvedAddress = {
+          address: display,
+          state: a.state || undefined,
+          municipality: a.city || a.town || a.village || a.municipality || undefined,
+          postalCode: a.postcode || undefined,
+        };
+        setAddress(resolved);
+        onAddressResolved?.(resolved);
+      } catch (e) {
+        if ((e as any)?.name !== "AbortError") setAddress(null);
+      } finally {
+        setLoadingAddress(false);
+      }
+    }, 500);
+    return () => {
+      ctrl.abort();
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pos?.[0], pos?.[1]]);
 
   const useMyLocation = () => {
     if (!navigator.geolocation) return;
