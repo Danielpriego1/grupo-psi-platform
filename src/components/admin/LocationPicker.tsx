@@ -13,10 +13,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+interface ResolvedAddress {
+  address: string;
+  state?: string;
+  municipality?: string;
+  postalCode?: string;
+}
+
 interface LocationPickerProps {
   latitude?: number | null;
   longitude?: number | null;
   onChange: (coords: { latitude: number; longitude: number }) => void;
+  onAddressResolved?: (info: ResolvedAddress) => void;
   height?: string;
 }
 
