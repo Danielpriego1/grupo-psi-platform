@@ -211,7 +211,9 @@ export default function AdminOrders() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Ubicación en mapa</Label>
+                <Label>
+                  Ubicación en mapa <span className="text-destructive">*</span>
+                </Label>
                 <LocationPicker
                   latitude={newOrder.latitude}
                   longitude={newOrder.longitude}
