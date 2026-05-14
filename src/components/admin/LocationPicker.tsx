@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-lea
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button } from "@/components/ui/button";
-import { MapPin, LocateFixed } from "lucide-react";
+import { MapPin, LocateFixed, CheckCircle2, AlertCircle } from "lucide-react";
 
 // Fix default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -57,25 +57,50 @@ export function LocationPicker({ latitude, longitude, onChange, height = "300px"
     );
   };
 
+  const isSet = pos !== null;
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="w-3.5 h-3.5" />
-          {pos ? (
-            <span>
-              {pos[0].toFixed(6)}, {pos[1].toFixed(6)}
-            </span>
+      <div
+        className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 transition-colors ${
+          isSet
+            ? "border-green-500/40 bg-green-500/10"
+            : "border-amber-500/40 bg-amber-500/10"
+        }`}
+      >
+        <div className="flex items-center gap-2 text-xs">
+          {isSet ? (
+            <>
+              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+              <div className="flex flex-col">
+                <span className="font-medium text-green-600 dark:text-green-400">
+                  Ubicación confirmada
+                </span>
+                <span className="text-muted-foreground font-mono text-[10px]">
+                  {pos![0].toFixed(6)}, {pos![1].toFixed(6)}
+                </span>
+              </div>
+            </>
           ) : (
-            <span>Haz clic en el mapa para fijar la ubicación</span>
+            <>
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                Haz clic en el mapa para fijar la ubicación
+              </span>
+            </>
           )}
         </div>
         <Button type="button" size="sm" variant="outline" onClick={useMyLocation}>
           <LocateFixed className="w-3.5 h-3.5 mr-1" />
-          Usar mi ubicación
+          {isSet ? "Cambiar" : "Mi ubicación"}
         </Button>
       </div>
-      <div className="rounded-lg overflow-hidden border border-border" style={{ height }}>
+      <div
+        className={`rounded-lg overflow-hidden border-2 transition-colors ${
+          isSet ? "border-green-500/50" : "border-border"
+        }`}
+        style={{ height }}
+      >
         <MapContainer
           center={pos ?? DEFAULT_CENTER}
           zoom={pos ? 14 : 11}
