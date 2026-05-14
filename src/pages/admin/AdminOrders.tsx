@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { LocationPicker } from "@/components/admin/LocationPicker";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",
@@ -39,7 +40,16 @@ export default function AdminOrders() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("active");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newOrder, setNewOrder] = useState({ client_id: "", notes: "", total: "" });
+  const [newOrder, setNewOrder] = useState({
+    client_id: "",
+    notes: "",
+    total: "",
+    address: "",
+    state: "",
+    municipality: "",
+    latitude: null as number | null,
+    longitude: null as number | null,
+  });
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -68,6 +78,11 @@ export default function AdminOrders() {
       client_id: newOrder.client_id || null,
       total: parseFloat(newOrder.total) || 0,
       notes: newOrder.notes,
+      address: newOrder.address || null,
+      state: newOrder.state || null,
+      municipality: newOrder.municipality || null,
+      latitude: newOrder.latitude,
+      longitude: newOrder.longitude,
       created_by: user?.id,
     });
     if (error) {
@@ -75,7 +90,16 @@ export default function AdminOrders() {
     } else {
       toast({ title: "Pedido creado", description: `#${orderNumber}` });
       setDialogOpen(false);
-      setNewOrder({ client_id: "", notes: "", total: "" });
+      setNewOrder({
+        client_id: "",
+        notes: "",
+        total: "",
+        address: "",
+        state: "",
+        municipality: "",
+        latitude: null,
+        longitude: null,
+      });
       fetchOrders();
     }
   };
@@ -127,7 +151,7 @@ export default function AdminOrders() {
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-2" />Nuevo Pedido</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Crear Pedido</DialogTitle>
             </DialogHeader>
@@ -150,6 +174,42 @@ export default function AdminOrders() {
                   value={newOrder.total}
                   onChange={(e) => setNewOrder({ ...newOrder, total: e.target.value })}
                   placeholder="0.00"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Input
+                    value={newOrder.state}
+                    onChange={(e) => setNewOrder({ ...newOrder, state: e.target.value })}
+                    placeholder="Tabasco"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Municipio</Label>
+                  <Input
+                    value={newOrder.municipality}
+                    onChange={(e) => setNewOrder({ ...newOrder, municipality: e.target.value })}
+                    placeholder="Nacajuca"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Dirección</Label>
+                <Input
+                  value={newOrder.address}
+                  onChange={(e) => setNewOrder({ ...newOrder, address: e.target.value })}
+                  placeholder="Calle, número, colonia..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ubicación en mapa</Label>
+                <LocationPicker
+                  latitude={newOrder.latitude}
+                  longitude={newOrder.longitude}
+                  onChange={({ latitude, longitude }) =>
+                    setNewOrder((prev) => ({ ...prev, latitude, longitude }))
+                  }
                 />
               </div>
               <div className="space-y-2">
