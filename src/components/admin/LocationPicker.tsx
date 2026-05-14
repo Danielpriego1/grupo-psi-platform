@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-lea
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button } from "@/components/ui/button";
-import { MapPin, LocateFixed } from "lucide-react";
+import { MapPin, LocateFixed, CheckCircle2, AlertCircle } from "lucide-react";
 
 // Fix default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
