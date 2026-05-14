@@ -40,7 +40,16 @@ export default function AdminOrders() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("active");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newOrder, setNewOrder] = useState({ client_id: "", notes: "", total: "" });
+  const [newOrder, setNewOrder] = useState({
+    client_id: "",
+    notes: "",
+    total: "",
+    address: "",
+    state: "",
+    municipality: "",
+    latitude: null as number | null,
+    longitude: null as number | null,
+  });
   const { toast } = useToast();
   const { user } = useAuth();
 
