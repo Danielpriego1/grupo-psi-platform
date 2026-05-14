@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { LocationPicker } from "@/components/admin/LocationPicker";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",
