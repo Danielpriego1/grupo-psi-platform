@@ -83,6 +83,14 @@ export default function AdminOrders() {
       });
       return;
     }
+    if (!/^\d{5}$/.test(newOrder.postal_code.trim())) {
+      toast({
+        title: "Código postal inválido",
+        description: "El código postal debe tener exactamente 5 dígitos.",
+        variant: "destructive",
+      });
+      return;
+    }
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const composedAddress = [
       [newOrder.street, newOrder.exterior_number].filter(Boolean).join(" ").trim(),
