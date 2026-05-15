@@ -314,10 +314,16 @@ export default function AdminOrders() {
               <Button
                 onClick={createOrder}
                 className="w-full"
-                disabled={newOrder.latitude == null || newOrder.longitude == null}
+                disabled={
+                  newOrder.latitude == null ||
+                  newOrder.longitude == null ||
+                  !/^\d{5}$/.test(newOrder.postal_code)
+                }
               >
                 {newOrder.latitude == null || newOrder.longitude == null
                   ? "Marca la ubicación en el mapa"
+                  : !/^\d{5}$/.test(newOrder.postal_code)
+                  ? "Código postal inválido"
                   : "Crear Pedido"}
               </Button>
             </div>
