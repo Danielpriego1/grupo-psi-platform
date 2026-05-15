@@ -83,6 +83,14 @@ export default function AdminOrders() {
       });
       return;
     }
+    if (!/^\d{5}$/.test(newOrder.postal_code.trim())) {
+      toast({
+        title: "Código postal inválido",
+        description: "El código postal debe tener exactamente 5 dígitos.",
+        variant: "destructive",
+      });
+      return;
+    }
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const composedAddress = [
       [newOrder.street, newOrder.exterior_number].filter(Boolean).join(" ").trim(),
@@ -241,14 +249,35 @@ export default function AdminOrders() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Código postal</Label>
+                  <Label>Código postal <span className="text-destructive">*</span></Label>
                   <Input
                     value={newOrder.postal_code}
-                    onChange={(e) => setNewOrder({ ...newOrder, postal_code: e.target.value })}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        postal_code: e.target.value.replace(/\D/g, "").slice(0, 5),
+                      })
+                    }
                     placeholder="86000"
                     inputMode="numeric"
                     maxLength={5}
+                    aria-invalid={
+                      newOrder.postal_code.length > 0 &&
+                      !/^\d{5}$/.test(newOrder.postal_code)
+                    }
+                    className={
+                      newOrder.postal_code.length > 0 &&
+                      !/^\d{5}$/.test(newOrder.postal_code)
+                        ? "border-destructive focus-visible:ring-destructive"
+                        : ""
+                    }
                   />
+                  {newOrder.postal_code.length > 0 &&
+                    !/^\d{5}$/.test(newOrder.postal_code) && (
+                      <p className="text-xs text-destructive">
+                        Debe tener exactamente 5 dígitos.
+                      </p>
+                    )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -285,10 +314,16 @@ export default function AdminOrders() {
               <Button
                 onClick={createOrder}
                 className="w-full"
-                disabled={newOrder.latitude == null || newOrder.longitude == null}
+                disabled={
+                  newOrder.latitude == null ||
+                  newOrder.longitude == null ||
+                  !/^\d{5}$/.test(newOrder.postal_code)
+                }
               >
                 {newOrder.latitude == null || newOrder.longitude == null
                   ? "Marca la ubicación en el mapa"
+                  : !/^\d{5}$/.test(newOrder.postal_code)
+                  ? "Código postal inválido"
                   : "Crear Pedido"}
               </Button>
             </div>
