@@ -153,9 +153,10 @@ export function LocationPicker({
                     <Loader2 className="w-3 h-3 animate-spin" /> Buscando dirección…
                   </span>
                 ) : address?.address ? (
-                  <span className="text-foreground text-[11px] truncate" title={address.address}>
+                  <span className="text-foreground text-[11px] line-clamp-2" title={address.address}>
                     {address.address}
                     {address.municipality ? ` · ${address.municipality}` : ""}
+                    {address.state ? `, ${address.state}` : ""}
                   </span>
                 ) : null}
                 <span className="text-muted-foreground font-mono text-[10px]">
