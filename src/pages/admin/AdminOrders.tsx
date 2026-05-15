@@ -92,27 +92,29 @@ export default function AdminOrders() {
       return;
     }
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
-    const composedAddress = [
-      [newOrder.street, newOrder.exterior_number].filter(Boolean).join(" ").trim(),
-      newOrder.neighborhood,
-      newOrder.postal_code ? `C.P. ${newOrder.postal_code}` : "",
-    ]
-      .filter(Boolean)
-      .join(", ");
-    const { error } = await supabase.from("orders").insert({
-      order_number: orderNumber,
-      client_id: newOrder.client_id || null,
-      total: parseFloat(newOrder.total) || 0,
-      notes: newOrder.notes,
-      address: composedAddress || null,
-      state: newOrder.state || null,
-      municipality: newOrder.municipality || null,
-      latitude: newOrder.latitude,
-      longitude: newOrder.longitude,
-      created_by: user?.id,
+    const { data, error } = await supabase.functions.invoke("create-admin-order", {
+      body: {
+        order_number: orderNumber,
+        client_id: newOrder.client_id || null,
+        total: parseFloat(newOrder.total) || 0,
+        notes: newOrder.notes,
+        street: newOrder.street,
+        exterior_number: newOrder.exterior_number,
+        neighborhood: newOrder.neighborhood,
+        postal_code: newOrder.postal_code,
+        state: newOrder.state,
+        municipality: newOrder.municipality,
+        latitude: newOrder.latitude,
+        longitude: newOrder.longitude,
+      },
     });
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    const serverError = (data as any)?.error || (data as any)?.message;
+    if (error || (data as any)?.success === false) {
+      toast({
+        title: serverError ? "No se pudo crear el pedido" : "Error",
+        description: serverError || error?.message || "Error desconocido",
+        variant: "destructive",
+      });
     } else {
       toast({ title: "Pedido creado", description: `#${orderNumber}` });
       setDialogOpen(false);
