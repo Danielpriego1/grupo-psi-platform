@@ -249,14 +249,35 @@ export default function AdminOrders() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Código postal</Label>
+                  <Label>Código postal <span className="text-destructive">*</span></Label>
                   <Input
                     value={newOrder.postal_code}
-                    onChange={(e) => setNewOrder({ ...newOrder, postal_code: e.target.value })}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        postal_code: e.target.value.replace(/\D/g, "").slice(0, 5),
+                      })
+                    }
                     placeholder="86000"
                     inputMode="numeric"
                     maxLength={5}
+                    aria-invalid={
+                      newOrder.postal_code.length > 0 &&
+                      !/^\d{5}$/.test(newOrder.postal_code)
+                    }
+                    className={
+                      newOrder.postal_code.length > 0 &&
+                      !/^\d{5}$/.test(newOrder.postal_code)
+                        ? "border-destructive focus-visible:ring-destructive"
+                        : ""
+                    }
                   />
+                  {newOrder.postal_code.length > 0 &&
+                    !/^\d{5}$/.test(newOrder.postal_code) && (
+                      <p className="text-xs text-destructive">
+                        Debe tener exactamente 5 dígitos.
+                      </p>
+                    )}
                 </div>
               </div>
               <div className="space-y-2">
