@@ -86,15 +86,25 @@ export function LocationPicker({
         if (!res.ok) throw new Error("Reverse geocode failed");
         const data = await res.json();
         const a = data.address ?? {};
-        const street = [a.road, a.house_number].filter(Boolean).join(" ");
-        const colonia = a.neighbourhood || a.suburb || a.quarter || a.residential || "";
-        const displayParts = [street, colonia].filter(Boolean);
+        const street = a.road || a.pedestrian || a.footway || "";
+        const houseNumber = a.house_number || "";
+        const neighborhood =
+          a.neighbourhood || a.suburb || a.quarter || a.residential || a.city_district || "";
+        const postalCode = a.postcode || "";
+        const municipality =
+          a.city || a.town || a.village || a.municipality || a.county || undefined;
+        const streetLine = [street, houseNumber].filter(Boolean).join(" ");
+        const cpLine = postalCode ? `C.P. ${postalCode}` : "";
+        const displayParts = [streetLine, neighborhood, cpLine].filter(Boolean);
         const display = displayParts.length ? displayParts.join(", ") : data.display_name ?? "";
         const resolved: ResolvedAddress = {
           address: display,
+          street: street || undefined,
+          houseNumber: houseNumber || undefined,
+          neighborhood: neighborhood || undefined,
           state: a.state || undefined,
-          municipality: a.city || a.town || a.village || a.municipality || undefined,
-          postalCode: a.postcode || undefined,
+          municipality,
+          postalCode: postalCode || undefined,
         };
         setAddress(resolved);
         onAddressResolved?.(resolved);
