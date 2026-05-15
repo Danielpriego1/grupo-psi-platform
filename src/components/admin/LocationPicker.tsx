@@ -15,6 +15,9 @@ L.Icon.Default.mergeOptions({
 
 interface ResolvedAddress {
   address: string;
+  street?: string;
+  houseNumber?: string;
+  neighborhood?: string;
   state?: string;
   municipality?: string;
   postalCode?: string;
