@@ -220,18 +220,13 @@ export default function AdminOrders() {
                   onChange={({ latitude, longitude }) =>
                     setNewOrder((prev) => ({ ...prev, latitude, longitude }))
                   }
-                  onAddressResolved={({ address, state, municipality, postalCode }) =>
-                    setNewOrder((prev) => {
-                      const cpSuffix = postalCode && !prev.address.includes(postalCode)
-                        ? ` C.P. ${postalCode}`
-                        : "";
-                      return {
-                        ...prev,
-                        address: address ? `${address}${cpSuffix}` : prev.address,
-                        state: prev.state || state || "",
-                        municipality: prev.municipality || municipality || "",
-                      };
-                    })
+                  onAddressResolved={({ address, state, municipality }) =>
+                    setNewOrder((prev) => ({
+                      ...prev,
+                      address: address || prev.address,
+                      state: prev.state || state || "",
+                      municipality: prev.municipality || municipality || "",
+                    }))
                   }
                 />
               </div>
