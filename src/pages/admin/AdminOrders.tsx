@@ -223,7 +223,7 @@ export default function AdminOrders() {
                   onAddressResolved={({ address, state, municipality }) =>
                     setNewOrder((prev) => ({
                       ...prev,
-                      address: prev.address || address || "",
+                      address: address || prev.address,
                       state: prev.state || state || "",
                       municipality: prev.municipality || municipality || "",
                     }))
