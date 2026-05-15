@@ -215,13 +215,41 @@ export default function AdminOrders() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Dirección</Label>
-                <Input
-                  value={newOrder.address}
-                  onChange={(e) => setNewOrder({ ...newOrder, address: e.target.value })}
-                  placeholder="Calle, número, colonia..."
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Calle</Label>
+                  <Input
+                    value={newOrder.street}
+                    onChange={(e) => setNewOrder({ ...newOrder, street: e.target.value })}
+                    placeholder="Av. Juárez"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Número</Label>
+                  <Input
+                    value={newOrder.exterior_number}
+                    onChange={(e) => setNewOrder({ ...newOrder, exterior_number: e.target.value })}
+                    placeholder="123"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Colonia</Label>
+                  <Input
+                    value={newOrder.neighborhood}
+                    onChange={(e) => setNewOrder({ ...newOrder, neighborhood: e.target.value })}
+                    placeholder="Centro"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Código postal</Label>
+                  <Input
+                    value={newOrder.postal_code}
+                    onChange={(e) => setNewOrder({ ...newOrder, postal_code: e.target.value })}
+                    placeholder="86000"
+                    inputMode="numeric"
+                    maxLength={5}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>
@@ -233,10 +261,13 @@ export default function AdminOrders() {
                   onChange={({ latitude, longitude }) =>
                     setNewOrder((prev) => ({ ...prev, latitude, longitude }))
                   }
-                  onAddressResolved={({ address, state, municipality }) =>
+                  onAddressResolved={({ street, houseNumber, neighborhood, state, municipality, postalCode }) =>
                     setNewOrder((prev) => ({
                       ...prev,
-                      address: address || prev.address,
+                      street: prev.street || street || "",
+                      exterior_number: prev.exterior_number || houseNumber || "",
+                      neighborhood: prev.neighborhood || neighborhood || "",
+                      postal_code: prev.postal_code || postalCode || "",
                       state: prev.state || state || "",
                       municipality: prev.municipality || municipality || "",
                     }))
