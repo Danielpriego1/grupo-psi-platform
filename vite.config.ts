@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { readFileSync, existsSync } from "node:fs";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 
 type PkgManager = "bun" | "pnpm" | "yarn" | "npm";
 
@@ -13,11 +15,18 @@ function detectPackageManager(): PkgManager {
   if (ua.startsWith("pnpm")) return "pnpm";
   if (ua.startsWith("yarn")) return "yarn";
   if (ua.startsWith("npm")) return "npm";
-  // 2) Fallback: lockfile presente en el proyecto.
-  const has = (f: string) => existsSync(path.resolve(__dirname, f));
-  if (has("bun.lockb") || has("bun.lock")) return "bun";
-  if (has("pnpm-lock.yaml")) return "pnpm";
-  if (has("yarn.lock")) return "yarn";
+  // 2) Fallback: lockfile presente en el proyecto o en raíces ascendentes (monorepo).
+  const has = (dir: string, f: string) => existsSync(path.join(dir, f));
+  let dir = __dirname;
+  while (true) {
+    if (has(dir, "bun.lockb") || has(dir, "bun.lock")) return "bun";
+    if (has(dir, "pnpm-lock.yaml")) return "pnpm";
+    if (has(dir, "yarn.lock")) return "yarn";
+    if (has(dir, "package-lock.json")) return "npm";
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
   return "npm";
 }
 
@@ -28,20 +37,52 @@ const COMPAT: Record<string, number[]> = {
 };
 const majorOf = (v: string) => Number(String(v).match(/^\d+/)?.[0] ?? 0);
 
+/**
+ * Resuelve `<pkg>/package.json` desde la raíz del proyecto usando el algoritmo
+ * de resolución de Node. Soporta monorepos: pnpm (.pnpm), yarn workspaces y
+ * npm con hoisting parcial, donde el paquete puede vivir en `../node_modules`
+ * o en un store anidado y NO en `<projectRoot>/node_modules/<pkg>`.
+ */
 function readPkg(name: string): { version: string } {
+  const req = createRequire(pathToFileURL(path.join(__dirname, "package.json")));
+  let file: string;
   try {
-    const file = path.resolve(__dirname, "node_modules", name, "package.json");
+    // Preferimos la subruta exportada para evitar problemas con `exports`.
+    file = req.resolve(`${name}/package.json`);
+  } catch {
+    try {
+      // Fallback: resolvemos el entry y subimos hasta el package.json del paquete.
+      const entry = req.resolve(name);
+      let dir = path.dirname(entry);
+      while (dir !== path.dirname(dir)) {
+        const candidate = path.join(dir, "package.json");
+        if (existsSync(candidate)) {
+          const pkg = JSON.parse(readFileSync(candidate, "utf8"));
+          if (pkg.name === name) return pkg;
+        }
+        dir = path.dirname(dir);
+      }
+      throw new Error(`package.json no encontrado al subir desde ${entry}`);
+    } catch (e) {
+      throw new Error(
+        `[compat-check] No se pudo resolver ${name}/package.json desde ${__dirname}: ${(e as Error).message}. Ejecuta la instalación del workspace.`,
+      );
+    }
+  }
+  try {
     return JSON.parse(readFileSync(file, "utf8"));
   } catch (e) {
     throw new Error(
-      `[compat-check] No se pudo leer ${name}/package.json: ${(e as Error).message}. Ejecuta \`bun install\`.`,
+      `[compat-check] No se pudo leer ${file}: ${(e as Error).message}`,
     );
   }
 }
 
-// Lee versiones una sola vez al cargar la config.
+// Lee versiones una sola vez al cargar la config, desde el `react` y
+// `react-leaflet` que efectivamente verá este workspace.
 const reactPkg = readPkg("react");
 const rlPkg = readPkg("react-leaflet");
+
 
 // Plugin: valida compatibilidad React ↔ react-leaflet al iniciar Vite (dev y build).
 function compatCheckPlugin() {
