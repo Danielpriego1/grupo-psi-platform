@@ -116,9 +116,11 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
               src="/images/logo_fondo_blanco.png"
               alt="Grupo PSI"
               className="h-full w-full object-cover"
+              style={{ filter: "hue-rotate(160deg) saturate(1.3)" }}
             />
             <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/5" />
+            <div className="absolute inset-0 bg-[hsl(21_90%_48%/0.18)] mix-blend-overlay" />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-primary/10" />
           </div>
 
           <AnimatePresence>
