@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
 
 // Plugin: valida compatibilidad React ↔ react-leaflet al iniciar Vite (dev y build).
 function compatCheckPlugin() {
@@ -10,24 +10,25 @@ function compatCheckPlugin() {
     name: "psi-compat-check",
     enforce: "pre" as const,
     configResolved() {
-      const require = createRequire(import.meta.url);
       const COMPAT: Record<string, number[]> = {
         "3": [16, 17],
         "4": [17, 18],
         "5": [19],
       };
       const major = (v: string) => Number(String(v).match(/^\d+/)?.[0] ?? 0);
+      const readPkg = (name: string): { version: string } => {
+        try {
+          const file = path.resolve(__dirname, "node_modules", name, "package.json");
+          return JSON.parse(readFileSync(file, "utf8"));
+        } catch (e) {
+          throw new Error(
+            `[compat-check] No se pudo leer ${name}/package.json: ${(e as Error).message}. Ejecuta \`bun install\`.`,
+          );
+        }
+      };
 
-      let reactPkg: { version: string };
-      let rlPkg: { version: string };
-      try {
-        reactPkg = require("react/package.json");
-        rlPkg = require("react-leaflet/package.json");
-      } catch (e) {
-        throw new Error(
-          `[compat-check] Falta dependencia: ${(e as Error).message}. Ejecuta \`bun install\`.`,
-        );
-      }
+      const reactPkg = readPkg("react");
+      const rlPkg = readPkg("react-leaflet");
 
       const reactMajor = major(reactPkg.version);
       const rlMajor = String(major(rlPkg.version));
