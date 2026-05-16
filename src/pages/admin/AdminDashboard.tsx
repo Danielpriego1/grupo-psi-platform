@@ -10,6 +10,7 @@ import { checkLeafletCompatibility } from "@/lib/leafletCompat";
 import { LeafletCompatAlert } from "@/components/admin/LeafletCompatAlert";
 import { AppointmentsCalendar, type CalendarEvent } from "@/components/admin/dashboard/AppointmentsCalendar";
 import { RecentOrdersTable, type OrderRow } from "@/components/admin/dashboard/RecentOrdersTable";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 const COMPLETED_STATUSES = ["ready", "delivered"] as const;
 const REVENUE_STATUSES: readonly string[] = ["confirmed", "in_progress", "ready", "delivered"];
