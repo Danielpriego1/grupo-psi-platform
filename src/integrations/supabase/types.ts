@@ -302,6 +302,7 @@ export type Database = {
           id: string
           model: string | null
           notes: string | null
+          qr_token: string
           serial_number: string | null
           updated_at: string
         }
@@ -314,6 +315,7 @@ export type Database = {
           id?: string
           model?: string | null
           notes?: string | null
+          qr_token?: string
           serial_number?: string | null
           updated_at?: string
         }
@@ -326,6 +328,7 @@ export type Database = {
           id?: string
           model?: string | null
           notes?: string | null
+          qr_token?: string
           serial_number?: string | null
           updated_at?: string
         }
@@ -644,6 +647,7 @@ export type Database = {
           valid_until: string
         }[]
       }
+      get_equipment_by_qr: { Args: { _token: string }; Returns: Json }
       get_maintenance_by_tracking_code: {
         Args: { _code: string }
         Returns: {
@@ -666,6 +670,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      regenerate_certificate_qr: { Args: { _id: string }; Returns: string }
+      regenerate_equipment_qr: { Args: { _id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "technician" | "vendor"

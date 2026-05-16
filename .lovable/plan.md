@@ -1,90 +1,68 @@
-# Módulo de Certificados — Grupo Psi
+# Sistema de Códigos QR — Grupo Psi
 
-Sistema completo de certificados de servicio (mantenimiento, calibración, hidrostática, pureza de aire, PosiChek) con portal de cliente, gestión admin y cobro Stripe para copias adicionales.
+QR únicos para equipos y certificados, con páginas de verificación oficiales dentro de la plataforma, generación/regeneración/impresión desde admin y visualización en portal cliente. Todo se actualiza en tiempo real vía Supabase Realtime ya activo.
 
-## Alcance
+## Estructura de URLs
 
-- Emisión, almacenamiento, búsqueda y verificación QR de certificados.
-- Portal del cliente: lista, filtros, detalle y descarga.
-- Primera emisión gratuita (incluida en el servicio). Reemisiones/copias adicionales cobradas vía Stripe.
-- Panel admin: subir, regenerar, reemplazar PDFs, ver estatus de pago.
-- Sincronización en tiempo real (Supabase Realtime) con dashboard, calendario, historial de equipos.
+- **Certificados**: `/verificar/certificado/{qr_token}` — token UUID seguro (ya existe en `certificates.qr_token`).
+- **Equipos**: `/verificar/equipo/{qr_token}` — nuevo token UUID en `equipment`.
+- La ruta actual `/verificar/:token` se conserva como redirect a `/verificar/certificado/:token` para no romper QRs ya impresos.
+
+Ningún QR apunta directamente a PDFs ni a IDs incrementales — todos van a páginas que consultan el estatus en vivo.
 
 ## Fase 1 — Esquema Supabase
 
-### Nuevas tablas
+### Cambios en `equipment`
+- Añadir columna `qr_token uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE`.
+- Backfill para registros existentes.
 
-**`equipment`** (catálogo de equipos del cliente)
-- `client_id`, `serial_number`, `equipment_type` (enum: `scba`, `cilindro`, `compresor`, `mascara`, `otro`), `brand`, `model`, `branch_name` (sucursal/base), `notes`.
+### Nueva RPC pública `get_equipment_by_qr(_token uuid)`
+- SECURITY DEFINER, devuelve: equipo (tipo, marca, modelo, serie, sucursal), empresa cliente, último servicio (de `maintenance_requests` y `certificates` más recientes), próximo servicio programado (`appointments`), estatus calculado (operativo / mantenimiento pendiente / fuera de servicio basado en certificados vigentes).
 
-**`certificates`**
-- `folio` (único, formato `PSI-{TIPO}-{YYYY}-{NNNNN}`), `client_id`, `equipment_id` (nullable), `service_type` (enum: `mantenimiento`, `calibracion`, `hidrostatica`, `pureza_aire`, `posichek`), `branch_name`, `issued_at`, `valid_until`, `pdf_url` (storage), `qr_token` (uuid público), `status` (enum: `vigente`, `por_vencer`, `vencido`, `revocado`), `issued_by` (uuid admin), `source_request_id` (referencia opcional a maintenance/order/appointment), `notes`.
+### RPC `regenerate_equipment_qr(_id uuid)` y `regenerate_certificate_qr(_id uuid)`
+- Solo admins (chequeo con `has_role`), reemplaza el `qr_token` por uno nuevo.
 
-**`certificate_copy_requests`**
-- `certificate_id`, `requested_by` (uuid usuario), `stripe_session_id`, `amount_mxn`, `payment_status` (enum: `pending`, `paid`, `failed`, `refunded`), `paid_at`, `download_token`, `expires_at`.
+## Fase 2 — Generación de QR
 
-### Storage
-Bucket privado `certificates` con RLS:
-- Admins: gestión total.
-- Clientes autenticados: solo sus PDFs (primera emisión gratis O copia pagada).
+Librería `qrcode` (npm, ya compatible con Vite). Función helper `buildQrUrl(kind, token)` y componente `<QrCode value size />` que renderiza SVG y permite descarga PNG.
 
-### RPC pública
-`get_certificate_by_qr(_token uuid)` → SECURITY DEFINER, devuelve datos de verificación (folio, cliente, equipo, fechas, estatus) sin PDF — alimenta página pública `/verificar/{token}`.
+Componente `<QrLabel />` con marca Grupo PSI + folio/serie + QR — diseñado para imprimir (1 por hoja o grilla 4x6 etiquetas). Vista `/admin/qr-print?ids=...&kind=...` con `@media print` styling.
 
-### Realtime
-Habilitar `REPLICA IDENTITY FULL` y publication para `certificates` y `certificate_copy_requests`.
+## Fase 3 — Páginas de verificación
 
-## Fase 2 — Stripe: cobro de copias
+### `/verificar/certificado/:token` (mejora de la existente)
+Ya implementada — solo mover ruta a la nueva URL y mantener alias antiguo.
 
-Edge functions nuevas:
+### `/verificar/equipo/:token` (nueva)
+- Header con icono escudo, tipo de equipo y empresa cliente.
+- Badge de estatus en vivo (verde operativo / ámbar próximo mantenimiento / rojo vencido).
+- Tarjeta de datos: serie, marca, modelo, sucursal.
+- Timeline de últimos 5 servicios (mantenimiento + certificados ordenados por fecha).
+- Próxima cita si existe.
+- Lista de certificados vigentes con badge y link a su verificación.
+- Realtime: suscripción a `equipment`, `certificates`, `maintenance_requests`, `appointments` filtrados.
 
-1. **`create-certificate-copy-checkout`** — recibe `certificate_id`, valida que el solicitante sea el dueño/admin, crea sesión Stripe Checkout (price one-shot configurable, default $250 MXN), inserta `certificate_copy_requests` con `payment_status=pending`, retorna `url`.
-2. **`certificate-copy-webhook`** — endpoint público con `verify_jwt = false`, valida firma Stripe, en `checkout.session.completed` marca request como `paid`, genera `download_token` y `expires_at` (72h).
-3. **`download-certificate`** — valida que el usuario sea admin, sea dueño con primera emisión, o presente un `download_token` válido y no expirado; devuelve signed URL del PDF.
+## Fase 4 — Admin y Portal
 
-Secret necesario: `STRIPE_WEBHOOK_SECRET` (pedir vía add_secret cuando empecemos la fase). `STRIPE_SECRET_KEY` ya existe.
+### Admin
+- En `AdminCertificates` sheet: agregar visualización QR + botones **Descargar PNG**, **Imprimir etiqueta**, **Regenerar QR**.
+- Nueva página `/admin/equipos` (tabla básica con búsqueda por cliente/serie, dialog de alta/edición, sheet con QR e historial). Item de menú "Equipos".
+- Vista `/admin/qr-print` que recibe `?kind=certificate|equipment&ids=...` y muestra etiquetas listas para imprimir (oculta sidebar/header con `print:hidden`).
 
-## Fase 3 — Frontend
+### Portal cliente (`PortalCertificates`)
+- En sheet de detalle de certificado: mostrar QR con botón descargar.
+- Nueva sección **Mis equipos** dentro del portal (`/portal/equipos`) con QR por cada equipo y link a su verificación.
 
-### Portal cliente (`/portal/certificados`)
-- Tabla SaaS con columnas: Folio, Equipo, Tipo de servicio, Sucursal, Emisión, Vigencia, Estatus (badge color).
-- Filtros: tipo, equipo, rango de fecha, estatus.
-- Sheet lateral de detalle con metadatos, botón **Descargar PDF** (gratis si primera emisión) y **Solicitar copia certificada** (abre Checkout Stripe).
-- Estado "Pago confirmado → Descarga lista" con toast y refresco realtime.
+## Fase 5 — Compatibilidad y QA
 
-### Admin (`/admin/certificados`)
-- Tabla con filtros + columna pago de copia.
-- Acciones: **Emitir certificado** (form: cliente, equipo, tipo, fechas, upload PDF), **Regenerar**, **Reemplazar PDF**, **Revocar**.
-- Sheet de detalle con historial de copias solicitadas/pagadas.
-
-### Verificación pública (`/verificar/:token`)
-- Página minimal: folio, cliente, equipo, tipo, vigencia, badge de estatus. Sin descarga.
-
-### Integraciones cruzadas
-- En **detalle del equipo** (nuevo o existente): tab "Certificados" filtrado por `equipment_id`.
-- En **calendario / detalle de servicio** (maintenance, appointment): enlace "Ver certificados generados" filtrado por `source_request_id`.
-- En **historial del cliente** (admin): sección de certificados.
-
-### Realtime
-Reusar `useRealtimeTable` ya existente para `certificates` y `certificate_copy_requests` en las vistas admin y portal.
-
-## Diseño
-
-- Tablas con `border-border/60`, badges `rounded-sm` discretos por estatus (verde vigente, ámbar por vencer, rojo vencido, gris revocado).
-- Sheet lateral 420px (mismo patrón que calendario).
-- Sin gradientes, mucho espacio en blanco, tipografía limpia.
+- Ruta `/verificar/:token` legacy redirige a `/verificar/certificado/:token`.
+- Sin cambios en `orders`, `deliveries`, `appointments`, `inventory`, calendario.
+- QA: escanear QR cert → ver estatus; escanear QR equipo → ver historial; regenerar QR invalida el anterior; impresión muestra etiquetas limpias.
 
 ## Orden de implementación
 
-1. Migración Supabase (tablas + enums + storage bucket + RLS + RPC verificación + realtime).
-2. Edge functions Stripe (checkout, webhook, download) + secret webhook.
-3. Hooks (`useCertificates`, `useCertificateCopyCheckout`) + servicios.
-4. Portal cliente: lista, filtros, detalle, flujo de pago.
-5. Admin: lista, form emisión, upload/replace PDF.
-6. Página pública de verificación QR.
-7. Integraciones en detalle equipo, calendario e historial cliente.
-8. QA: emisión, descarga gratis, pago de copia, webhook, realtime, QR.
-
-## Compatibilidad
-
-No se tocan `orders`, `maintenance_requests`, `deliveries`, `appointments`, `inventory`, ni el calendario existente — solo se agregan relaciones opcionales (`source_request_id` apunta por id sin FK estricto para permitir referencias multi-tabla).
+1. Migración: columna y RPCs.
+2. Helpers `qrcode` + componentes `<QrCode>` y `<QrLabel>`.
+3. Páginas de verificación (equipo + ajuste cert + alias legacy).
+4. Vista de impresión `/admin/qr-print`.
+5. Integración en `AdminCertificates`, nueva `AdminEquipment`, portal cliente.
