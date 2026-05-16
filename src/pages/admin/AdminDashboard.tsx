@@ -187,6 +187,11 @@ export default function AdminDashboard() {
     fetchAll();
   }, [fetchAll]);
 
+  useRealtimeTable({ table: "orders", onChange: fetchAll });
+  useRealtimeTable({ table: "maintenance_requests", onChange: fetchAll });
+  useRealtimeTable({ table: "deliveries", onChange: fetchAll });
+  useRealtimeTable({ table: "appointments", onChange: fetchAll });
+
   return (
     <div className="space-y-6">
       <KpiCards data={kpi} />
