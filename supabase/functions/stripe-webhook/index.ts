@@ -62,54 +62,78 @@ serve(async (req) => {
   const auditId = auditRow?.id;
 
   const updateAudit = async (patch: Record<string, unknown>) => {
-    if (!auditId) return;
-    await supabase
+    if (!auditId) {
+      console.error("updateAudit: auditId nulo, no se puede actualizar registro");
+      return;
+    }
+    const { error } = await supabase
       .from("stripe_webhook_events")
       .update({ ...patch, processed_at: new Date().toISOString() })
       .eq("id", auditId);
+    if (error) console.error("updateAudit error:", error.message);
   };
 
   try {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const orderNumber = session.metadata?.order_number ?? null;
-        const orderId = session.metadata?.order_id ?? null;
+        const nullIfEmpty = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : null);
+        const orderNumber = nullIfEmpty(session.metadata?.order_number);
+        const orderId = nullIfEmpty(session.metadata?.order_id);
+        const paymentIntentId = nullIfEmpty(session.payment_intent as string);
         const ticketToken = crypto.randomUUID();
 
         const updates = {
           status: "confirmed" as const,
           payment_status: "paid",
           stripe_session_id: session.id,
-          stripe_payment_intent: (session.payment_intent as string) ?? null,
+          stripe_payment_intent: paymentIntentId,
           paid_at: new Date().toISOString(),
           ticket_token: ticketToken,
         };
 
+        // Cascade match: order_id → order_number → stripe_session_id → payment_intent
+        const tryUpdate = async (col: string, val: string | null) => {
+          if (!val) return { matched: 0, error: null as string | null };
+          const { data, error } = await supabase
+            .from("orders")
+            .update(updates)
+            .eq(col, val)
+            .select("id");
+          return { matched: data?.length ?? 0, error: error?.message ?? null };
+        };
+
+        let matched = 0;
         let updateError: string | null = null;
-        if (orderId) {
-          const { error } = await supabase.from("orders").update(updates).eq("id", orderId);
-          if (error) updateError = error.message;
-        } else if (orderNumber) {
-          const { error } = await supabase.from("orders").update(updates).eq("order_number", orderNumber);
-          if (error) updateError = error.message;
-        } else {
-          updateError = "Sin order_id ni order_number en metadata";
+        for (const [col, val] of [
+          ["id", orderId],
+          ["order_number", orderNumber],
+          ["stripe_session_id", session.id],
+          ["stripe_payment_intent", paymentIntentId],
+        ] as [string, string | null][]) {
+          const r = await tryUpdate(col, val);
+          if (r.error) { updateError = r.error; break; }
+          if (r.matched > 0) { matched = r.matched; break; }
         }
 
+        const orphan = !updateError && matched === 0;
         await updateAudit({
-          processing_status: updateError ? "error" : "success",
+          processing_status: updateError ? "error" : orphan ? "orphan" : "success",
           payment_status: "paid",
           stripe_session_id: session.id,
-          stripe_payment_intent: (session.payment_intent as string) ?? null,
+          stripe_payment_intent: paymentIntentId,
           order_id: orderId,
           order_number: orderNumber,
-          ticket_generated: !updateError,
-          ticket_token: updateError ? null : ticketToken,
-          error_message: updateError,
+          ticket_generated: matched > 0,
+          ticket_token: matched > 0 ? ticketToken : null,
+          error_message: updateError ?? (orphan ? `No se encontró orden (order_id=${orderId}, order_number=${orderNumber}, session=${session.id})` : null),
         });
 
-        console.log(`Pago confirmado: ${orderNumber} | Session: ${session.id}`);
+        if (orphan) {
+          console.warn(`ORPHAN checkout.session.completed: order_number=${orderNumber} session=${session.id}`);
+        } else {
+          console.log(`Pago confirmado: ${orderNumber} | Session: ${session.id} | matched=${matched}`);
+        }
         break;
       }
 
