@@ -674,7 +674,7 @@ export type Database = {
       regenerate_equipment_qr: { Args: { _id: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "technician" | "vendor"
+      app_role: "admin" | "technician" | "vendor" | "tecnico" | "client"
       appointment_status:
         | "scheduled"
         | "confirmed"
@@ -837,7 +837,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "technician", "vendor"],
+      app_role: ["admin", "technician", "vendor", "tecnico", "client"],
       appointment_status: [
         "scheduled",
         "confirmed",
