@@ -1,4 +1,5 @@
 import React from "react";
+// @ts-expect-error – Vite resuelve JSON de paquetes en runtime.
 import reactLeafletPkg from "react-leaflet/package.json";
 
 /**
