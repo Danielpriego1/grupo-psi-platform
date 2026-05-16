@@ -21,13 +21,14 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const inventoryImages = useInventoryImages();
   const [date, setDate] = useState<Date>();
-  const [serviceType, setServiceType] = useState<"delivery" | "maintenance">("delivery");
+  const serviceType: "delivery" = "delivery";
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [inventoryItem, setInventoryItem] = useState<any>(null);
-  const [priceRevealed, setPriceRevealed] = useState(false);
+  const [imageZoomed, setImageZoomed] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
