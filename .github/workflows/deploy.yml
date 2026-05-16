@@ -39,10 +39,10 @@ jobs:
             echo "=== Iniciando deploy ==="
             cd /var/www/grupopsi
             git pull origin main
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+            which npm || (curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs)
             npm install
             npm run build
-            pm2 restart grupo-psi || pm2 start npm --name grupo-psi -- start
-            nginx -t && sudo systemctl reload nginx
+            pm2 restart grupo-psi 2>/dev/null || pm2 start npm --name grupo-psi -- start
+            sudo nginx -t && sudo systemctl reload nginx
             echo "=== Deploy completado ==="
