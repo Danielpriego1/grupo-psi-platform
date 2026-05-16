@@ -90,6 +90,7 @@ export function ChatWidget() {
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
+    requestAnimationFrame(() => inputRef.current?.focus());
 
     try {
       const historyForApi = updatedMessages
