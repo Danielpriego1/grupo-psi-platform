@@ -40,6 +40,7 @@ export default function AdminOrders() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("active");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [postalCodeTouched, setPostalCodeTouched] = useState(false);
   const [newOrder, setNewOrder] = useState({
     client_id: "",
     notes: "",
@@ -269,21 +270,28 @@ export default function AdminOrders() {
                     placeholder="86000"
                     inputMode="numeric"
                     maxLength={5}
+                    onBlur={() => setPostalCodeTouched(true)}
                     aria-invalid={
-                      newOrder.postal_code.length > 0 &&
+                      (postalCodeTouched || newOrder.postal_code.length > 0) &&
                       !/^\d{5}$/.test(newOrder.postal_code)
                     }
                     className={
                       newOrder.postal_code.length === 0
-                        ? ""
+                        ? postalCodeTouched
+                          ? "border-destructive focus-visible:ring-destructive"
+                          : ""
                         : /^\d{5}$/.test(newOrder.postal_code)
                           ? "border-green-500 focus-visible:ring-green-500"
                           : "border-destructive focus-visible:ring-destructive"
                     }
                   />
-                  {newOrder.postal_code.length === 0 ? null : /^\d{5}$/.test(
-                      newOrder.postal_code,
-                    ) ? (
+                  {newOrder.postal_code.length === 0 ? (
+                    postalCodeTouched ? (
+                      <p className="text-xs text-destructive">
+                        El código postal es obligatorio.
+                      </p>
+                    ) : null
+                  ) : /^\d{5}$/.test(newOrder.postal_code) ? (
                     <p className="text-xs text-green-600">✓ Código postal válido.</p>
                   ) : (
                     <p className="text-xs text-destructive">
