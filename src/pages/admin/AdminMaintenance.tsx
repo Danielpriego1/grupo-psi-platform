@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Phone, Mail, Calendar, Clock, Wrench } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 type ReqStatus = Database["public"]["Enums"]["maintenance_request_status"];
 
