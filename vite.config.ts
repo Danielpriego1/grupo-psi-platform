@@ -2,7 +2,24 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
+
+type PkgManager = "bun" | "pnpm" | "yarn" | "npm";
+
+function detectPackageManager(): PkgManager {
+  // 1) Lo más fiable: variable inyectada por el propio gestor al ejecutar scripts.
+  const ua = process.env.npm_config_user_agent ?? "";
+  if (ua.startsWith("bun")) return "bun";
+  if (ua.startsWith("pnpm")) return "pnpm";
+  if (ua.startsWith("yarn")) return "yarn";
+  if (ua.startsWith("npm")) return "npm";
+  // 2) Fallback: lockfile presente en el proyecto.
+  const has = (f: string) => existsSync(path.resolve(__dirname, f));
+  if (has("bun.lockb") || has("bun.lock")) return "bun";
+  if (has("pnpm-lock.yaml")) return "pnpm";
+  if (has("yarn.lock")) return "yarn";
+  return "npm";
+}
 
 const COMPAT: Record<string, number[]> = {
   "3": [16, 17],
