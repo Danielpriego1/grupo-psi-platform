@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
@@ -11,14 +12,15 @@ export default function VerifyCertificate() {
   const [cert, setCert] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      if (!token) return;
-      const { data } = await supabase.rpc("get_certificate_by_qr", { _token: token });
-      setCert(Array.isArray(data) ? data[0] : data);
-      setLoading(false);
-    })();
+  const fetchCert = useCallback(async () => {
+    if (!token) return;
+    const { data } = await supabase.rpc("get_certificate_by_qr", { _token: token });
+    setCert(Array.isArray(data) ? data[0] : data);
+    setLoading(false);
   }, [token]);
+
+  useEffect(() => { fetchCert(); }, [fetchCert]);
+  useRealtimeTable({ table: "certificates", onChange: fetchCert });
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Verificando...</div>;
 
