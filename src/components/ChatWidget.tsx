@@ -275,10 +275,15 @@ export function ChatWidget() {
               rel="noopener noreferrer"
               className="text-white/70 hover:text-green-400 transition-colors mr-1"
               title="Escribir por WhatsApp"
+              aria-label="Escribir por WhatsApp"
             >
               <MessageCircle className="h-5 w-5" />
             </a>
-            <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white transition-colors">
+            <button
+              onClick={() => setOpen(false)}
+              className="text-white/70 hover:text-white transition-colors"
+              aria-label="Cerrar chat"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
