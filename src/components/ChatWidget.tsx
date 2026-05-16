@@ -78,6 +78,9 @@ export function ChatWidget() {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stickToBottomRef = useRef(true);
+  const [atBottom, setAtBottom] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const prevMessageCountRef = useRef(messages.length);
 
   // Performance instrumentation (dev or localStorage.chatPerf="1")
   useRenderMetrics("ChatWidget", { messageCount: messages.length });
@@ -89,8 +92,10 @@ export function ChatWidget() {
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    stickToBottomRef.current =
-      el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+    stickToBottomRef.current = near;
+    setAtBottom(prev => (prev !== near ? near : prev));
+    if (near) setUnreadCount(0);
   }, []);
 
   const scrollToBottom = useCallback((smooth = false) => {
@@ -99,10 +104,26 @@ export function ChatWidget() {
     el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
   }, []);
 
-  // Scroll on new messages / loading indicator changes (smooth)
+  const jumpToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    stickToBottomRef.current = true;
+    setAtBottom(true);
+    setUnreadCount(0);
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, []);
+
+  // Scroll on new messages / loading indicator changes (smooth) + unread counter
   useEffect(() => {
+    const delta = messages.length - prevMessageCountRef.current;
+    if (delta > 0 && !stickToBottomRef.current) {
+      // New assistant/user message arrived while user is reading above
+      const newCount = messages.slice(-delta).filter(m => m.role === "assistant").length;
+      if (newCount > 0) setUnreadCount(c => c + newCount);
+    }
+    prevMessageCountRef.current = messages.length;
     scrollToBottom(true);
-  }, [messages.length, isLoading, scrollToBottom]);
+  }, [messages.length, isLoading, scrollToBottom, messages]);
 
   // Typing effect — uses rAF batching + instant (non-smooth) scroll to avoid jank
    const typeMessage = useCallback((fullText: string, messageId: string) => {
