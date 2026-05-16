@@ -214,18 +214,10 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <div className="text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</div>
                 <h1 className="text-xl font-bold text-card-foreground leading-tight">{product.name}</h1>
-                {!priceRevealed ? (
-                  <button
-                    onClick={() => setPriceRevealed(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Ver precio
-                  </button>
-                ) : (
-                  <div className="space-y-3 animate-fade-in">
+                {basePrice > 0 ? (
+                  <div className="space-y-3">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-extrabold">${finalPrice.toFixed(2)}</span>
+                      <span className="text-3xl font-extrabold">${finalPrice.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       {product.sizePricing && selectedSize && (
                         <span className="text-xs text-muted-foreground ml-1">(precio por talla)</span>
                       )}
@@ -234,6 +226,10 @@ const ProductDetail = () => {
                         <span className="text-sm text-muted-foreground line-through">${product.priceOriginalMxn.toFixed(2)}</span>
                       )}
                     </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-xl font-bold text-muted-foreground">Consultar precio</div>
                     <a
                       href={`https://wa.me/5219931684717?text=${encodeURIComponent(`Hola, me interesa cotizar: ${product.name}`)}`}
                       target="_blank"
