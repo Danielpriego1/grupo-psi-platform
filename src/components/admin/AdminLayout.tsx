@@ -28,6 +28,7 @@ const navItems = [
   { label: "Inventario", icon: Package, path: "/admin/inventory" },
   { label: "Clientes", icon: Users, path: "/admin/clients" },
   { label: "Certificados", icon: FileText, path: "/admin/certificados" },
+  { label: "Equipos", icon: QrCode, path: "/admin/equipos" },
 ];
 
 export function AdminLayout() {
