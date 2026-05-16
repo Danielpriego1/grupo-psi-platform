@@ -13,6 +13,7 @@ import {
   Shield,
   Wrench,
   CalendarDays,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const navItems = [
   { label: "Entregas", icon: Truck, path: "/admin/deliveries" },
   { label: "Inventario", icon: Package, path: "/admin/inventory" },
   { label: "Clientes", icon: Users, path: "/admin/clients" },
+  { label: "Certificados", icon: FileText, path: "/admin/certificados" },
 ];
 
 export function AdminLayout() {
