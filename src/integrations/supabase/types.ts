@@ -659,6 +659,63 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_id: string | null
+          event_type: string
+          id: string
+          order_id: string | null
+          order_number: string | null
+          payment_status: string | null
+          processed_at: string | null
+          processing_status: string
+          raw_payload: Json | null
+          received_at: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
+          ticket_generated: boolean
+          ticket_token: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_id?: string | null
+          event_type: string
+          id?: string
+          order_id?: string | null
+          order_number?: string | null
+          payment_status?: string | null
+          processed_at?: string | null
+          processing_status?: string
+          raw_payload?: Json | null
+          received_at?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          ticket_generated?: boolean
+          ticket_token?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          order_number?: string | null
+          payment_status?: string | null
+          processed_at?: string | null
+          processing_status?: string
+          raw_payload?: Json | null
+          received_at?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          ticket_generated?: boolean
+          ticket_token?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
