@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",
@@ -60,6 +61,9 @@ export default function AdminDeliveries() {
     fetchDeliveries();
     fetchOrders();
   }, []);
+
+  useRealtimeTable({ table: "deliveries", onChange: () => fetchDeliveries() });
+  useRealtimeTable({ table: "orders", onChange: () => fetchOrders() });
 
   const createDelivery = async () => {
     if (!newDelivery.order_id) {

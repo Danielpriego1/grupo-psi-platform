@@ -12,12 +12,14 @@ import {
   X,
   Shield,
   Wrench,
+  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
+  { label: "Calendario", icon: CalendarDays, path: "/admin/calendario" },
   { label: "Pedidos", icon: ShoppingCart, path: "/admin/orders" },
   { label: "Mantenimiento", icon: Wrench, path: "/admin/maintenance" },
   { label: "Entregas", icon: Truck, path: "/admin/deliveries" },

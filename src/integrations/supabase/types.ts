@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          address: string | null
+          appointment_type: Database["public"]["Enums"]["appointment_type"]
+          assigned_to: string | null
+          client_id: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string | null
+          duration_minutes: number
+          id: string
+          internal_notes: string | null
+          latitude: number | null
+          longitude: number | null
+          municipality: string | null
+          notes: string | null
+          scheduled_at: string
+          state: string | null
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          appointment_type?: Database["public"]["Enums"]["appointment_type"]
+          assigned_to?: string | null
+          client_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          id?: string
+          internal_notes?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
+          notes?: string | null
+          scheduled_at: string
+          state?: string | null
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          appointment_type?: Database["public"]["Enums"]["appointment_type"]
+          assigned_to?: string | null
+          client_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          id?: string
+          internal_notes?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
+          notes?: string | null
+          scheduled_at?: string
+          state?: string | null
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -367,7 +441,31 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      calendar_events: {
+        Row: {
+          address: string | null
+          assigned_to: string | null
+          client_id: string | null
+          client_name: string | null
+          contact_phone: string | null
+          created_at: string | null
+          end_at: string | null
+          event_type: string | null
+          id: string | null
+          internal_notes: string | null
+          latitude: number | null
+          longitude: number | null
+          municipality: string | null
+          notes: string | null
+          source: string | null
+          source_id: string | null
+          start_at: string | null
+          state: string | null
+          status: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_maintenance_tracking_code: { Args: never; Returns: string }
@@ -396,6 +494,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "technician" | "vendor"
+      appointment_status:
+        | "scheduled"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "no_show"
+      appointment_type: "visit" | "inspection" | "pickup" | "meeting"
       delivery_status:
         | "pending"
         | "assigned"
@@ -543,6 +648,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "technician", "vendor"],
+      appointment_status: [
+        "scheduled",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
+      appointment_type: ["visit", "inspection", "pickup", "meeting"],
       delivery_status: [
         "pending",
         "assigned",

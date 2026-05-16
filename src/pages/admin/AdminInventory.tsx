@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ export default function AdminInventory() {
   };
 
   useEffect(() => { fetchItems(); }, []);
+  useRealtimeTable({ table: "inventory", onChange: () => fetchItems() });
 
   const openNew = () => {
     setEditItem(null);

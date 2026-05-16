@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapPin, Phone, Mail, Calendar, Clock, Wrench } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 type ReqStatus = Database["public"]["Enums"]["maintenance_request_status"];
 
@@ -77,6 +78,8 @@ export default function AdminMaintenance() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useRealtimeTable({ table: "maintenance_requests", onChange: () => fetchData() });
 
   const filtered = useMemo(
     () => (filter === "all" ? requests : requests.filter((r) => r.status === filter)),
