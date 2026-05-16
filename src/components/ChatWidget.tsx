@@ -295,14 +295,19 @@ export function ChatWidget() {
             onScroll={handleScroll}
             className="h-full space-y-3 overflow-y-auto overscroll-contain p-4"
             style={{ maxHeight: 360, contain: "layout paint style", willChange: "scroll-position" }}
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-label="Conversación con Sora"
+            tabIndex={0}
           >
             {visibleMessages.map(msg => (
               <MessageBubble key={msg.id} msg={msg} />
             ))}
             {isLoading && (
-              <div className="flex justify-start animate-fade-in">
+              <div className="flex justify-start animate-fade-in" role="status" aria-label="Sora está escribiendo">
                 <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
-                  <span className="inline-flex gap-1">
+                  <span className="inline-flex gap-1" aria-hidden="true">
                     <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
                     <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
                     <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
@@ -313,12 +318,25 @@ export function ChatWidget() {
             )}
           </div>
 
+          {/* Live region so screen readers announce new arrivals even while scrolled up */}
+          <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {!atBottom && unreadCount > 0
+              ? `${unreadCount} ${unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"} de Sora. Presiona Fin para ir al final.`
+              : ""}
+          </div>
+
           {!atBottom && unreadCount > 0 && (
             <button
+              type="button"
               onClick={jumpToBottom}
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-[#ea580c] px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in"
+              aria-label={`Ir al final del chat. ${unreadCount} ${unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}. Atajo: tecla Fin.`}
+              title="Ir al final (Fin)"
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-[#ea580c] px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-card min-h-[32px]"
             >
-              ↓ {unreadCount} {unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+              <span aria-hidden="true">↓</span>
+              <span>
+                {unreadCount} {unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+              </span>
             </button>
           )}
         </div>
