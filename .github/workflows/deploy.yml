@@ -1,4 +1,4 @@
-# Deploy workflow v2
+# Deploy workflow v3
 name: Deploy to VPS
 
 on:
@@ -39,10 +39,8 @@ jobs:
             echo "=== Iniciando deploy ==="
             cd /var/www/grupopsi
             git pull origin main
-            export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
-            which npm || (curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs)
-            npm install
-            npm run build
-            pm2 restart grupo-psi 2>/dev/null || pm2 start npm --name grupo-psi -- start
-            sudo nginx -t && sudo systemctl reload nginx
+            /usr/bin/npm install
+            /usr/bin/npm run build
+            /usr/local/bin/pm2 restart grupo-psi 2>/dev/null || /usr/local/bin/pm2 start /usr/bin/npm --name grupo-psi -- start
+            sudo /usr/sbin/nginx -t && sudo systemctl reload nginx
             echo "=== Deploy completado ==="
