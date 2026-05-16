@@ -4,34 +4,36 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { readFileSync } from "node:fs";
 
+const COMPAT: Record<string, number[]> = {
+  "3": [16, 17],
+  "4": [17, 18],
+  "5": [19],
+};
+const majorOf = (v: string) => Number(String(v).match(/^\d+/)?.[0] ?? 0);
+
+function readPkg(name: string): { version: string } {
+  try {
+    const file = path.resolve(__dirname, "node_modules", name, "package.json");
+    return JSON.parse(readFileSync(file, "utf8"));
+  } catch (e) {
+    throw new Error(
+      `[compat-check] No se pudo leer ${name}/package.json: ${(e as Error).message}. Ejecuta \`bun install\`.`,
+    );
+  }
+}
+
+// Lee versiones una sola vez al cargar la config.
+const reactPkg = readPkg("react");
+const rlPkg = readPkg("react-leaflet");
+
 // Plugin: valida compatibilidad React ↔ react-leaflet al iniciar Vite (dev y build).
 function compatCheckPlugin() {
   return {
     name: "psi-compat-check",
     enforce: "pre" as const,
     configResolved() {
-      const COMPAT: Record<string, number[]> = {
-        "3": [16, 17],
-        "4": [17, 18],
-        "5": [19],
-      };
-      const major = (v: string) => Number(String(v).match(/^\d+/)?.[0] ?? 0);
-      const readPkg = (name: string): { version: string } => {
-        try {
-          const file = path.resolve(__dirname, "node_modules", name, "package.json");
-          return JSON.parse(readFileSync(file, "utf8"));
-        } catch (e) {
-          throw new Error(
-            `[compat-check] No se pudo leer ${name}/package.json: ${(e as Error).message}. Ejecuta \`bun install\`.`,
-          );
-        }
-      };
-
-      const reactPkg = readPkg("react");
-      const rlPkg = readPkg("react-leaflet");
-
-      const reactMajor = major(reactPkg.version);
-      const rlMajor = String(major(rlPkg.version));
+      const reactMajor = majorOf(reactPkg.version);
+      const rlMajor = String(majorOf(rlPkg.version));
       const expected = COMPAT[rlMajor];
 
       if (!expected) {
@@ -72,5 +74,8 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: {
+    __REACT_LEAFLET_VERSION__: JSON.stringify(rlPkg.version),
   },
 }));
