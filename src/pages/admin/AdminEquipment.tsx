@@ -69,7 +69,7 @@ export default function AdminEquipment() {
 
   const save = async () => {
     if (!form.client_id) { toast({ title: "Selecciona cliente", variant: "destructive" }); return; }
-    const payload = { ...form, serial_number: form.serial_number || null, brand: form.brand || null, model: form.model || null, branch_name: form.branch_name || null, notes: form.notes || null };
+    const payload: any = { ...form, serial_number: form.serial_number || null, brand: form.brand || null, model: form.model || null, branch_name: form.branch_name || null, notes: form.notes || null };
     if (editId) {
       const { error } = await supabase.from("equipment").update(payload).eq("id", editId);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
