@@ -758,6 +758,10 @@ export type Database = {
           total: number
         }[]
       }
+      get_ticket_token_by_order: {
+        Args: { _order_number: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
