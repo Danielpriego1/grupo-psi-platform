@@ -64,8 +64,7 @@ serve(async (req) => {
             : i.product.priceOriginalMxn;
           return sum + p * i.quantity;
         }, 0),
-        notes: `Cliente: ${clientName || "No especificado"} | Tel: ${clientPhone || "No especificado"}`,
-        payment_method: "stripe",
+        notes: `Cliente: ${clientName || "No especificado"} | Tel: ${clientPhone || "No especificado"} | Pago: Stripe`,
       })
       .select()
       .single();
