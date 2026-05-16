@@ -1,8 +1,12 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+interface AdminProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+export function ProtectedRoute({ children }: AdminProtectedRouteProps) {
+  const { user, loading, roles } = useAuth();
 
   if (loading) {
     return (
@@ -14,6 +18,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Navigate to="/admin/login" replace />;
+  }
+
+  // Admin area requires admin or vendor role
+  const hasAdminAccess = roles.includes("admin") || roles.includes("vendor");
+  if (!hasAdminAccess) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

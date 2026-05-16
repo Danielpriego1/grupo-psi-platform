@@ -216,6 +216,7 @@ export type Database = {
           phone: string | null
           state: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -229,6 +230,7 @@ export type Database = {
           phone?: string | null
           state?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -242,6 +244,7 @@ export type Database = {
           phone?: string | null
           state?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -672,9 +675,10 @@ export type Database = {
       }
       regenerate_certificate_qr: { Args: { _id: string }; Returns: string }
       regenerate_equipment_qr: { Args: { _id: string }; Returns: string }
+      user_owns_client: { Args: { _client_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "technician" | "vendor"
+      app_role: "admin" | "technician" | "vendor" | "tecnico" | "client"
       appointment_status:
         | "scheduled"
         | "confirmed"
@@ -837,7 +841,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "technician", "vendor"],
+      app_role: ["admin", "technician", "vendor", "tecnico", "client"],
       appointment_status: [
         "scheduled",
         "confirmed",

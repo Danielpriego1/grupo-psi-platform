@@ -9,7 +9,8 @@ import { ChatWidget } from "./components/ChatWidget";
 import { CartDrawer } from "./components/CartDrawer";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./hooks/useAuth";
-import { ProtectedRoute } from "./components/admin/ProtectedRoute";
+import { ProtectedRoute as AdminProtectedRoute } from "./components/admin/ProtectedRoute";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
@@ -25,6 +26,7 @@ import AdminClients from "./pages/admin/AdminClients";
 import AdminMaintenance from "./pages/admin/AdminMaintenance";
 import AdminCalendar from "./pages/admin/AdminCalendar";
 import AdminCertificates from "./pages/admin/AdminCertificates";
+import PortalHome from "./pages/portal/PortalHome";
 import PortalCertificates from "./pages/portal/PortalCertificates";
 import VerifyCertificate from "./pages/VerifyCertificate";
 import VerifyEquipment from "./pages/VerifyEquipment";
@@ -33,6 +35,13 @@ import AdminQrPrint from "./pages/admin/AdminQrPrint";
 import CategoryPage from "./pages/CategoryPage";
 import ServiceDetail from "./pages/ServiceDetail";
 import RastreoMantenimiento from "./pages/RastreoMantenimiento";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import AuthCallback from "./pages/auth/Callback";
+import Privacidad from "./pages/Privacidad";
+import Terminos from "./pages/Terminos";
 
 const queryClient = new QueryClient({});
 
@@ -119,14 +128,25 @@ const App = () => (
                 }
               />
 
+              {/* Auth routes (public) */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/registro" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+
+              {/* Legal */}
+              <Route path="/privacidad" element={<Privacidad />} />
+              <Route path="/terminos" element={<Terminos />} />
+
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute>
+                  <AdminProtectedRoute>
                     <AdminLayout />
-                  </ProtectedRoute>
+                  </AdminProtectedRoute>
                 }
               >
                 <Route index element={<AdminDashboard />} />
@@ -141,10 +161,11 @@ const App = () => (
               </Route>
 
               {/* Print view (admin auth required) */}
-              <Route path="/admin/qr-print" element={<ProtectedRoute><AdminQrPrint /></ProtectedRoute>} />
+              <Route path="/admin/qr-print" element={<AdminProtectedRoute><AdminQrPrint /></AdminProtectedRoute>} />
 
-              {/* Customer portal */}
-              <Route path="/portal/certificados" element={<PortalCertificates />} />
+              {/* Customer portal (authenticated) */}
+              <Route path="/portal" element={<ProtectedRoute><PortalHome /></ProtectedRoute>} />
+              <Route path="/portal/certificados" element={<ProtectedRoute><PortalCertificates /></ProtectedRoute>} />
 
               {/* Public verification (QR targets) */}
               <Route path="/verificar/certificado/:token" element={<VerifyCertificate />} />

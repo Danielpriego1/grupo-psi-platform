@@ -1,68 +1,79 @@
-# Sistema de Códigos QR — Grupo Psi
+# Plan: Autenticación completa + Roles + RLS
 
-QR únicos para equipos y certificados, con páginas de verificación oficiales dentro de la plataforma, generación/regeneración/impresión desde admin y visualización en portal cliente. Todo se actualiza en tiempo real vía Supabase Realtime ya activo.
+## Nota importante sobre proveedores OAuth
 
-## Estructura de URLs
+Lovable Cloud soporta de forma nativa **Email/Password, Google y Apple**. **GitHub no está soportado nativamente** en Lovable Cloud. Opciones:
 
-- **Certificados**: `/verificar/certificado/{qr_token}` — token UUID seguro (ya existe en `certificates.qr_token`).
-- **Equipos**: `/verificar/equipo/{qr_token}` — nuevo token UUID en `equipment`.
-- La ruta actual `/verificar/:token` se conserva como redirect a `/verificar/certificado/:token` para no romper QRs ya impresos.
+1. **Recomendado:** Implementar Email + Google + Apple ahora, y dejar GitHub fuera (la mayoría de plataformas B2B industriales como Grupo Psi no lo necesitan).
+2. Si GitHub es indispensable, hay que migrar a una integración directa con Supabase externa (proceso aparte).
 
-Ningún QR apunta directamente a PDFs ni a IDs incrementales — todos van a páginas que consultan el estatus en vivo.
+Procederé con **opción 1** salvo que indiques lo contrario.
 
-## Fase 1 — Esquema Supabase
+## Fase 1 — Supabase Auth & esquema
 
-### Cambios en `equipment`
-- Añadir columna `qr_token uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE`.
-- Backfill para registros existentes.
+- `configure_auth`: signup habilitado, `auto_confirm_email=false` (verificación por email), HIBP activado.
+- `configure_social_auth`: habilitar `google` y `apple` (managed, sin credenciales propias).
+- Trigger `on_auth_user_created` ya existe (`handle_new_user`) → verificar que crea `profiles` y asigna rol por defecto `client`.
+- Enum `app_role` actual: `admin`, `vendor`. **Migración:** agregar `'tecnico'` y `'client'` al enum (manteniendo `vendor` por compatibilidad con código existente que la usa).
+- Trigger nuevo: al crear profile, insertar `(user_id, 'client')` en `user_roles` por defecto.
+- Tabla `clients`: agregar columna opcional `user_id uuid` para vincular cuenta auth ↔ registro de cliente (matching por email también soportado como hoy).
+- Tabla `appointments` y `maintenance_requests`: ya tienen `assigned_to` para técnicos (perfecto para RLS).
 
-### Nueva RPC pública `get_equipment_by_qr(_token uuid)`
-- SECURITY DEFINER, devuelve: equipo (tipo, marca, modelo, serie, sucursal), empresa cliente, último servicio (de `maintenance_requests` y `certificates` más recientes), próximo servicio programado (`appointments`), estatus calculado (operativo / mantenimiento pendiente / fuera de servicio basado en certificados vigentes).
+## Fase 2 — RLS endurecidas (estrategia por rol)
 
-### RPC `regenerate_equipment_qr(_id uuid)` y `regenerate_certificate_qr(_id uuid)`
-- Solo admins (chequeo con `has_role`), reemplaza el `qr_token` por uno nuevo.
+Función helper nueva `public.is_admin()` y `public.is_tecnico()` (wrappers de `has_role`) para legibilidad.
 
-## Fase 2 — Generación de QR
+| Tabla | Admin | Técnico | Cliente |
+|---|---|---|---|
+| `profiles` | todo | propio | propio |
+| `user_roles` | todo | leer propio | leer propio |
+| `clients` | todo | leer asignados | leer propio (`user_id = auth.uid()` o email match) |
+| `orders` | todo | leer asignados (`assigned_to`) | leer propios (vía `client_id` → `clients.user_id`) |
+| `order_items` | todo | leer si order asignado | leer si order propio |
+| `appointments` | todo | leer/actualizar asignados | leer propios |
+| `maintenance_requests` | todo | leer asignadas (futuro: añadir `assigned_to`) | leer por email/tracking |
+| `deliveries` | todo | leer asignados | leer si order propio |
+| `certificates` | todo | leer relacionados | leer propios |
+| `equipment` | todo | leer asignados | leer propios |
+| `certificate_copy_requests` | todo | — | propios (ya está) |
+| `inventory` | admin gestiona | leer | leer público (mantengo) |
 
-Librería `qrcode` (npm, ya compatible con Vite). Función helper `buildQrUrl(kind, token)` y componente `<QrCode value size />` que renderiza SVG y permite descarga PNG.
+Se eliminan las políticas actuales tipo `"Authenticated users can view X" USING true` que son demasiado abiertas, y se reemplazan por las anteriores.
 
-Componente `<QrLabel />` con marca Grupo PSI + folio/serie + QR — diseñado para imprimir (1 por hoja o grilla 4x6 etiquetas). Vista `/admin/qr-print?ids=...&kind=...` con `@media print` styling.
+## Fase 3 — Frontend
 
-## Fase 3 — Páginas de verificación
+Páginas nuevas/actualizadas en `src/pages/auth/`:
+- `Login.tsx`: email/password + botones OAuth (Google, Apple) con logos oficiales SVG.
+- `Register.tsx`: email/password + OAuth, acepta términos.
+- `ForgotPassword.tsx`: envía email con `resetPasswordForEmail`.
+- `ResetPassword.tsx`: pública, detecta `type=recovery`, actualiza password.
+- `Callback.tsx`: maneja redirect OAuth.
 
-### `/verificar/certificado/:token` (mejora de la existente)
-Ya implementada — solo mover ruta a la nueva URL y mantener alias antiguo.
+Componentes:
+- `src/components/auth/AuthLayout.tsx`: layout limpio, branding Grupo Psi, dark mode.
+- `src/components/auth/OAuthButtons.tsx`: botones con logos.
+- `src/components/auth/ProtectedRoute.tsx`: ya existe → extender con prop `requiredRole`.
+- `src/hooks/useAuth.tsx`: ya existe → añadir `roles`, `isAdmin`, `isTecnico`, `isClient`, `signOut`.
 
-### `/verificar/equipo/:token` (nueva)
-- Header con icono escudo, tipo de equipo y empresa cliente.
-- Badge de estatus en vivo (verde operativo / ámbar próximo mantenimiento / rojo vencido).
-- Tarjeta de datos: serie, marca, modelo, sucursal.
-- Timeline de últimos 5 servicios (mantenimiento + certificados ordenados por fecha).
-- Próxima cita si existe.
-- Lista de certificados vigentes con badge y link a su verificación.
-- Realtime: suscripción a `equipment`, `certificates`, `maintenance_requests`, `appointments` filtrados.
+Protección de rutas en `App.tsx`:
+- `/admin/*` → `requiredRole="admin"`
+- `/tecnico/*` (nuevo dashboard básico) → `requiredRole="tecnico"`
+- `/portal/*` → autenticado (cualquier rol)
 
-## Fase 4 — Admin y Portal
+## Fase 4 — Legal
 
-### Admin
-- En `AdminCertificates` sheet: agregar visualización QR + botones **Descargar PNG**, **Imprimir etiqueta**, **Regenerar QR**.
-- Nueva página `/admin/equipos` (tabla básica con búsqueda por cliente/serie, dialog de alta/edición, sheet con QR e historial). Item de menú "Equipos".
-- Vista `/admin/qr-print` que recibe `?kind=certificate|equipment&ids=...` y muestra etiquetas listas para imprimir (oculta sidebar/header con `print:hidden`).
+Actualizar `src/pages/Privacidad.tsx` y `src/pages/Terminos.tsx`:
+- Sección "Autenticación y datos OAuth" (Google/Apple, qué datos se reciben).
+- Sección "Sesiones y cookies".
+- Sección "Roles y permisos".
+- Sección "Retención de datos" (90 días tras eliminación de cuenta).
 
-### Portal cliente (`PortalCertificates`)
-- En sheet de detalle de certificado: mostrar QR con botón descargar.
-- Nueva sección **Mis equipos** dentro del portal (`/portal/equipos`) con QR por cada equipo y link a su verificación.
+## Entregables (orden de ejecución)
 
-## Fase 5 — Compatibilidad y QA
+1. `supabase--migration` con: enum `app_role` ampliado, helpers RLS, `clients.user_id`, nuevas políticas en todas las tablas, trigger de rol por defecto.
+2. `configure_auth` + `configure_social_auth` (google, apple).
+3. Implementación frontend (auth pages, OAuthButtons, ProtectedRoute con roles, useAuth ampliado).
+4. Actualización Privacidad/Términos.
+5. Verificación de rutas existentes (admin, portal) para que sigan funcionando.
 
-- Ruta `/verificar/:token` legacy redirige a `/verificar/certificado/:token`.
-- Sin cambios en `orders`, `deliveries`, `appointments`, `inventory`, calendario.
-- QA: escanear QR cert → ver estatus; escanear QR equipo → ver historial; regenerar QR invalida el anterior; impresión muestra etiquetas limpias.
-
-## Orden de implementación
-
-1. Migración: columna y RPCs.
-2. Helpers `qrcode` + componentes `<QrCode>` y `<QrLabel>`.
-3. Páginas de verificación (equipo + ajuste cert + alias legacy).
-4. Vista de impresión `/admin/qr-print`.
-5. Integración en `AdminCertificates`, nueva `AdminEquipment`, portal cliente.
+¿Confirmas que procedo **sin GitHub** (solo Email + Google + Apple)?
