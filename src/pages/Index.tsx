@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { AboutSection } from "@/components/AboutSection";
 import { CTASection } from "@/components/CTASection";
 import { CustomerStories } from "@/components/CustomerStories";
+import { CoverageMap } from "@/components/CoverageMap";
 import { categories } from "@/data/categories";
 import { motion } from "framer-motion";
 
