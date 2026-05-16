@@ -77,9 +77,10 @@ serve(async (req) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const orderNumber = (session.metadata?.order_number as string) ?? null;
-        const orderId = (session.metadata?.order_id as string) ?? null;
-        const paymentIntentId = (session.payment_intent as string) ?? null;
+        const nullIfEmpty = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : null);
+        const orderNumber = nullIfEmpty(session.metadata?.order_number);
+        const orderId = nullIfEmpty(session.metadata?.order_id);
+        const paymentIntentId = nullIfEmpty(session.payment_intent as string);
         const ticketToken = crypto.randomUUID();
 
         const updates = {
