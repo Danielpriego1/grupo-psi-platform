@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
 import { X, Send, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,27 +21,47 @@ const INITIAL_MESSAGES: Message[] = [
 
 const WHATSAPP_NUMBER = "5219931684717";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+const MAX_RENDERED_MESSAGES = 60; // virtualize tail; older still kept for context
+const NEAR_BOTTOM_PX = 80;
 
 function renderMarkdown(text: string) {
-  return text.split(/(\*\*.*?\*\*)/).map((part, idx) => {
+  // Split on bold + newlines in a single pass to avoid nested spans
+  const parts = text.split(/(\*\*.*?\*\*)/);
+  const out: React.ReactNode[] = [];
+  parts.forEach((part, idx) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={idx}>{part.slice(2, -2)}</strong>;
+      out.push(<strong key={`b${idx}`}>{part.slice(2, -2)}</strong>);
+      return;
     }
-    if (part.includes("\n")) {
-      return (
-        <span key={idx}>
-          {part.split("\n").map((line, li) => (
-            <span key={li}>
-              {li > 0 && <br />}
-              {line}
-            </span>
-          ))}
-        </span>
-      );
-    }
-    return <span key={idx}>{part}</span>;
+    const lines = part.split("\n");
+    lines.forEach((line, li) => {
+      if (li > 0) out.push(<br key={`br${idx}-${li}`} />);
+      if (line) out.push(line);
+    });
   });
+  return out;
 }
+
+const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
+  const content = useMemo(() => renderMarkdown(msg.content), [msg.content]);
+  return (
+    <div className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+      <div
+        className={cn(
+          "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+          msg.role === "user"
+            ? "bg-[#ea580c] text-white rounded-br-md"
+            : "bg-muted text-foreground rounded-bl-md"
+        )}
+      >
+        {content}
+        {msg.isTyping && (
+          <span className="inline-block w-0.5 h-4 bg-foreground/60 animate-pulse ml-0.5 align-text-bottom" />
+        )}
+      </div>
+    </div>
+  );
+});
 
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -50,42 +70,61 @@ export function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stickToBottomRef = useRef(true);
 
+  // Track if user scrolled away from bottom — only auto-scroll when near bottom
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    stickToBottomRef.current =
+      el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+  }, []);
+
+  const scrollToBottom = useCallback((smooth = false) => {
+    const el = scrollRef.current;
+    if (!el || !stickToBottomRef.current) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  }, []);
+
+  // Scroll on new messages / loading indicator changes (smooth)
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-    }
-  }, [messages, isLoading]);
+    scrollToBottom(true);
+  }, [messages.length, isLoading, scrollToBottom]);
 
-  // Simulate typing effect - reveals characters gradually
+  // Typing effect — uses rAF batching + instant (non-smooth) scroll to avoid jank
    const typeMessage = useCallback((fullText: string, messageId: string) => {
-    if (typingIntervalRef.current) {
-      clearInterval(typingIntervalRef.current);
-      typingIntervalRef.current = null;
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
     }
     let charIndex = 0;
-    const speed = 18 + Math.random() * 12;
-
-    typingIntervalRef.current = setInterval(() => {
-      charIndex += 1 + Math.floor(Math.random() * 2);
-      if (charIndex >= fullText.length) {
-        charIndex = fullText.length;
-        if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
-        typingIntervalRef.current = null;
+    const tick = () => {
+      charIndex += 2 + Math.floor(Math.random() * 3);
+      const done = charIndex >= fullText.length;
+      if (done) charIndex = fullText.length;
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (!last || last.id !== messageId) return prev;
+        const updated = { ...last, content: fullText.slice(0, charIndex), isTyping: !done };
+        return [...prev.slice(0, -1), updated];
+      });
+      // instant scroll during streaming — cheaper than smooth
+      const el = scrollRef.current;
+      if (el && stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+      if (!done) {
+        typingTimeoutRef.current = setTimeout(tick, 18 + Math.random() * 12);
+      } else {
+        typingTimeoutRef.current = null;
       }
-      setMessages(prev =>
-        prev.map(m =>
-          m.id === messageId
-            ? { ...m, content: fullText.slice(0, charIndex), isTyping: charIndex < fullText.length }
-            : m
-        )
-      );
-    }, speed);
+    };
+    typingTimeoutRef.current = setTimeout(tick, 18);
   }, []);
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: input.trim() };
+    stickToBottomRef.current = true;
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
@@ -106,15 +145,11 @@ export function ChatWidget() {
 
       const reply = data?.reply || "Disculpa, no pude procesar tu solicitud. ¿Podrías intentar de nuevo?";
       const msgId = (Date.now() + 1).toString();
-      
-      // Add empty message first, then type it out
       setMessages(prev => [
         ...prev,
         { id: msgId, role: "assistant", content: "", isTyping: true },
       ]);
       setIsLoading(false);
-      
-      // Start typing effect
       typeMessage(reply, msgId);
     } catch (err) {
       console.error("Sora chat error:", err);
@@ -134,11 +169,20 @@ export function ChatWidget() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, []);
 
   const anyTyping = messages.some(m => m.isTyping);
+
+  // Only render last N for performance; older context still kept in state for API history
+  const visibleMessages = useMemo(
+    () =>
+      messages.length > MAX_RENDERED_MESSAGES
+        ? messages.slice(-MAX_RENDERED_MESSAGES)
+        : messages,
+    [messages]
+  );
 
   return (
     <>
@@ -188,27 +232,14 @@ export function ChatWidget() {
           </div>
         </div>
 
-        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4" style={{ maxHeight: 360 }}>
-          {messages.map((msg, i) => (
-            <div
-              key={msg.id}
-              className={cn("flex animate-slide-up", msg.role === "user" ? "justify-end" : "justify-start")}
-              style={{ animationDelay: `${i * 50}ms` }}
-            >
-              <div
-                className={cn(
-                  "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed transition-all duration-300 whitespace-pre-wrap",
-                  msg.role === "user"
-                    ? "bg-[#ea580c] text-white rounded-br-md"
-                    : "bg-muted text-foreground rounded-bl-md"
-                )}
-              >
-                {renderMarkdown(msg.content)}
-                {msg.isTyping && (
-                  <span className="inline-block w-0.5 h-4 bg-foreground/60 animate-pulse ml-0.5 align-text-bottom" />
-                )}
-              </div>
-            </div>
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4"
+          style={{ maxHeight: 360, contain: "layout paint style", willChange: "scroll-position" }}
+        >
+          {visibleMessages.map(msg => (
+            <MessageBubble key={msg.id} msg={msg} />
           ))}
           {isLoading && (
             <div className="flex justify-start animate-fade-in">
@@ -231,14 +262,14 @@ export function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Pregunta sobre productos, precios..."
-              className="flex-1 rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-[#ea580c] focus:border-[#ea580c]"
+              className="flex-1 rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none transition-colors duration-200 focus:ring-2 focus:ring-[#ea580c] focus:border-[#ea580c]"
               disabled={isLoading || anyTyping}
               autoFocus
             />
             <Button
               type="submit"
               size="icon"
-              className="shrink-0 rounded-xl bg-[#ea580c] text-white hover:bg-[#c2410c] transition-transform hover:scale-105 active:scale-95"
+              className="shrink-0 rounded-xl bg-[#ea580c] text-white hover:bg-[#c2410c] active:scale-95"
               disabled={isLoading || anyTyping}
             >
               <Send className="h-4 w-4" />
