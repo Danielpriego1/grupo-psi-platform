@@ -34,10 +34,12 @@ export function LeafletCompatAlert({ compat }: Props) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const reactMajor = Number(compat.reactVersion.split(".")[0]);
-  const suggestedRl =
-    reactMajor >= 19 ? "5" : reactMajor >= 17 ? "4" : "3";
+  // El major y la sugerencia vienen ya calculados desde checkLeafletCompatibility(),
+  // usando la versión leída en build-time desde node_modules/react/package.json.
+  const suggestedRl = compat.suggestedReactLeafletMajor;
   const command = buildCommand(PKG_MANAGER, "react-leaflet", suggestedRl);
+  const runtimeMismatch =
+    compat.reactRuntimeVersion && compat.reactRuntimeVersion !== compat.reactVersion;
 
   const handleCopy = async () => {
     try {
