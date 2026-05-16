@@ -231,16 +231,10 @@ function BrandsManager() {
                   }
                 />
               </div>
-              <div>
-                <Label>URL del logo (opcional)</Label>
-                <Input
-                  value={editing.logo_url ?? ""}
-                  placeholder="https://..."
-                  onChange={(e) =>
-                    setEditing({ ...editing, logo_url: e.target.value })
-                  }
-                />
-              </div>
+              <LogoUploader
+                value={editing.logo_url}
+                onChange={(url) => setEditing((prev) => prev ? { ...prev, logo_url: url } : prev)}
+              />
               <div>
                 <Label>Orden</Label>
                 <Input
