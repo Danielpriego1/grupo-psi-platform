@@ -3,8 +3,9 @@ import { getProductById, getProductPrice } from "@/data/products";
 import { mapStaticCategory, mapInventorySubcategory } from "@/data/categories";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { ShoppingCart, Truck, Wrench, ArrowLeft, ChevronLeft, ChevronRight, FileText, Eye, MessageCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, FileText, MessageCircle, X } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -20,13 +21,14 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const inventoryImages = useInventoryImages();
   const [date, setDate] = useState<Date>();
-  const [serviceType, setServiceType] = useState<"delivery" | "maintenance">("delivery");
+  const serviceType: "delivery" = "delivery";
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [inventoryItem, setInventoryItem] = useState<any>(null);
-  const [priceRevealed, setPriceRevealed] = useState(false);
+  const [imageZoomed, setImageZoomed] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -75,6 +77,21 @@ const ProductDetail = () => {
 
   const specPdfUrl = (inventoryItem as any)?.spec_pdf_url;
 
+  // Earliest delivery date: today + 2 business days (skip weekends).
+  const minDeliveryDate = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    let added = 0;
+    while (added < 2) {
+      d.setDate(d.getDate() + 1);
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) added++;
+    }
+    // If the resulting date lands on a weekend (shouldn't, but safety), bump to Monday.
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    return d;
+  }, []);
+
   const handleAddToCart = () => {
     if (allSizes.length > 0 && !selectedSize) {
       toast.error("Selecciona una talla");
@@ -114,23 +131,44 @@ const ProductDetail = () => {
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* ─── LEFT: Images, Description, Spec PDF, Map ─── */}
           <div className="flex-1 space-y-8">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/30">
+            <div
+              className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/30 cursor-zoom-in"
+              onMouseEnter={() => setImageZoomed(true)}
+              onMouseLeave={() => setImageZoomed(false)}
+              onClick={() => setLightboxOpen(true)}
+            >
               <img
                 src={allImages[currentImage]}
                 alt={product.name}
-                className="h-full w-full object-contain p-8 transition-opacity duration-300"
+                className={cn(
+                  "h-full w-full object-contain p-8 transition-transform duration-300 ease-out",
+                  imageZoomed && "scale-150"
+                )}
               />
               {allImages.length > 1 && (
                 <>
-                  <button onClick={prevImg} className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); prevImg(); }} className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
                     <ChevronLeft className="h-5 w-5" />
                   </button>
-                  <button onClick={nextImg} className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); nextImg(); }} className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
                     <ChevronRight className="h-5 w-5" />
                   </button>
                 </>
               )}
             </div>
+
+            <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+              <DialogContent className="max-w-5xl bg-background/95 p-2">
+                <button
+                  onClick={() => setLightboxOpen(false)}
+                  className="absolute right-3 top-3 z-10 h-9 w-9 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background"
+                  aria-label="Cerrar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <img src={allImages[currentImage]} alt={product.name} className="max-h-[85vh] w-full object-contain" />
+              </DialogContent>
+            </Dialog>
 
             {allImages.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
@@ -191,18 +229,10 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <div className="text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</div>
                 <h1 className="text-xl font-bold text-card-foreground leading-tight">{product.name}</h1>
-                {!priceRevealed ? (
-                  <button
-                    onClick={() => setPriceRevealed(true)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Ver precio
-                  </button>
-                ) : (
-                  <div className="space-y-3 animate-fade-in">
+                {basePrice > 0 ? (
+                  <div className="space-y-3">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-extrabold">${finalPrice.toFixed(2)}</span>
+                      <span className="text-3xl font-extrabold">${finalPrice.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       {product.sizePricing && selectedSize && (
                         <span className="text-xs text-muted-foreground ml-1">(precio por talla)</span>
                       )}
@@ -211,6 +241,10 @@ const ProductDetail = () => {
                         <span className="text-sm text-muted-foreground line-through">${product.priceOriginalMxn.toFixed(2)}</span>
                       )}
                     </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-xl font-bold text-muted-foreground">Consultar precio</div>
                     <a
                       href={`https://wa.me/5219931684717?text=${encodeURIComponent(`Hola, me interesa cotizar: ${product.name}`)}`}
                       target="_blank"
@@ -285,22 +319,9 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Service type toggle */}
-              <div className="space-y-3 rounded-xl border border-border bg-muted/10 p-4">
-                <div className="text-sm font-semibold">Tipo de servicio</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant={serviceType === "delivery" ? "default" : "outline"} className="w-full text-xs" onClick={() => setServiceType("delivery")}>
-                    <Truck className="mr-2 h-4 w-4" /> Entrega
-                  </Button>
-                  <Button variant={serviceType === "maintenance" ? "default" : "outline"} className="w-full text-xs" onClick={() => setServiceType("maintenance")}>
-                    <Wrench className="mr-2 h-4 w-4" /> Mantenimiento
-                  </Button>
-                </div>
-              </div>
-
               {/* Calendar */}
               <div className="space-y-3">
-                <div className="text-sm font-semibold">{serviceType === "delivery" ? "Fecha de entrega" : "Fecha de recolección"}</div>
+                <div className="text-sm font-semibold">Fecha de entrega</div>
                 <div className="overflow-hidden rounded-xl border border-border">
                   <Calendar
                     mode="single"
@@ -308,18 +329,27 @@ const ProductDetail = () => {
                     onSelect={setDate}
                     locale={es}
                     className={cn("p-3 pointer-events-auto w-full")}
-                    disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                    modifiers={{ weekend: (d) => d.getDay() === 0 || d.getDay() === 6 }}
+                    modifiersClassNames={{ weekend: "text-muted-foreground/40 line-through" }}
+                    disabled={(d) => {
+                      const day = new Date(d); day.setHours(0,0,0,0);
+                      if (day.getDay() === 0 || day.getDay() === 6) return true;
+                      return day < minDeliveryDate;
+                    }}
                   />
                 </div>
                 {date && (
                   <p className="text-sm text-primary font-medium">📅 {format(date, "EEEE d 'de' MMMM, yyyy", { locale: es })}</p>
                 )}
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  La fecha de entrega está sujeta a confirmación de pago. Los pedidos confirmados antes de las 12:00 pm en días hábiles se preparan el mismo día.
+                </p>
               </div>
 
               {/* Add to cart */}
               <Button size="lg" className="w-full text-base" onClick={handleAddToCart} disabled={!product.inStock}>
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                {priceRevealed ? `Agregar al carrito — $${(finalPrice * quantity).toFixed(2)}` : "Agregar al carrito"}
+                {basePrice > 0 ? `Agregar al carrito — $${(finalPrice * quantity).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Agregar al carrito"}
               </Button>
 
               {product.purchaseUrl && (
