@@ -206,6 +206,25 @@ export function ChatWidget() {
     };
   }, []);
 
+  // Keyboard shortcut: End (or Ctrl/Cmd+↓) jumps to the latest message when
+  // the "new messages" pill is visible. Active while the chat is open.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const hasPill = !atBottom && unreadCount > 0;
+      if (!hasPill) return;
+      const isEnd = e.key === "End";
+      const isCtrlDown = (e.ctrlKey || e.metaKey) && e.key === "ArrowDown";
+      if (isEnd || isCtrlDown) {
+        e.preventDefault();
+        jumpToBottom();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, atBottom, unreadCount, jumpToBottom]);
+
   const anyTyping = messages.some(m => m.isTyping);
 
   // Only render last N for performance; older context still kept in state for API history
@@ -256,10 +275,15 @@ export function ChatWidget() {
               rel="noopener noreferrer"
               className="text-white/70 hover:text-green-400 transition-colors mr-1"
               title="Escribir por WhatsApp"
+              aria-label="Escribir por WhatsApp"
             >
               <MessageCircle className="h-5 w-5" />
             </a>
-            <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white transition-colors">
+            <button
+              onClick={() => setOpen(false)}
+              className="text-white/70 hover:text-white transition-colors"
+              aria-label="Cerrar chat"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -271,14 +295,19 @@ export function ChatWidget() {
             onScroll={handleScroll}
             className="h-full space-y-3 overflow-y-auto overscroll-contain p-4"
             style={{ maxHeight: 360, contain: "layout paint style", willChange: "scroll-position" }}
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-label="Conversación con Sora"
+            tabIndex={0}
           >
             {visibleMessages.map(msg => (
               <MessageBubble key={msg.id} msg={msg} />
             ))}
             {isLoading && (
-              <div className="flex justify-start animate-fade-in">
+              <div className="flex justify-start animate-fade-in" role="status" aria-label="Sora está escribiendo">
                 <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
-                  <span className="inline-flex gap-1">
+                  <span className="inline-flex gap-1" aria-hidden="true">
                     <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
                     <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
                     <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
@@ -289,12 +318,25 @@ export function ChatWidget() {
             )}
           </div>
 
+          {/* Live region so screen readers announce new arrivals even while scrolled up */}
+          <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {!atBottom && unreadCount > 0
+              ? `${unreadCount} ${unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"} de Sora. Presiona Fin para ir al final.`
+              : ""}
+          </div>
+
           {!atBottom && unreadCount > 0 && (
             <button
+              type="button"
               onClick={jumpToBottom}
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-[#ea580c] px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in"
+              aria-label={`Ir al final del chat. ${unreadCount} ${unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}. Atajo: tecla Fin.`}
+              title="Ir al final (Fin)"
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-[#ea580c] px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-card min-h-[32px]"
             >
-              ↓ {unreadCount} {unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+              <span aria-hidden="true">↓</span>
+              <span>
+                {unreadCount} {unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+              </span>
             </button>
           )}
         </div>
