@@ -538,6 +538,7 @@ export type Database = {
           status: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent: string | null
           stripe_session_id: string | null
+          ticket_token: string | null
           total: number
           updated_at: string
         }
@@ -559,6 +560,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
+          ticket_token?: string | null
           total?: number
           updated_at?: string
         }
@@ -580,6 +582,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"]
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
+          ticket_token?: string | null
           total?: number
           updated_at?: string
         }
@@ -740,6 +743,24 @@ export type Database = {
           tracking_code: string
           updated_at: string
         }[]
+      }
+      get_order_ticket: {
+        Args: { _token: string }
+        Returns: {
+          address: string
+          created_at: string
+          municipality: string
+          order_number: string
+          paid_at: string
+          payment_status: string
+          state: string
+          status: Database["public"]["Enums"]["order_status"]
+          total: number
+        }[]
+      }
+      get_ticket_token_by_order: {
+        Args: { _order_number: string }
+        Returns: string
       }
       has_role: {
         Args: {

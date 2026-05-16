@@ -17,6 +17,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Mantenimiento from "./pages/Mantenimiento";
 import NotFound from "./pages/NotFound";
 import PagoExitoso from "./pages/PagoExitoso";
+import Ticket from "./pages/Ticket";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -117,6 +118,7 @@ const App = () => (
                 }
               />
                       <Route path="/pago-exitoso" element={<PagoExitoso />} />
+              <Route path="/ticket/:token" element={<Ticket />} />
               <Route
                 path="/rastreo"
                 element={
