@@ -22,13 +22,11 @@ export default function PagoExitoso() {
     const maxAttempts = 20; // ~40s
     const interval = setInterval(async () => {
       attempts++;
-      const { data } = await supabase
-        .from("orders")
-        .select("ticket_token")
-        .eq("order_number", orderNumber)
-        .maybeSingle();
-      if (data?.ticket_token) {
-        setTicketToken(data.ticket_token);
+      const { data } = await supabase.rpc("get_ticket_token_by_order", {
+        _order_number: orderNumber,
+      });
+      if (data) {
+        setTicketToken(data as string);
         setPolling(false);
         clearInterval(interval);
       } else if (attempts >= maxAttempts) {
