@@ -128,14 +128,25 @@ const App = () => (
                 }
               />
 
+              {/* Auth routes (public) */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/registro" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+
+              {/* Legal */}
+              <Route path="/privacidad" element={<Privacidad />} />
+              <Route path="/terminos" element={<Terminos />} />
+
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute>
+                  <AdminProtectedRoute>
                     <AdminLayout />
-                  </ProtectedRoute>
+                  </AdminProtectedRoute>
                 }
               >
                 <Route index element={<AdminDashboard />} />
@@ -150,10 +161,11 @@ const App = () => (
               </Route>
 
               {/* Print view (admin auth required) */}
-              <Route path="/admin/qr-print" element={<ProtectedRoute><AdminQrPrint /></ProtectedRoute>} />
+              <Route path="/admin/qr-print" element={<AdminProtectedRoute><AdminQrPrint /></AdminProtectedRoute>} />
 
-              {/* Customer portal */}
-              <Route path="/portal/certificados" element={<PortalCertificates />} />
+              {/* Customer portal (authenticated) */}
+              <Route path="/portal" element={<ProtectedRoute><PortalHome /></ProtectedRoute>} />
+              <Route path="/portal/certificados" element={<ProtectedRoute><PortalCertificates /></ProtectedRoute>} />
 
               {/* Public verification (QR targets) */}
               <Route path="/verificar/certificado/:token" element={<VerifyCertificate />} />
