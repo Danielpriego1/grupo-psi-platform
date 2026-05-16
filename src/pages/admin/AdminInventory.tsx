@@ -70,6 +70,7 @@ export default function AdminInventory() {
   };
 
   useEffect(() => { fetchItems(); }, []);
+  useRealtimeTable({ table: "inventory", onChange: () => fetchItems() });
 
   const openNew = () => {
     setEditItem(null);

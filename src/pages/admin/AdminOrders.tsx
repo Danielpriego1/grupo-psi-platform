@@ -76,6 +76,8 @@ export default function AdminOrders() {
     fetchClients();
   }, []);
 
+  useRealtimeTable({ table: "orders", onChange: () => fetchOrders() });
+
   const createOrder = async () => {
     if (newOrder.latitude == null || newOrder.longitude == null) {
       toast({

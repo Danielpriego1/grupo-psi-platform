@@ -78,6 +78,8 @@ export default function AdminMaintenance() {
     fetchData();
   }, []);
 
+  useRealtimeTable({ table: "maintenance_requests", onChange: () => fetchData() });
+
   const filtered = useMemo(
     () => (filter === "all" ? requests : requests.filter((r) => r.status === filter)),
     [requests, filter]
