@@ -265,26 +265,37 @@ export function ChatWidget() {
           </div>
         </div>
 
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4"
-          style={{ maxHeight: 360, contain: "layout paint style", willChange: "scroll-position" }}
-        >
-          {visibleMessages.map(msg => (
-            <MessageBubble key={msg.id} msg={msg} />
-          ))}
-          {isLoading && (
-            <div className="flex justify-start animate-fade-in">
-              <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
-                <span className="inline-flex gap-1">
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
-                </span>
-                <span className="text-xs text-muted-foreground italic">Sora está escribiendo…</span>
+        <div className="relative flex-1">
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="h-full space-y-3 overflow-y-auto overscroll-contain p-4"
+            style={{ maxHeight: 360, contain: "layout paint style", willChange: "scroll-position" }}
+          >
+            {visibleMessages.map(msg => (
+              <MessageBubble key={msg.id} msg={msg} />
+            ))}
+            {isLoading && (
+              <div className="flex justify-start animate-fade-in">
+                <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
+                  <span className="inline-flex gap-1">
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
+                  </span>
+                  <span className="text-xs text-muted-foreground italic">Sora está escribiendo…</span>
+                </div>
               </div>
-            </div>
+            )}
+          </div>
+
+          {!atBottom && unreadCount > 0 && (
+            <button
+              onClick={jumpToBottom}
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-[#ea580c] px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in"
+            >
+              ↓ {unreadCount} {unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+            </button>
           )}
         </div>
 
