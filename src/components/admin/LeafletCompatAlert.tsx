@@ -3,6 +3,29 @@ import { Copy, Check, RefreshCw, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { LeafletCompatResult } from "@/lib/leafletCompat";
 
+// Inyectados en build-time por vite.config.ts (define).
+declare const __PKG_MANAGER__: "bun" | "pnpm" | "yarn" | "npm";
+
+type PkgManager = "bun" | "pnpm" | "yarn" | "npm";
+
+const PKG_MANAGER: PkgManager =
+  typeof __PKG_MANAGER__ !== "undefined" ? __PKG_MANAGER__ : "npm";
+
+function buildCommand(pm: PkgManager, pkg: string, version: string): string {
+  const spec = `${pkg}@^${version}`;
+  switch (pm) {
+    case "bun":
+      return `bun add ${spec}`;
+    case "pnpm":
+      return `pnpm add ${spec}`;
+    case "yarn":
+      return `yarn add ${spec}`;
+    case "npm":
+    default:
+      return `npm install ${spec}`;
+  }
+}
+
 interface Props {
   compat: LeafletCompatResult;
 }
@@ -14,7 +37,7 @@ export function LeafletCompatAlert({ compat }: Props) {
   const reactMajor = Number(compat.reactVersion.split(".")[0]);
   const suggestedRl =
     reactMajor >= 19 ? "5" : reactMajor >= 17 ? "4" : "3";
-  const command = `bun add react-leaflet@^${suggestedRl}`;
+  const command = buildCommand(PKG_MANAGER, "react-leaflet", suggestedRl);
 
   const handleCopy = async () => {
     try {
