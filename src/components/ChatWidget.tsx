@@ -79,6 +79,12 @@ export function ChatWidget() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stickToBottomRef = useRef(true);
 
+  // Performance instrumentation (dev or localStorage.chatPerf="1")
+  useRenderMetrics("ChatWidget", { messageCount: messages.length });
+  useScrollMetrics(scrollRef, "transcript");
+  useFpsMonitor(open && (isLoading || messages.some(m => m.isTyping)), "transcript");
+  useLongTaskMonitor("ChatWidget");
+
   // Track if user scrolled away from bottom — only auto-scroll when near bottom
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
