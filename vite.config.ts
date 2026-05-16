@@ -93,6 +93,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
+    __REACT_VERSION__: JSON.stringify(reactPkg.version),
     __REACT_LEAFLET_VERSION__: JSON.stringify(rlPkg.version),
     __PKG_MANAGER__: JSON.stringify(detectPackageManager()),
   },
