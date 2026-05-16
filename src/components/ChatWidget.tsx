@@ -54,9 +54,9 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   // Simulate typing effect - reveals characters gradually
    const typeMessage = useCallback((fullText: string, messageId: string) => {
