@@ -1,12 +1,11 @@
 import React from "react";
-// @ts-expect-error – Vite resuelve JSON de paquetes en runtime.
-import reactLeafletPkg from "react-leaflet/package.json";
+
+// Inyectado en build-time por vite.config.ts (define).
+declare const __REACT_LEAFLET_VERSION__: string;
 
 /**
- * Compatibility matrix between react-leaflet major versions and React major versions.
- * Source: react-leaflet release notes / peerDependencies.
- *   - v4.x → React 17, 18
- *   - v5.x → React 19
+ * Matriz de compatibilidad react-leaflet major → React majors soportados.
+ *   3.x → 16, 17 · 4.x → 17, 18 · 5.x → 19
  */
 const COMPATIBILITY: Record<string, number[]> = {
   "3": [16, 17],
@@ -15,7 +14,7 @@ const COMPATIBILITY: Record<string, number[]> = {
 };
 
 function major(version: string): string {
-  return (version.match(/^\d+/)?.[0] ?? "0");
+  return version.match(/^\d+/)?.[0] ?? "0";
 }
 
 export interface LeafletCompatResult {
@@ -28,7 +27,10 @@ export interface LeafletCompatResult {
 
 export function checkLeafletCompatibility(): LeafletCompatResult {
   const reactVersion = React.version;
-  const reactLeafletVersion = reactLeafletPkg.version;
+  const reactLeafletVersion =
+    typeof __REACT_LEAFLET_VERSION__ !== "undefined"
+      ? __REACT_LEAFLET_VERSION__
+      : "unknown";
   const rlMajor = major(reactLeafletVersion);
   const reactMajor = Number(major(reactVersion));
   const expected = COMPATIBILITY[rlMajor] ?? [];
