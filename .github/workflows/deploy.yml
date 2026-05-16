@@ -44,3 +44,5 @@ jobs:
             /usr/local/bin/pm2 restart grupo-psi 2>/dev/null || /usr/local/bin/pm2 start /usr/bin/npm --name grupo-psi -- start
             sudo /usr/sbin/nginx -t && sudo systemctl reload nginx
             echo "=== Deploy completado ==="
+
+# v4 - PubkeyAuth enabled
