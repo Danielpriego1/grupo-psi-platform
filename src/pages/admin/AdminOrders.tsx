@@ -260,6 +260,12 @@ export default function AdminOrders() {
                         postal_code: e.target.value.replace(/\D/g, "").slice(0, 5),
                       })
                     }
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pasted = e.clipboardData.getData("text");
+                      const normalized = pasted.replace(/\D/g, "").slice(0, 5);
+                      setNewOrder((prev) => ({ ...prev, postal_code: normalized }));
+                    }}
                     placeholder="86000"
                     inputMode="numeric"
                     maxLength={5}
@@ -268,18 +274,22 @@ export default function AdminOrders() {
                       !/^\d{5}$/.test(newOrder.postal_code)
                     }
                     className={
-                      newOrder.postal_code.length > 0 &&
-                      !/^\d{5}$/.test(newOrder.postal_code)
-                        ? "border-destructive focus-visible:ring-destructive"
-                        : ""
+                      newOrder.postal_code.length === 0
+                        ? ""
+                        : /^\d{5}$/.test(newOrder.postal_code)
+                          ? "border-green-500 focus-visible:ring-green-500"
+                          : "border-destructive focus-visible:ring-destructive"
                     }
                   />
-                  {newOrder.postal_code.length > 0 &&
-                    !/^\d{5}$/.test(newOrder.postal_code) && (
-                      <p className="text-xs text-destructive">
-                        Debe tener exactamente 5 dígitos.
-                      </p>
-                    )}
+                  {newOrder.postal_code.length === 0 ? null : /^\d{5}$/.test(
+                      newOrder.postal_code,
+                    ) ? (
+                    <p className="text-xs text-green-600">✓ Código postal válido.</p>
+                  ) : (
+                    <p className="text-xs text-destructive">
+                      Debe tener exactamente 5 dígitos ({newOrder.postal_code.length}/5).
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">
