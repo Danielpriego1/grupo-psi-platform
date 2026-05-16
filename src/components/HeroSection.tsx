@@ -115,11 +115,10 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
             <img
               src="/images/logo_fondo_blanco.png"
               alt="Grupo PSI"
-              className="h-full w-full object-cover opacity-60"
+              className="h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-orange-500/40 mix-blend-multiply" />
             <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-primary/10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/5" />
           </div>
 
           <AnimatePresence>
