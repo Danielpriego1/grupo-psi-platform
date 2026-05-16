@@ -78,6 +78,9 @@ export function ChatWidget() {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stickToBottomRef = useRef(true);
+  const [atBottom, setAtBottom] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const prevMessageCountRef = useRef(messages.length);
 
   // Performance instrumentation (dev or localStorage.chatPerf="1")
   useRenderMetrics("ChatWidget", { messageCount: messages.length });
@@ -89,8 +92,10 @@ export function ChatWidget() {
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    stickToBottomRef.current =
-      el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+    stickToBottomRef.current = near;
+    setAtBottom(prev => (prev !== near ? near : prev));
+    if (near) setUnreadCount(0);
   }, []);
 
   const scrollToBottom = useCallback((smooth = false) => {
@@ -99,10 +104,26 @@ export function ChatWidget() {
     el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
   }, []);
 
-  // Scroll on new messages / loading indicator changes (smooth)
+  const jumpToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    stickToBottomRef.current = true;
+    setAtBottom(true);
+    setUnreadCount(0);
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, []);
+
+  // Scroll on new messages / loading indicator changes (smooth) + unread counter
   useEffect(() => {
+    const delta = messages.length - prevMessageCountRef.current;
+    if (delta > 0 && !stickToBottomRef.current) {
+      // New assistant/user message arrived while user is reading above
+      const newCount = messages.slice(-delta).filter(m => m.role === "assistant").length;
+      if (newCount > 0) setUnreadCount(c => c + newCount);
+    }
+    prevMessageCountRef.current = messages.length;
     scrollToBottom(true);
-  }, [messages.length, isLoading, scrollToBottom]);
+  }, [messages.length, isLoading, scrollToBottom, messages]);
 
   // Typing effect — uses rAF batching + instant (non-smooth) scroll to avoid jank
    const typeMessage = useCallback((fullText: string, messageId: string) => {
@@ -244,26 +265,37 @@ export function ChatWidget() {
           </div>
         </div>
 
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4"
-          style={{ maxHeight: 360, contain: "layout paint style", willChange: "scroll-position" }}
-        >
-          {visibleMessages.map(msg => (
-            <MessageBubble key={msg.id} msg={msg} />
-          ))}
-          {isLoading && (
-            <div className="flex justify-start animate-fade-in">
-              <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
-                <span className="inline-flex gap-1">
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
-                </span>
-                <span className="text-xs text-muted-foreground italic">Sora está escribiendo…</span>
+        <div className="relative flex-1">
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="h-full space-y-3 overflow-y-auto overscroll-contain p-4"
+            style={{ maxHeight: 360, contain: "layout paint style", willChange: "scroll-position" }}
+          >
+            {visibleMessages.map(msg => (
+              <MessageBubble key={msg.id} msg={msg} />
+            ))}
+            {isLoading && (
+              <div className="flex justify-start animate-fade-in">
+                <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
+                  <span className="inline-flex gap-1">
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
+                  </span>
+                  <span className="text-xs text-muted-foreground italic">Sora está escribiendo…</span>
+                </div>
               </div>
-            </div>
+            )}
+          </div>
+
+          {!atBottom && unreadCount > 0 && (
+            <button
+              onClick={jumpToBottom}
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-[#ea580c] px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in"
+            >
+              ↓ {unreadCount} {unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+            </button>
           )}
         </div>
 
