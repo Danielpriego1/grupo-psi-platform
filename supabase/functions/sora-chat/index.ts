@@ -112,16 +112,22 @@ Deno.serve(async (req) => {
       })),
     ];
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY missing");
+      return new Response(JSON.stringify({ reply: "Intenta de nuevo en un momento." }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer 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`,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://grupopsi.com",
-        "X-Title": "Sora - Grupo PSI",
       },
       body: JSON.stringify({
-        model: "mistralai/devstral-2512",
+        model: "google/gemini-2.5-flash",
         messages: apiMessages,
         max_tokens: 600,
         temperature: 0.6,
@@ -131,22 +137,13 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI API error:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "rate_limit", reply: "Estoy atendiendo muchas consultas en este momento. ¿Podrías intentar en un minuto?" }), {
-          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "credits", reply: "Tengo un inconveniente técnico. Si es urgente, escríbenos por WhatsApp al +52 1 993 168 4717." }), {
-          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI API error: ${response.status}`);
+      return new Response(JSON.stringify({ reply: "Intenta de nuevo en un momento." }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "Disculpa, no pude procesar tu solicitud. ¿Podrías reformular tu pregunta?";
+    const reply = data.choices?.[0]?.message?.content || "Intenta de nuevo en un momento.";
 
     return new Response(
       JSON.stringify({ reply }),
@@ -155,9 +152,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Sora chat error:", error);
     return new Response(
-      JSON.stringify({ 
-        reply: "Disculpa, tengo un pequeño inconveniente técnico. ¿Podrías intentar de nuevo? Si es urgente, escríbenos por WhatsApp al +52 1 993 168 4717." 
-      }),
+      JSON.stringify({ reply: "Intenta de nuevo en un momento." }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

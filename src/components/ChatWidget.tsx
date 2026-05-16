@@ -49,6 +49,7 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -89,6 +90,7 @@ export function ChatWidget() {
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
+    requestAnimationFrame(() => inputRef.current?.focus());
 
     try {
       const historyForApi = updatedMessages
@@ -117,13 +119,15 @@ export function ChatWidget() {
     } catch (err) {
       console.error("Sora chat error:", err);
       const msgId = (Date.now() + 1).toString();
-      const fallback = "Disculpa, tengo un pequeño inconveniente. ¿Podrías intentar de nuevo? Si es urgente, escríbenos por WhatsApp.";
+      const fallback = "Intenta de nuevo en un momento.";
       setMessages(prev => [
         ...prev,
         { id: msgId, role: "assistant", content: "", isTyping: true },
       ]);
       setIsLoading(false);
       typeMessage(fallback, msgId);
+    } finally {
+      requestAnimationFrame(() => inputRef.current?.focus());
     }
   };
 
@@ -219,26 +223,16 @@ export function ChatWidget() {
           )}
         </div>
 
-        {/* WhatsApp fallback banner */}
-        <div className="border-t border-border/50 bg-muted/30 px-4 py-2 text-center">
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
-            ¿Prefieres WhatsApp? Escríbenos →
-          </a>
-        </div>
-
         <div className="border-t border-border p-3">
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
             <input
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Pregunta sobre productos, precios..."
               className="flex-1 rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none ring-ring transition-all duration-200 focus:ring-2 focus:border-primary"
               disabled={isLoading || anyTyping}
+              autoFocus
             />
             <Button type="submit" size="icon" className="shrink-0 rounded-xl transition-transform hover:scale-105 active:scale-95" disabled={isLoading || anyTyping}>
               <Send className="h-4 w-4" />
