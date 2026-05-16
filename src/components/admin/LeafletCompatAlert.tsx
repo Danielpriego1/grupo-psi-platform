@@ -81,7 +81,12 @@ export function LeafletCompatAlert({ compat }: Props) {
       </dl>
 
       <div className="pt-2 space-y-2 text-xs">
-        <p className="text-foreground font-medium">Cómo actualizar:</p>
+        <p className="text-foreground font-medium">
+          Cómo actualizar{" "}
+          <span className="text-muted-foreground font-normal">
+            (detectado: <span className="font-mono">{PKG_MANAGER}</span>):
+          </span>
+        </p>
         <div className="flex items-stretch gap-2">
           <code className="flex-1 px-2 py-1.5 rounded bg-muted text-foreground font-mono break-all">
             {command}
