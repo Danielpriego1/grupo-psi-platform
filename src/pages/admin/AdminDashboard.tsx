@@ -5,6 +5,7 @@ import { es } from "date-fns/locale";
 import { KpiCards, type KpiData } from "@/components/admin/dashboard/KpiCards";
 import { DashboardCharts, type MonthlyPoint, type StatusSlice } from "@/components/admin/dashboard/DashboardCharts";
 import { PendingOrdersMap, type MapPin } from "@/components/admin/dashboard/PendingOrdersMap";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppointmentsCalendar, type CalendarEvent } from "@/components/admin/dashboard/AppointmentsCalendar";
 import { RecentOrdersTable, type OrderRow } from "@/components/admin/dashboard/RecentOrdersTable";
 
@@ -187,7 +188,9 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <KpiCards data={kpi} />
       <DashboardCharts monthly={monthly} ordersByStatus={ordersByStatus} maintByStatus={maintByStatus} />
-      <PendingOrdersMap pins={pins} />
+      <ErrorBoundary label="el mapa de pedidos y mantenimientos">
+        <PendingOrdersMap pins={pins} />
+      </ErrorBoundary>
       <AppointmentsCalendar events={events} />
       <RecentOrdersTable orders={recent} onChanged={fetchAll} />
     </div>
