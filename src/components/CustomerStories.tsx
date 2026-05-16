@@ -63,12 +63,11 @@ export function CustomerStories() {
           <div className="relative h-[360px] sm:h-[340px]">
             {stories.map((story, i) => {
               const offset = (i - activeIndex + total) % total;
-              // 0 = front, 1 = behind right, 2 = behind further... Up to 3 layers shown.
+              // Show only the front card + 2 behind it (3 total visible).
               const visible = offset < 3;
-              const scale = 1 - offset * 0.05;
-              const translateY = offset * 18;
-              const translateX = offset * 14;
-              const opacity = offset === 0 ? 1 : 0.55 - offset * 0.15;
+              const scale = offset === 0 ? 1 : offset === 1 ? 0.95 : 0.9;
+              const translateY = offset * 20;
+              const opacity = offset === 0 ? 1 : offset === 1 ? 0.6 : 0.35;
               const zIndex = total - offset;
 
               return (
@@ -79,16 +78,16 @@ export function CustomerStories() {
                   animate={{
                     scale,
                     y: translateY,
-                    x: translateX,
                     opacity: visible ? opacity : 0,
                     pointerEvents: visible ? "auto" : "none",
                   }}
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
                   style={{ zIndex }}
                   className={cn(
-                    "absolute inset-0 text-left rounded-2xl overflow-hidden",
-                    "border border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.7)]",
-                    offset === 0 ? "cursor-default" : "cursor-pointer"
+                    "absolute inset-0 text-left rounded-2xl overflow-hidden border-2 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.7)]",
+                    offset === 0
+                      ? "cursor-default border-primary"
+                      : "cursor-pointer border-white/10"
                   )}
                 >
                   <div
