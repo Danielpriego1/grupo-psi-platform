@@ -75,8 +75,8 @@ serve(async (req) => {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: successUrl || `${req.headers.get("origin")}/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&order=${orderNumber}`,
-      cancel_url: cancelUrl || `${req.headers.get("origin")}/`,
+      success_url: successUrl || `https://checkout.grupopsi.com/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&order=${orderNumber}`,
+      cancel_url: cancelUrl || `https://checkout.grupopsi.com/`,
       metadata: {
         order_number: orderNumber,
         client_name: clientName || "",
