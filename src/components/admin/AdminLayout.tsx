@@ -10,7 +10,6 @@ import {
   LogOut,
   Menu,
   X,
-  Shield,
   Wrench,
   CalendarDays,
   FileText,
@@ -36,29 +35,36 @@ export function AdminLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const currentLabel =
+    navItems.find((i) =>
+      i.path === "/admin"
+        ? location.pathname === "/admin"
+        : location.pathname.startsWith(i.path),
+    )?.label ?? "Admin";
+
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="admin-theme min-h-screen bg-background text-foreground flex">
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform lg:translate-x-0 lg:static lg:inset-auto",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "admin-sidebar fixed inset-y-0 left-0 z-50 w-60 border-r transform transition-transform lg:translate-x-0 lg:static lg:inset-auto",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-3 p-4 border-b border-border">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Shield className="w-4 h-4 text-primary-foreground" />
+          <div className="flex items-center gap-2.5 px-4 h-14 border-b border-[hsl(var(--admin-sidebar-border))]">
+            <div className="w-7 h-7 rounded-md bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center">
+              <span className="text-primary text-xs font-bold">P</span>
             </div>
-            <div>
-              <h2 className="font-bold text-foreground text-sm">Grupo PSI</h2>
-              <p className="text-[10px] text-muted-foreground">Panel Admin</p>
+            <div className="flex flex-col leading-tight">
+              <span className="text-[13px] font-semibold tracking-tight text-foreground">Grupo PSI</span>
+              <span className="text-[10px] text-muted-foreground">Admin</span>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="ml-auto lg:hidden"
+              className="ml-auto h-7 w-7 lg:hidden"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="w-4 h-4" />
@@ -66,7 +72,10 @@ export function AdminLayout() {
           </div>
 
           {/* Nav */}
-          <nav className="flex-1 p-3 space-y-1">
+          <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+            <p className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+              General
+            </p>
             {navItems.map((item) => {
               const isActive =
                 item.path === "/admin"
@@ -78,31 +87,42 @@ export function AdminLayout() {
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                    "group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-primary/10 text-foreground ring-1 ring-inset ring-primary/20"
+                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
                   )}
                 >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
+                  <item.icon
+                    className={cn(
+                      "w-4 h-4 shrink-0",
+                      isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                    )}
+                    strokeWidth={1.75}
+                  />
+                  <span className="truncate">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* User */}
-          <div className="p-4 border-t border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
+          <div className="p-3 border-t border-[hsl(var(--admin-sidebar-border))]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-primary/15 ring-1 ring-primary/25 flex items-center justify-center text-primary text-[11px] font-semibold">
                 {user?.email?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-foreground truncate">{user?.email}</p>
-                <p className="text-[10px] text-muted-foreground capitalize">{roles.join(", ") || "user"}</p>
+                <p className="text-[12px] font-medium text-foreground truncate leading-tight">{user?.email}</p>
+                <p className="text-[10px] text-muted-foreground capitalize leading-tight">{roles.join(", ") || "user"}</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-destructive">
-                <LogOut className="w-4 h-4" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={signOut}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+              >
+                <LogOut className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
@@ -112,32 +132,30 @@ export function AdminLayout() {
       {/* Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3 lg:px-6">
+      <div className="flex-1 flex flex-col min-h-screen bg-background">
+        <header className="sticky top-0 z-30 bg-background/85 backdrop-blur border-b border-border h-14 px-4 lg:px-8 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden h-8 w-8"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4 h-4" />
           </Button>
-          <h1 className="text-lg font-semibold text-foreground">
-            {navItems.find((i) =>
-              i.path === "/admin"
-                ? location.pathname === "/admin"
-                : location.pathname.startsWith(i.path)
-            )?.label ?? "Admin"}
-          </h1>
+          <div className="flex flex-col leading-tight">
+            <span className="text-[11px] text-muted-foreground">Panel</span>
+            <h1 className="text-[15px] font-semibold tracking-tight text-foreground">{currentLabel}</h1>
+          </div>
+          <div id="admin-header-actions" className="ml-auto flex items-center gap-2" />
         </header>
 
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-5 lg:p-8">
           <Outlet />
         </main>
       </div>

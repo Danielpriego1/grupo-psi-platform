@@ -51,6 +51,7 @@ export default function AdminDashboard() {
     const todayStart = startOfDay(now).toISOString();
     const todayEnd = endOfDay(now).toISOString();
     const monthStart = startOfMonth(now);
+    const prevMonthStart = startOfMonth(subMonths(now, 1));
 
     const [
       ordersAllRes,
@@ -101,11 +102,32 @@ export default function AdminDashboard() {
       .filter((o) => REVENUE_STATUSES.includes(o.status) && new Date(o.created_at) >= monthStart)
       .reduce((s, o) => s + Number(o.total), 0);
 
+    const prevMonthRevenue = allOrders
+      .filter(
+        (o) =>
+          REVENUE_STATUSES.includes(o.status) &&
+          new Date(o.created_at) >= prevMonthStart &&
+          new Date(o.created_at) < monthStart,
+      )
+      .reduce((s, o) => s + Number(o.total), 0);
+
+    const prevMonthCompleted = allOrders.filter(
+      (o) =>
+        COMPLETED_STATUSES.includes(o.status as (typeof COMPLETED_STATUSES)[number]) &&
+        new Date(o.created_at) >= prevMonthStart &&
+        new Date(o.created_at) < monthStart,
+    ).length;
+
+    const pct = (curr: number, prev: number) =>
+      prev === 0 ? (curr === 0 ? 0 : 100) : ((curr - prev) / prev) * 100;
+
     setKpi({
       ordersToday: ordersTodayRes.count ?? 0,
       pendingOrders: pendingOrdersRes.count ?? 0,
       completedThisMonth: completedMonthRes.count ?? 0,
       monthRevenue,
+      revenueChange: pct(monthRevenue, prevMonthRevenue),
+      completedChange: pct(completedMonthRes.count ?? 0, prevMonthCompleted),
     });
 
     // Last 6 months revenue
