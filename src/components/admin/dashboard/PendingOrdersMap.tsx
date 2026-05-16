@@ -14,31 +14,34 @@ export interface MapPin {
 
 export function PendingOrdersMap({ pins }: { pins: MapPin[] }) {
   useEffect(() => {
-    // Force resize once mounted to avoid grey tile issue inside cards
     setTimeout(() => window.dispatchEvent(new Event("resize")), 200);
   }, []);
 
   const center: [number, number] =
-    pins.length > 0 ? [pins[0].lat, pins[0].lng] : [18.16, -93.01]; // Nacajuca, Tabasco
+    pins.length > 0 ? [pins[0].lat, pins[0].lng] : [17.9869, -92.9303];
 
   return (
     <Card className="border-border">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="text-foreground text-base">
           Mapa de pedidos y mantenimientos pendientes
         </CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          Región de operaciones: Tabasco, México
+        </p>
       </CardHeader>
       <CardContent>
-        <div className="h-[420px] rounded-lg overflow-hidden border border-border">
+        <div className="relative h-[420px] rounded-lg overflow-hidden border border-border">
           <MapContainer
             center={center}
-            zoom={pins.length > 0 ? 6 : 5}
+            zoom={9}
             scrollWheelZoom={false}
-            style={{ height: "100%", width: "100%" }}
+            style={{ height: "100%", width: "100%", background: "#0b0d12" }}
           >
             <TileLayer
-              attribution='&copy; OpenStreetMap'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              subdomains="abcd"
             />
             {pins.map((p) => (
               <CircleMarker
@@ -64,6 +67,13 @@ export function PendingOrdersMap({ pins }: { pins: MapPin[] }) {
               </CircleMarker>
             ))}
           </MapContainer>
+          {pins.length === 0 && (
+            <div className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-[400]">
+              <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-background/80 backdrop-blur border border-border text-muted-foreground">
+                Sin eventos activos
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
