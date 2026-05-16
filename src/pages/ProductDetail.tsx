@@ -116,23 +116,44 @@ const ProductDetail = () => {
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* ─── LEFT: Images, Description, Spec PDF, Map ─── */}
           <div className="flex-1 space-y-8">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/30">
+            <div
+              className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/30 cursor-zoom-in"
+              onMouseEnter={() => setImageZoomed(true)}
+              onMouseLeave={() => setImageZoomed(false)}
+              onClick={() => setLightboxOpen(true)}
+            >
               <img
                 src={allImages[currentImage]}
                 alt={product.name}
-                className="h-full w-full object-contain p-8 transition-opacity duration-300"
+                className={cn(
+                  "h-full w-full object-contain p-8 transition-transform duration-300 ease-out",
+                  imageZoomed && "scale-150"
+                )}
               />
               {allImages.length > 1 && (
                 <>
-                  <button onClick={prevImg} className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); prevImg(); }} className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
                     <ChevronLeft className="h-5 w-5" />
                   </button>
-                  <button onClick={nextImg} className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); nextImg(); }} className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
                     <ChevronRight className="h-5 w-5" />
                   </button>
                 </>
               )}
             </div>
+
+            <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+              <DialogContent className="max-w-5xl bg-background/95 p-2">
+                <button
+                  onClick={() => setLightboxOpen(false)}
+                  className="absolute right-3 top-3 z-10 h-9 w-9 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background"
+                  aria-label="Cerrar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <img src={allImages[currentImage]} alt={product.name} className="max-h-[85vh] w-full object-contain" />
+              </DialogContent>
+            </Dialog>
 
             {allImages.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
