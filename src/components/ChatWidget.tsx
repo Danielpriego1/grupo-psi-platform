@@ -3,6 +3,12 @@ import { X, Send, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  useFpsMonitor,
+  useLongTaskMonitor,
+  useRenderMetrics,
+  useScrollMetrics,
+} from "@/lib/perfMonitor";
 
 interface Message {
   id: string;
