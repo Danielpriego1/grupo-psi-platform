@@ -29,6 +29,7 @@ import AdminCalendar from "./pages/admin/AdminCalendar";
 import AdminCertificates from "./pages/admin/AdminCertificates";
 import PortalHome from "./pages/portal/PortalHome";
 import PortalCertificates from "./pages/portal/PortalCertificates";
+import PortalOrders from "./pages/portal/PortalOrders";
 import VerifyCertificate from "./pages/VerifyCertificate";
 import VerifyEquipment from "./pages/VerifyEquipment";
 import AdminEquipment from "./pages/admin/AdminEquipment";
@@ -172,6 +173,7 @@ const App = () => (
               {/* Customer portal (authenticated) */}
               <Route path="/portal" element={<ProtectedRoute><PortalHome /></ProtectedRoute>} />
               <Route path="/portal/certificados" element={<ProtectedRoute><PortalCertificates /></ProtectedRoute>} />
+              <Route path="/portal/pagos" element={<ProtectedRoute><PortalOrders /></ProtectedRoute>} />
 
               {/* Public verification (QR targets) */}
               <Route path="/verificar/certificado/:token" element={<VerifyCertificate />} />

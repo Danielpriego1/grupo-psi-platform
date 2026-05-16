@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, LogOut, ShieldCheck } from "lucide-react";
+import { FileText, LogOut, ShieldCheck, Receipt } from "lucide-react";
 
 export default function PortalHome() {
   const { user, signOut } = useAuth();
@@ -41,6 +41,21 @@ export default function PortalHome() {
               <p className="text-sm text-muted-foreground mb-4">Descarga tus certificados emitidos y solicita copias adicionales.</p>
               <Button asChild variant="outline" size="sm">
                 <Link to="/portal/certificados">Ver certificados</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Receipt className="h-5 w-5 text-primary" />
+                Pagos y tickets
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">Consulta el estatus de tus pagos y descarga tus tickets con QR.</p>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/portal/pagos">Ver pagos</Link>
               </Button>
             </CardContent>
           </Card>
