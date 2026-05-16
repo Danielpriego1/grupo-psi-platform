@@ -100,6 +100,10 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-4px)" },
         },
+        "brands-marquee": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -111,6 +115,7 @@ export default {
         "float": "float 3s ease-in-out infinite",
         "glow-pulse": "glow-pulse 2.5s ease-in-out infinite",
         "bounce-soft": "bounce-soft 2s ease-in-out infinite",
+        "brands-marquee": "brands-marquee 30s linear infinite",
       },
     },
   },

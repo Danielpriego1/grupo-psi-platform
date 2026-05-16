@@ -5,6 +5,8 @@ import { AboutSection } from "@/components/AboutSection";
 import { CTASection } from "@/components/CTASection";
 import { CustomerStories } from "@/components/CustomerStories";
 import { CoverageMap } from "@/components/CoverageMap";
+import { BrandsTicker } from "@/components/BrandsTicker";
+import { ServicesSection } from "@/components/ServicesSection";
 import { categories } from "@/data/categories";
 import { motion } from "framer-motion";
 
@@ -66,6 +68,8 @@ const Index = () => {
         </div>
       </main>
 
+      <BrandsTicker />
+      <ServicesSection />
       <AboutSection />
       <CoverageMap />
       <CustomerStories />

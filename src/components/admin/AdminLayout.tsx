@@ -14,6 +14,7 @@ import {
   CalendarDays,
   FileText,
   QrCode,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ const navItems = [
   { label: "Clientes", icon: Users, path: "/admin/clients" },
   { label: "Certificados", icon: FileText, path: "/admin/certificados" },
   { label: "Equipos", icon: QrCode, path: "/admin/equipos" },
+  { label: "Contenido Web", icon: Sparkles, path: "/admin/contenido" },
 ];
 
 export function AdminLayout() {
