@@ -304,22 +304,9 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Service type toggle */}
-              <div className="space-y-3 rounded-xl border border-border bg-muted/10 p-4">
-                <div className="text-sm font-semibold">Tipo de servicio</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant={serviceType === "delivery" ? "default" : "outline"} className="w-full text-xs" onClick={() => setServiceType("delivery")}>
-                    <Truck className="mr-2 h-4 w-4" /> Entrega
-                  </Button>
-                  <Button variant={serviceType === "maintenance" ? "default" : "outline"} className="w-full text-xs" onClick={() => setServiceType("maintenance")}>
-                    <Wrench className="mr-2 h-4 w-4" /> Mantenimiento
-                  </Button>
-                </div>
-              </div>
-
               {/* Calendar */}
               <div className="space-y-3">
-                <div className="text-sm font-semibold">{serviceType === "delivery" ? "Fecha de entrega" : "Fecha de recolección"}</div>
+                <div className="text-sm font-semibold">Fecha de entrega</div>
                 <div className="overflow-hidden rounded-xl border border-border">
                   <Calendar
                     mode="single"
@@ -327,18 +314,27 @@ const ProductDetail = () => {
                     onSelect={setDate}
                     locale={es}
                     className={cn("p-3 pointer-events-auto w-full")}
-                    disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                    modifiers={{ weekend: (d) => d.getDay() === 0 || d.getDay() === 6 }}
+                    modifiersClassNames={{ weekend: "text-muted-foreground/40 line-through" }}
+                    disabled={(d) => {
+                      const day = new Date(d); day.setHours(0,0,0,0);
+                      if (day.getDay() === 0 || day.getDay() === 6) return true;
+                      return day < minDeliveryDate;
+                    }}
                   />
                 </div>
                 {date && (
                   <p className="text-sm text-primary font-medium">📅 {format(date, "EEEE d 'de' MMMM, yyyy", { locale: es })}</p>
                 )}
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  La fecha de entrega está sujeta a confirmación de pago. Los pedidos confirmados antes de las 12:00 pm en días hábiles se preparan el mismo día.
+                </p>
               </div>
 
               {/* Add to cart */}
               <Button size="lg" className="w-full text-base" onClick={handleAddToCart} disabled={!product.inStock}>
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                {priceRevealed ? `Agregar al carrito — $${(finalPrice * quantity).toFixed(2)}` : "Agregar al carrito"}
+                {basePrice > 0 ? `Agregar al carrito — $${(finalPrice * quantity).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Agregar al carrito"}
               </Button>
 
               {product.purchaseUrl && (
