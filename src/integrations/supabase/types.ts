@@ -88,6 +88,121 @@ export type Database = {
           },
         ]
       }
+      certificate_copy_requests: {
+        Row: {
+          amount_mxn: number
+          certificate_id: string
+          created_at: string
+          download_token: string | null
+          expires_at: string | null
+          id: string
+          paid_at: string | null
+          payment_status: Database["public"]["Enums"]["certificate_copy_status"]
+          requested_by: string | null
+          stripe_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_mxn?: number
+          certificate_id: string
+          created_at?: string
+          download_token?: string | null
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_status?: Database["public"]["Enums"]["certificate_copy_status"]
+          requested_by?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_mxn?: number
+          certificate_id?: string
+          created_at?: string
+          download_token?: string | null
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_status?: Database["public"]["Enums"]["certificate_copy_status"]
+          requested_by?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_copy_requests_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "certificates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificates: {
+        Row: {
+          branch_name: string | null
+          client_id: string
+          created_at: string
+          equipment_id: string | null
+          folio: string
+          id: string
+          issued_at: string
+          issued_by: string | null
+          notes: string | null
+          pdf_url: string | null
+          qr_token: string
+          service_type: Database["public"]["Enums"]["certificate_service_type"]
+          source_request_id: string | null
+          status: Database["public"]["Enums"]["certificate_status"]
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          branch_name?: string | null
+          client_id: string
+          created_at?: string
+          equipment_id?: string | null
+          folio: string
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          notes?: string | null
+          pdf_url?: string | null
+          qr_token?: string
+          service_type: Database["public"]["Enums"]["certificate_service_type"]
+          source_request_id?: string | null
+          status?: Database["public"]["Enums"]["certificate_status"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          branch_name?: string | null
+          client_id?: string
+          created_at?: string
+          equipment_id?: string | null
+          folio?: string
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          notes?: string | null
+          pdf_url?: string | null
+          qr_token?: string
+          service_type?: Database["public"]["Enums"]["certificate_service_type"]
+          source_request_id?: string | null
+          status?: Database["public"]["Enums"]["certificate_status"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -176,6 +291,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      equipment: {
+        Row: {
+          branch_name: string | null
+          brand: string | null
+          client_id: string
+          created_at: string
+          equipment_type: Database["public"]["Enums"]["equipment_type"]
+          id: string
+          model: string | null
+          notes: string | null
+          serial_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          branch_name?: string | null
+          brand?: string | null
+          client_id: string
+          created_at?: string
+          equipment_type?: Database["public"]["Enums"]["equipment_type"]
+          id?: string
+          model?: string | null
+          notes?: string | null
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branch_name?: string | null
+          brand?: string | null
+          client_id?: string
+          created_at?: string
+          equipment_type?: Database["public"]["Enums"]["equipment_type"]
+          id?: string
+          model?: string | null
+          notes?: string | null
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       inventory: {
         Row: {
@@ -468,7 +622,28 @@ export type Database = {
       }
     }
     Functions: {
+      generate_certificate_folio: {
+        Args: {
+          _service_type: Database["public"]["Enums"]["certificate_service_type"]
+        }
+        Returns: string
+      }
       generate_maintenance_tracking_code: { Args: never; Returns: string }
+      get_certificate_by_qr: {
+        Args: { _token: string }
+        Returns: {
+          branch_name: string
+          client_company: string
+          equipment_brand: string
+          equipment_model: string
+          equipment_serial: string
+          folio: string
+          issued_at: string
+          service_type: Database["public"]["Enums"]["certificate_service_type"]
+          status: Database["public"]["Enums"]["certificate_status"]
+          valid_until: string
+        }[]
+      }
       get_maintenance_by_tracking_code: {
         Args: { _code: string }
         Returns: {
@@ -501,12 +676,21 @@ export type Database = {
         | "cancelled"
         | "no_show"
       appointment_type: "visit" | "inspection" | "pickup" | "meeting"
+      certificate_copy_status: "pending" | "paid" | "failed" | "refunded"
+      certificate_service_type:
+        | "mantenimiento"
+        | "calibracion"
+        | "hidrostatica"
+        | "pureza_aire"
+        | "posichek"
+      certificate_status: "vigente" | "por_vencer" | "vencido" | "revocado"
       delivery_status:
         | "pending"
         | "assigned"
         | "in_transit"
         | "delivered"
         | "failed"
+      equipment_type: "scba" | "cilindro" | "compresor" | "mascara" | "otro"
       maintenance_request_status:
         | "pending"
         | "contacted"
@@ -656,6 +840,15 @@ export const Constants = {
         "no_show",
       ],
       appointment_type: ["visit", "inspection", "pickup", "meeting"],
+      certificate_copy_status: ["pending", "paid", "failed", "refunded"],
+      certificate_service_type: [
+        "mantenimiento",
+        "calibracion",
+        "hidrostatica",
+        "pureza_aire",
+        "posichek",
+      ],
+      certificate_status: ["vigente", "por_vencer", "vencido", "revocado"],
       delivery_status: [
         "pending",
         "assigned",
@@ -663,6 +856,7 @@ export const Constants = {
         "delivered",
         "failed",
       ],
+      equipment_type: ["scba", "cilindro", "compresor", "mascara", "otro"],
       maintenance_request_status: [
         "pending",
         "contacted",
