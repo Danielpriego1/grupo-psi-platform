@@ -12,16 +12,13 @@ serve(async (req) => {
   }
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
-
   const body = await req.text();
 
   let event: Stripe.Event;
-
   try {
     if (webhookSecret && signature) {
       event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     } else {
-      // For testing without webhook secret
       event = JSON.parse(body);
     }
   } catch (err: any) {
@@ -34,12 +31,51 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
+  // Idempotency: skip if already processed successfully
+  const { data: existing } = await supabase
+    .from("stripe_webhook_events")
+    .select("id, processing_status")
+    .eq("event_id", event.id)
+    .maybeSingle();
+
+  if (existing?.processing_status === "success") {
+    console.log(`Evento ${event.id} ya procesado, omitiendo`);
+    return new Response(JSON.stringify({ received: true, duplicate: true }), {
+      headers: { "Content-Type": "application/json" },
+      status: 200,
+    });
+  }
+
+  // Log received event
+  const { data: auditRow } = await supabase
+    .from("stripe_webhook_events")
+    .insert({
+      event_id: event.id,
+      event_type: event.type,
+      processing_status: "received",
+      raw_payload: event as any,
+      received_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  const auditId = auditRow?.id;
+
+  const updateAudit = async (patch: Record<string, unknown>) => {
+    if (!auditId) return;
+    await supabase
+      .from("stripe_webhook_events")
+      .update({ ...patch, processed_at: new Date().toISOString() })
+      .eq("id", auditId);
+  };
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const orderNumber = session.metadata?.order_number;
-        const orderId = session.metadata?.order_id;
+        const orderNumber = session.metadata?.order_number ?? null;
+        const orderId = session.metadata?.order_id ?? null;
+        const ticketToken = crypto.randomUUID();
 
         const updates = {
           status: "confirmed" as const,
@@ -47,14 +83,31 @@ serve(async (req) => {
           stripe_session_id: session.id,
           stripe_payment_intent: (session.payment_intent as string) ?? null,
           paid_at: new Date().toISOString(),
-          ticket_token: crypto.randomUUID(),
+          ticket_token: ticketToken,
         };
 
+        let updateError: string | null = null;
         if (orderId) {
-          await supabase.from("orders").update(updates).eq("id", orderId);
+          const { error } = await supabase.from("orders").update(updates).eq("id", orderId);
+          if (error) updateError = error.message;
         } else if (orderNumber) {
-          await supabase.from("orders").update(updates).eq("order_number", orderNumber);
+          const { error } = await supabase.from("orders").update(updates).eq("order_number", orderNumber);
+          if (error) updateError = error.message;
+        } else {
+          updateError = "Sin order_id ni order_number en metadata";
         }
+
+        await updateAudit({
+          processing_status: updateError ? "error" : "success",
+          payment_status: "paid",
+          stripe_session_id: session.id,
+          stripe_payment_intent: (session.payment_intent as string) ?? null,
+          order_id: orderId,
+          order_number: orderNumber,
+          ticket_generated: !updateError,
+          ticket_token: updateError ? null : ticketToken,
+          error_message: updateError,
+        });
 
         console.log(`Pago confirmado: ${orderNumber} | Session: ${session.id}`);
         break;
@@ -62,20 +115,32 @@ serve(async (req) => {
 
       case "checkout.session.expired": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const orderId = session.metadata?.order_id;
-        const orderNumber = session.metadata?.order_number;
+        const orderId = session.metadata?.order_id ?? null;
+        const orderNumber = session.metadata?.order_number ?? null;
 
+        let updateError: string | null = null;
         if (orderId) {
-          await supabase
+          const { error } = await supabase
             .from("orders")
             .update({ status: "cancelled", payment_status: "expired" })
             .eq("id", orderId);
+          if (error) updateError = error.message;
         } else if (orderNumber) {
-          await supabase
+          const { error } = await supabase
             .from("orders")
             .update({ status: "cancelled", payment_status: "expired" })
             .eq("order_number", orderNumber);
+          if (error) updateError = error.message;
         }
+
+        await updateAudit({
+          processing_status: updateError ? "error" : "success",
+          payment_status: "expired",
+          stripe_session_id: session.id,
+          order_id: orderId,
+          order_number: orderNumber,
+          error_message: updateError,
+        });
 
         console.log(`Sesion expirada: ${orderNumber}`);
         break;
@@ -83,15 +148,26 @@ serve(async (req) => {
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        await updateAudit({
+          processing_status: "success",
+          payment_status: "failed",
+          stripe_payment_intent: paymentIntent.id,
+          error_message: paymentIntent.last_payment_error?.message ?? null,
+        });
         console.log(`Pago fallido: ${paymentIntent.id}`);
         break;
       }
 
       default:
+        await updateAudit({ processing_status: "skipped" });
         console.log(`Evento no manejado: ${event.type}`);
     }
   } catch (err: any) {
     console.error("Error procesando evento:", err.message);
+    await updateAudit({
+      processing_status: "error",
+      error_message: err.message ?? String(err),
+    });
     return new Response(`Error: ${err.message}`, { status: 500 });
   }
 
