@@ -1,49 +1,55 @@
-# Página /pago-exitoso con resumen del pago
+## Plan: Panel de Auditoría de Webhooks de Stripe
 
-## Estado actual
-`PagoExitoso.tsx` ya existe pero solo muestra el número de pedido y hace polling al `ticket_token`. No muestra el resumen del pedido (productos, total, datos del cliente, método de pago).
+Registrar cada evento entrante de Stripe (con timestamp, payment_status, resultado de generación de QR/ticket) y exponerlos en un panel admin.
 
-## Objetivo
-Mostrar un resumen completo del pago al regresar de Stripe: productos comprados, cantidades, subtotales, total pagado, datos del cliente, fecha y un indicador del estado del pago en tiempo real.
+### 1. Base de datos (migración)
 
-## Cambios
+Nueva tabla `public.stripe_webhook_events`:
+- `id` uuid PK
+- `event_id` text UNIQUE (id del evento Stripe, para idempotencia)
+- `event_type` text (`checkout.session.completed`, etc.)
+- `stripe_session_id` text
+- `stripe_payment_intent` text
+- `order_id` uuid, `order_number` text
+- `payment_status` text (paid / expired / failed / unknown)
+- `processing_status` text (`received`, `success`, `error`, `skipped`)
+- `ticket_generated` boolean
+- `ticket_token` uuid
+- `error_message` text
+- `raw_payload` jsonb
+- `received_at`, `processed_at` timestamptz
+- `created_at` timestamptz default now()
 
-### 1. Nuevo edge function `get-checkout-summary`
-- Recibe `session_id` (de Stripe) y/o `order_number`
-- Con `STRIPE_SECRET_KEY` recupera `stripe.checkout.sessions.retrieve(session_id, { expand: ['line_items', 'payment_intent'] })`
-- Cruza con la tabla `orders` (vía service role) y `order_items` para devolver:
-  - `order_number`, `payment_status`, `total`, `paid_at`, `created_at`
-  - `client_name`, `client_phone` (extraídos de `notes` de la orden)
-  - `items[]`: nombre, cantidad, precio unitario, subtotal
-  - `stripe_status` ("paid" / "unpaid" / "no_payment_required")
-  - `ticket_token` si ya existe
-- Público (no requiere JWT) pero validado por la posesión del `session_id`
+RLS: solo `admin` puede SELECT/ALL. Sin acceso público.
+Índices en `event_type`, `received_at desc`, `order_number`.
 
-### 2. Rediseñar `src/pages/PagoExitoso.tsx`
-- Leer `session_id` y `order` del query string
-- Llamar al edge function al montar
-- Layout en dos secciones:
-  - **Header**: icono check, "¡Pago confirmado!", número de pedido, fecha
-  - **Tarjeta resumen**:
-    - Lista de productos (`product_name × qty` ........ `$subtotal`)
-    - Separador, total destacado
-    - Datos del cliente (nombre, teléfono)
-    - Método de pago: "Tarjeta vía Stripe"
-- Mantener el polling del `ticket_token` y el botón "Ver mi ticket con QR" cuando esté listo
-- Conservar botones de WhatsApp y volver al inicio
-- Estado de carga: skeleton mientras llega el resumen
-- Estado de error: mensaje claro + CTA WhatsApp si no se puede recuperar la sesión
+### 2. Edge function `stripe-webhook` (actualizar)
 
-## Detalles técnicos
-- Nuevo archivo: `supabase/functions/get-checkout-summary/index.ts`
-- Editado: `src/pages/PagoExitoso.tsx`
-- No requiere migraciones: ya existen columnas `paid_at`, `payment_status`, `stripe_session_id`, `ticket_token` en `orders`, y `order_items` ya tiene `product_name`, `quantity`, `unit_price`, `subtotal`.
-- `notes` de `orders` ya contiene `Cliente: X | Tel: Y | Pago: Stripe` → parseo simple para extraer nombre y teléfono.
-- Sin cambios de RLS: el edge function usa service role.
+En cada evento:
+1. Insertar fila con `received_at = now()`, `processing_status = 'received'`, `raw_payload`, `event_type`, `event_id`.
+2. Tras procesar (update a orders + generar `ticket_token`), hacer UPDATE de la misma fila con `processing_status`, `payment_status`, `ticket_generated`, `ticket_token`, `order_id`, `order_number`, `processed_at`, y `error_message` si falla.
+3. Try/catch envolvente: si algo truena, registrar `processing_status='error'` con el mensaje y devolver 500.
 
-## Fuera de alcance
-- Generación del ticket QR (ya implementada vía webhook).
-- Envío de email al cliente (ya existe flujo).
-- Cambios en el flujo de checkout o webhook.
+Idempotencia: si `event_id` ya existe con `processing_status='success'`, retorna 200 sin reprocesar.
 
-¿Procedo con esta implementación?
+### 3. Frontend admin
+
+**Nueva ruta** `/admin/auditoria` en `src/App.tsx` + entrada en `AdminLayout` (icono `ShieldCheck`, label "Auditoría Stripe").
+
+**Nueva página** `src/pages/admin/AdminStripeAudit.tsx`:
+- Tabla con columnas: Fecha (received_at), Tipo evento, Order #, Payment status (badge color), Resultado (success/error/skipped badge), Ticket generado (✓/—), Acciones.
+- Filtros: rango de fechas, tipo de evento (select), processing_status, búsqueda por order_number / session_id.
+- KPIs arriba: total eventos 24h, % éxito, pagos confirmados, errores.
+- Sheet/Dialog "Ver detalle" que muestra `raw_payload` (JSON formateado), error_message, timestamps received/processed, y enlace al pedido.
+- Realtime opcional vía `useRealtimeTable` para refrescar al instante.
+
+### 4. Detalles técnicos
+
+- Migración con trigger NO necesario; los timestamps se llenan desde la edge function.
+- Edge function usa `service_role` (ya lo hace) para insertar en la tabla.
+- Importar `Badge`, `Table`, `Sheet`, `Input`, `Select` de shadcn.
+- Reutilizar formato `Intl.DateTimeFormat('es-MX')`.
+
+### Out of scope
+- Reintento manual de eventos fallidos (se puede agregar después con un botón "Reprocesar" que invoque una nueva edge function).
+- Exportación CSV.
