@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Badge } from "@/components/ui/badge";
 import { FileText, Search, Download, ShoppingBag, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { QrCode, downloadQrPng, buildQrUrl } from "@/components/qr/QrCode";
 import {
   SERVICE_LABEL, STATUS_LABEL, statusBadgeClass, ServiceType, CertStatus,
   requestDownload, startCopyCheckout,
@@ -181,6 +182,13 @@ export default function PortalCertificates() {
                     <p className="text-xs">{selected.notes}</p>
                   </div>
                 )}
+                <div className="flex flex-col items-center gap-2 p-3 bg-white rounded-md border border-border/60">
+                  <QrCode value={buildQrUrl("certificado", selected.qr_token)} size={160} />
+                  <Button size="sm" variant="ghost"
+                    onClick={() => downloadQrPng(buildQrUrl("certificado", selected.qr_token), `qr-${selected.folio}`)}>
+                    <Download className="w-3.5 h-3.5 mr-1.5" /> Descargar QR
+                  </Button>
+                </div>
                 <div className="flex flex-col gap-2 pt-2 border-t border-border/60">
                   <Button size="sm" onClick={() => download(selected)} disabled={!selected.pdf_url}>
                     <Download className="w-4 h-4 mr-2" /> Descargar PDF

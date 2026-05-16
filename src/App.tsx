@@ -27,6 +27,9 @@ import AdminCalendar from "./pages/admin/AdminCalendar";
 import AdminCertificates from "./pages/admin/AdminCertificates";
 import PortalCertificates from "./pages/portal/PortalCertificates";
 import VerifyCertificate from "./pages/VerifyCertificate";
+import VerifyEquipment from "./pages/VerifyEquipment";
+import AdminEquipment from "./pages/admin/AdminEquipment";
+import AdminQrPrint from "./pages/admin/AdminQrPrint";
 import CategoryPage from "./pages/CategoryPage";
 import ServiceDetail from "./pages/ServiceDetail";
 import RastreoMantenimiento from "./pages/RastreoMantenimiento";
@@ -134,10 +137,19 @@ const App = () => (
                 <Route path="maintenance" element={<AdminMaintenance />} />
                 <Route path="calendario" element={<AdminCalendar />} />
                 <Route path="certificados" element={<AdminCertificates />} />
+                <Route path="equipos" element={<AdminEquipment />} />
               </Route>
+
+              {/* Print view (admin auth required) */}
+              <Route path="/admin/qr-print" element={<ProtectedRoute><AdminQrPrint /></ProtectedRoute>} />
 
               {/* Customer portal */}
               <Route path="/portal/certificados" element={<PortalCertificates />} />
+
+              {/* Public verification (QR targets) */}
+              <Route path="/verificar/certificado/:token" element={<VerifyCertificate />} />
+              <Route path="/verificar/equipo/:token" element={<VerifyEquipment />} />
+              {/* Legacy alias for already-printed QRs */}
               <Route path="/verificar/:token" element={<VerifyCertificate />} />
 
               <Route path="*" element={<NotFound />} />

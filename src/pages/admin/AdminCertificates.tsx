@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Search, Upload, Download, RefreshCcw, ShieldOff, QrCode } from "lucide-react";
+import { FileText, Plus, Search, Upload, Download, RefreshCcw, ShieldOff, QrCode as QrIcon, Printer } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { QrCode, downloadQrPng, buildQrUrl } from "@/components/qr/QrCode";
 import {
   SERVICE_LABEL, STATUS_LABEL, statusBadgeClass, ServiceType, CertStatus, requestDownload,
 } from "@/lib/certificates";
@@ -342,13 +344,32 @@ export default function AdminCertificates() {
                   <Field label="Emisión" value={selected.issued_at} />
                   <Field label="Vigencia" value={selected.valid_until ?? "—"} />
                 </div>
-                <div className="space-y-1.5">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">QR de verificación</p>
-                  <a href={verifyUrl(selected.qr_token)} target="_blank" rel="noreferrer"
-                    className="flex items-center gap-2 text-xs text-primary hover:underline">
-                    <QrCode className="w-3.5 h-3.5" /> {verifyUrl(selected.qr_token)}
+                <div className="flex flex-col items-center gap-2 p-3 bg-white rounded-md border border-border/60">
+                  <QrCode value={buildQrUrl("certificado", selected.qr_token)} size={170} />
+                  <a href={buildQrUrl("certificado", selected.qr_token)} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1.5 text-[11px] text-primary hover:underline truncate max-w-full">
+                    <QrIcon className="w-3 h-3" /> {buildQrUrl("certificado", selected.qr_token)}
                   </a>
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button size="sm" variant="outline" onClick={() => downloadQrPng(buildQrUrl("certificado", selected.qr_token), `qr-${selected.folio}`)}>
+                    <Download className="w-4 h-4 mr-2" /> QR PNG
+                  </Button>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to={`/admin/qr-print?kind=certificado&ids=${selected.id}`} target="_blank">
+                      <Printer className="w-4 h-4 mr-2" /> Imprimir
+                    </Link>
+                  </Button>
+                </div>
+                <Button size="sm" variant="ghost" onClick={async () => {
+                  if (!confirm("Regenerar QR invalidará el código impreso anterior. ¿Continuar?")) return;
+                  const { error } = await supabase.rpc("regenerate_certificate_qr", { _id: selected.id });
+                  if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+                  toast({ title: "QR regenerado" });
+                  fetchAll();
+                }} className="w-full">
+                  <RefreshCcw className="w-4 h-4 mr-2" /> Regenerar QR
+                </Button>
                 {selected.notes && (
                   <div className="space-y-1">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Notas</p>
@@ -367,7 +388,7 @@ export default function AdminCertificates() {
                     </Button>
                   </label>
                   <Button size="sm" variant="outline" onClick={() => openEdit(selected)}>
-                    <RefreshCcw className="w-4 h-4 mr-2" /> Editar datos
+                    Editar datos
                   </Button>
                   {selected.status !== "revocado" && (
                     <Button size="sm" variant="ghost" onClick={() => revoke(selected)} className="text-destructive hover:text-destructive">
