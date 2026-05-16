@@ -62,11 +62,15 @@ serve(async (req) => {
   const auditId = auditRow?.id;
 
   const updateAudit = async (patch: Record<string, unknown>) => {
-    if (!auditId) return;
-    await supabase
+    if (!auditId) {
+      console.error("updateAudit: auditId nulo, no se puede actualizar registro");
+      return;
+    }
+    const { error } = await supabase
       .from("stripe_webhook_events")
       .update({ ...patch, processed_at: new Date().toISOString() })
       .eq("id", auditId);
+    if (error) console.error("updateAudit error:", error.message);
   };
 
   try {
