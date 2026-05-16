@@ -7,6 +7,7 @@ import { DashboardCharts, type MonthlyPoint, type StatusSlice } from "@/componen
 import { PendingOrdersMap, type MapPin } from "@/components/admin/dashboard/PendingOrdersMap";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { checkLeafletCompatibility } from "@/lib/leafletCompat";
+import { LeafletCompatAlert } from "@/components/admin/LeafletCompatAlert";
 import { AppointmentsCalendar, type CalendarEvent } from "@/components/admin/dashboard/AppointmentsCalendar";
 import { RecentOrdersTable, type OrderRow } from "@/components/admin/dashboard/RecentOrdersTable";
 
@@ -192,65 +193,7 @@ export default function AdminDashboard() {
       {(() => {
         const compat = checkLeafletCompatibility();
         if (!compat.compatible) {
-          const targetMajor = compat.expectedReactMajors[0];
-          // Si la app está en React N, sugerir react-leaflet compatible (4 para 17/18, 5 para 19).
-          const reactMajor = Number(compat.reactVersion.split(".")[0]);
-          const suggestedRl =
-            reactMajor >= 19 ? "5.x" : reactMajor >= 17 ? "4.x" : "3.x";
-          return (
-            <div
-              role="alert"
-              className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm space-y-2"
-            >
-              <p className="font-medium text-foreground">
-                Mapa deshabilitado por incompatibilidad de versiones.
-              </p>
-              <p className="text-xs text-muted-foreground">{compat.message}</p>
-              <dl className="text-xs grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2">
-                <dt className="text-muted-foreground">React instalado:</dt>
-                <dd className="font-mono text-foreground">{compat.reactVersion}</dd>
-                <dt className="text-muted-foreground">react-leaflet instalado:</dt>
-                <dd className="font-mono text-foreground">{compat.reactLeafletVersion}</dd>
-                <dt className="text-muted-foreground">React esperado:</dt>
-                <dd className="font-mono text-foreground">
-                  {compat.expectedReactMajors.map((m) => `${m}.x`).join(" o ") || "—"}
-                </dd>
-                <dt className="text-muted-foreground">react-leaflet sugerido:</dt>
-                <dd className="font-mono text-foreground">{suggestedRl}</dd>
-              </dl>
-              <div className="pt-2 space-y-1 text-xs">
-                <p className="text-foreground font-medium">Cómo actualizar:</p>
-                <code className="block px-2 py-1 rounded bg-muted text-foreground font-mono">
-                  bun add react-leaflet@^{suggestedRl.replace(".x", "")}
-                </code>
-                <p className="text-muted-foreground">
-                  Guía oficial:{" "}
-                  <a
-                    href="https://react-leaflet.js.org/docs/start-installation/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline underline-offset-2 hover:no-underline"
-                  >
-                    react-leaflet.js.org
-                  </a>{" "}
-                  ·{" "}
-                  <a
-                    href={`https://github.com/PaulLeCam/react-leaflet/releases/tag/v${compat.reactLeafletVersion}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline underline-offset-2 hover:no-underline"
-                  >
-                    Release notes v{compat.reactLeafletVersion}
-                  </a>
-                </p>
-                {targetMajor ? (
-                  <p className="text-muted-foreground">
-                    Esta versión requiere React {targetMajor}.x.
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          );
+          return <LeafletCompatAlert compat={compat} />;
         }
         return (
           <ErrorBoundary label="el mapa de pedidos y mantenimientos">
