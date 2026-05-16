@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { getCategoryBySlug, mapStaticCategory, mapInventorySubcategory } from "@/data/categories";
-import { products as allStaticProducts } from "@/data/products";
+import { products as allStaticProducts, isCatalogReady } from "@/data/products";
 import { useInventoryCatalog } from "@/hooks/useInventoryCatalog";
 import { ProductCard } from "@/components/ProductCard";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -30,6 +30,7 @@ const CategoryPage = () => {
     const result: CatalogProduct[] = [];
 
     for (const p of allStaticProducts) {
+      if (!isCatalogReady(p)) continue;
       const mapped = mapStaticCategory(p.category);
       if (mapped.mainCategory === category.slug) {
         seenIds.add(p.id);
@@ -39,6 +40,7 @@ const CategoryPage = () => {
 
     for (const ip of inventoryProducts) {
       if (seenIds.has(ip.id)) continue;
+      if (!isCatalogReady(ip)) continue;
       const mapped = mapInventorySubcategory(
         (ip as any).category || null,
         ip.subcategory || null

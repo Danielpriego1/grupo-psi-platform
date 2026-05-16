@@ -18,29 +18,34 @@ export function useInventoryCatalog() {
       const { data } = await supabase
         .from("inventory")
         .select("*")
-        
-        
+        .not("image_url", "is", null)
+        .gt("unit_price", 0)
         .order("product_name");
 
       if (data) {
-        const products: InventoryProduct[] = data.map((item) => ({
-          id: item.product_id,
-          name: item.product_name,
-          category: item.subcategory
-            ? item.subcategory.split("-").slice(0, 1).join("")
-            : item.category || "EPP",
-          description: `${item.product_name}. ${item.category ? `Categoría: ${item.category}.` : ""} ${item.subcategory ? `Subcategoría: ${item.subcategory}.` : ""}`,
-          priceOriginalMxn: Number(item.unit_price),
-          discount: null,
-          purchaseUrl: null,
-          purchaseStatus: "Available",
-          inStock: item.stock > 0,
-          image: item.image_url || undefined,
-          fromInventory: true,
-          subcategory: (item as any).subcategory || null,
-          specPdfUrl: (item as any).spec_pdf_url || null,
-          stock: item.stock,
-        }));
+        const products: InventoryProduct[] = data
+          .filter((item) => {
+            const img = (item.image_url || "").trim();
+            return img.length > 0 && Number(item.unit_price) > 0;
+          })
+          .map((item) => ({
+            id: item.product_id,
+            name: item.product_name,
+            category: item.subcategory
+              ? item.subcategory.split("-").slice(0, 1).join("")
+              : item.category || "EPP",
+            description: `${item.product_name}. ${item.category ? `Categoría: ${item.category}.` : ""} ${item.subcategory ? `Subcategoría: ${item.subcategory}.` : ""}`,
+            priceOriginalMxn: Number(item.unit_price),
+            discount: null,
+            purchaseUrl: null,
+            purchaseStatus: "Available",
+            inStock: item.stock > 0,
+            image: item.image_url || undefined,
+            fromInventory: true,
+            subcategory: (item as any).subcategory || null,
+            specPdfUrl: (item as any).spec_pdf_url || null,
+            stock: item.stock,
+          }));
         setInventoryProducts(products);
       }
       setLoading(false);
