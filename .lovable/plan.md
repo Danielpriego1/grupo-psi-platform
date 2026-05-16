@@ -1,63 +1,57 @@
-## Plan: Configurar y probar el Webhook de Stripe
+## Reporte de auditoría + plan de correcciones
 
-El endpoint ya existe (`supabase/functions/stripe-webhook/index.ts`) y procesa `checkout.session.completed`, `checkout.session.expired` y `payment_intent.payment_failed`, registrando todo en `stripe_webhook_events`. Falta enlazarlo con Stripe y validarlo de extremo a extremo.
+### Estado actual verificado
 
-### 1. URL del webhook
+| Área | Estado |
+|---|---|
+| Frontend público, auth, portal, admin (12 secciones), 9 edge functions | OK estructural |
+| Stripe webhook recibe eventos y los registra | OK |
+| **Stripe webhook → tabla `orders`** | 🔴 No actualiza la orden (1 evento `success` en auditoría pero 0 órdenes `paid`) |
+| `scripts/keep-alive.sh` | 🟠 Dos scripts concatenados, segunda mitad apunta a un proyecto Supabase distinto |
+| `supabase/.temp/linked-project.json` | 🟠 Ref `faadsipcsecmulwhbjah` ≠ proyecto activo `wcnbqlpbqansyvslxlth` |
+| Portal cliente | 🟡 Vacío porque `clients` = 0 filas y el trigger solo vincula si ya existe el cliente |
+| Linter Supabase | 28 warnings, todas `SECURITY DEFINER` aceptadas — sin acción |
 
-Pública (sin JWT, ya está en `config.toml`):
-```
-https://wcnbqlpbqansyvslxlth.supabase.co/functions/v1/stripe-webhook
-```
+Datos: 16 órdenes (0 pagadas), 168 productos, 2 mantenimientos, 1 evento Stripe.
 
-### 2. Configurar en Stripe Dashboard
+### Correcciones a aplicar
 
-Pasos que debe hacer el usuario (te guío en chat):
-1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**.
-2. Endpoint URL: la de arriba.
-3. **Events to send** (seleccionar exactamente estos 3):
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-   - `payment_intent.payment_failed`
-4. Crear endpoint y copiar el **Signing secret** (`whsec_...`).
+**1. 🔴 Stripe webhook → órdenes (bloqueador)**
+- Revisar `supabase/functions/stripe-webhook/index.ts` y reforzar el matching de la orden por `session.id`, `payment_intent` y `metadata.order_number` (los 3, en cascada).
+- Agregar logs explícitos cuando no se encuentre la orden y marcar `processing_status='orphan'` en `stripe_webhook_events` en vez de `success` falso.
+- Actualizar `orders` con `payment_status='paid'`, `status='confirmed'`, `paid_at=now()`, `ticket_token=gen_random_uuid()` cuando llegue `checkout.session.completed`.
+- Manejar `payment_intent.payment_failed`: marcar `payment_status='failed'`, `status='cancelled'`, guardar mensaje en `notes`.
+- Redesplegar la función.
 
-### 3. Guardar el Signing Secret
+**2. 🟠 Reparar `scripts/keep-alive.sh`**
+- Dejar un solo bloque apuntando a `wcnbqlpbqansyvslxlth`.
 
-El secret `stripe_webhook_secret` ya existe en el proyecto, pero hay que **actualizarlo** con el valor real del endpoint que se cree. Usaré `update_secret` para `STRIPE_WEBHOOK_SECRET` (el código lee ambos nombres) una vez que el usuario me pase el `whsec_...`.
+**3. 🟠 Sincronizar `linked-project.json`**
+- Actualizar `ref` y `name` al proyecto activo para que el repo `grupo-psi-app` en GitHub no haga push a la BD equivocada.
 
-### 4. Reforzar manejo del payment_intent.payment_failed
+**4. 🟡 Auto-vincular cliente al registrarse**
+- Modificar el trigger `handle_new_user` para que, si no existe un `clients` con ese email, **cree uno** con `email`, `contact_name` (de `full_name`) y `user_id = NEW.id`. Así el portal funciona desde el primer login.
 
-Hoy ese caso solo loguea y registra en auditoría, pero **no** actualiza la tabla `orders`. Voy a agregar: buscar la orden por `stripe_payment_intent` y marcar `payment_status='failed'`, `status='cancelled'`, guardar el mensaje de error en `notes`. Así el dashboard refleja pagos fallidos en tiempo real.
+**5. 🟢 Limpieza opcional**
+- Marcar las 4 órdenes `COT-...` de abril como `archived` (campo `notes`) o dejarlas como están — dime.
+- Silenciar los warnings de React Router v6 con `future={{ v7_startTransition: true, v7_relativeSplatPath: true }}`.
 
-### 5. Realtime en `AdminOrders`
+### Cómo voy a validar después
 
-Verificar que `AdminOrders` se refresque automáticamente cuando cambie `orders`. Si no usa `useRealtimeTable`, agregarlo para que el estado de pago aparezca al instante sin recargar.
+1. `curl_edge_functions` al webhook con un payload simulado de `checkout.session.completed` con `metadata.order_number` de una orden real → debe quedar `paid` con `ticket_token`.
+2. Revisar `edge_function_logs` de `stripe-webhook` para confirmar branch correcto.
+3. Crear un usuario de prueba y verificar que aparece en `clients`.
 
-### 6. Pruebas
+### Lo que necesito de ti después
 
-Tres pruebas, sin tocar dinero real:
+- Hacer **un pago real de prueba** con `4242 4242 4242 4242` desde el sitio para confirmar el ciclo completo end-to-end (no puedo hacerlo yo desde el sandbox).
+- Confirmar en Stripe Dashboard que el webhook apunta a:
+  `https://wcnbqlpbqansyvslxlth.supabase.co/functions/v1/stripe-webhook`
 
-**A. Smoke test desde el sandbox** (yo, con `curl_edge_functions`):
-- POST sin firma con un payload simulado de `checkout.session.completed` para verificar que la función responde 200 y registra en `stripe_webhook_events`. (Funciona porque el código permite ejecutar sin secret si no hay firma — útil sólo para pruebas internas).
+### Sobre el repo GitHub `grupo-psi-app`
 
-**B. Test card en flujo real** (usuario):
-- Crear un pedido pequeño desde el sitio, ir a Stripe Checkout con `4242 4242 4242 4242` (éxito) → debe verse en `/admin/auditoria` como **success** y la orden en `/admin/orders` con `payment_status=paid` y ticket QR generado.
-- Tarjeta `4000 0000 0000 0002` (declinada) → evento `payment_intent.payment_failed` → orden marcada `failed`.
-- Iniciar checkout y abandonarlo 24h o usar "Send test event" desde Stripe Dashboard para `checkout.session.expired`.
+No tengo acceso directo a GitHub. Si el repo está sincronizado con este proyecto Lovable, los cambios se pushean solos. Si es un fork separado, dime su URL para revisarlo aparte.
 
-**C. Test events desde Stripe Dashboard**:
-- En la página del endpoint, botón **"Send test event"** → elegir cada uno de los 3 eventos. Verificar en `/admin/auditoria` que aparecen con la firma válida y `processing_status=success`.
+---
 
-### 7. Verificación de logs
-
-Revisar logs de la edge function `stripe-webhook` con `edge_function_logs` para confirmar que la firma se valida correctamente y no hay errores.
-
-### Detalles técnicos
-
-- No requiere migración nueva.
-- Cambio de código: agregar lógica de update a `orders` en el branch `payment_intent.payment_failed` (intentar por `stripe_payment_intent` y, si Stripe envía `metadata.order_id/order_number`, también).
-- Opcional: agregar `useRealtimeTable` en `AdminOrders` si aún no lo tiene.
-
-### Qué necesito de ti para empezar
-
-1. Confirmar que quieres que active el realtime en AdminOrders si no lo tiene.
-2. Después de crear el endpoint en Stripe, pasarme el `whsec_...` para actualizarlo en los secrets.
+**Aprueba este plan y ejecuto los 4 puntos críticos (1-4) en orden.** El punto 5 lo hago solo si me lo confirmas.
