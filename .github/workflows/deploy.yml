@@ -8,22 +8,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-          cache: 'npm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Build project
-        run: npm run build
+        run: bun run build
         env:
           NODE_ENV: production
 
@@ -39,9 +38,10 @@ jobs:
             echo "=== Iniciando deploy ==="
             cd /var/www/grupopsi
             git pull origin main
-            npm ci --production=false
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            npm install
             npm run build
-            rsync -av --delete dist/ /var/www/grupopsi/dist/
             pm2 restart grupo-psi || pm2 start npm --name grupo-psi -- start
-            nginx -t && systemctl reload nginx
+            nginx -t && sudo systemctl reload nginx
             echo "=== Deploy completado ==="
