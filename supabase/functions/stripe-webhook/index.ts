@@ -41,26 +41,18 @@ serve(async (req) => {
         const orderNumber = session.metadata?.order_number;
         const orderId = session.metadata?.order_id;
 
+        const updates = {
+          status: "confirmed" as const,
+          payment_status: "paid",
+          stripe_session_id: session.id,
+          stripe_payment_intent: (session.payment_intent as string) ?? null,
+          paid_at: new Date().toISOString(),
+        };
+
         if (orderId) {
-          await supabase
-            .from("orders")
-            .update({
-              status: "confirmed",
-              payment_status: "paid",
-              stripe_session_id: session.id,
-              stripe_payment_intent: session.payment_intent as string,
-            })
-            .eq("id", orderId);
+          await supabase.from("orders").update(updates).eq("id", orderId);
         } else if (orderNumber) {
-          await supabase
-            .from("orders")
-            .update({
-              status: "confirmed",
-              payment_status: "paid",
-              stripe_session_id: session.id,
-              stripe_payment_intent: session.payment_intent as string,
-            })
-            .eq("order_number", orderNumber);
+          await supabase.from("orders").update(updates).eq("order_number", orderNumber);
         }
 
         console.log(`Pago confirmado: ${orderNumber} | Session: ${session.id}`);
