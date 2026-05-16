@@ -47,6 +47,7 @@ serve(async (req) => {
           stripe_session_id: session.id,
           stripe_payment_intent: (session.payment_intent as string) ?? null,
           paid_at: new Date().toISOString(),
+          ticket_token: crypto.randomUUID(),
         };
 
         if (orderId) {
