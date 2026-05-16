@@ -206,6 +206,25 @@ export function ChatWidget() {
     };
   }, []);
 
+  // Keyboard shortcut: End (or Ctrl/Cmd+↓) jumps to the latest message when
+  // the "new messages" pill is visible. Active while the chat is open.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const hasPill = !atBottom && unreadCount > 0;
+      if (!hasPill) return;
+      const isEnd = e.key === "End";
+      const isCtrlDown = (e.ctrlKey || e.metaKey) && e.key === "ArrowDown";
+      if (isEnd || isCtrlDown) {
+        e.preventDefault();
+        jumpToBottom();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, atBottom, unreadCount, jumpToBottom]);
+
   const anyTyping = messages.some(m => m.isTyping);
 
   // Only render last N for performance; older context still kept in state for API history
