@@ -119,13 +119,15 @@ export function ChatWidget() {
     } catch (err) {
       console.error("Sora chat error:", err);
       const msgId = (Date.now() + 1).toString();
-      const fallback = "Disculpa, tengo un pequeño inconveniente. ¿Podrías intentar de nuevo? Si es urgente, escríbenos por WhatsApp.";
+      const fallback = "Intenta de nuevo en un momento.";
       setMessages(prev => [
         ...prev,
         { id: msgId, role: "assistant", content: "", isTyping: true },
       ]);
       setIsLoading(false);
       typeMessage(fallback, msgId);
+    } finally {
+      requestAnimationFrame(() => inputRef.current?.focus());
     }
   };
 
