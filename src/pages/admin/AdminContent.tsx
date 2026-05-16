@@ -557,3 +557,109 @@ function ServicesManager() {
     </section>
   );
 }
+
+// ─── LOGO UPLOADER ───────────────────────────────────────────────────
+function LogoUploader({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  onChange: (url: string | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten imágenes");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Máximo 5 MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("brand-logos")
+        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("brand-logos").getPublicUrl(path);
+      onChange(data.publicUrl);
+      toast.success("Logo subido");
+    } catch (e: any) {
+      toast.error(e.message || "Error subiendo logo");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <Label>Logo</Label>
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) handleFile(f);
+        }}
+        onClick={() => inputRef.current?.click()}
+        className={`relative mt-1.5 cursor-pointer rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
+          dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/60"
+        }`}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+            e.target.value = "";
+          }}
+        />
+        {uploading ? (
+          <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" /> Subiendo…
+          </div>
+        ) : value ? (
+          <div className="flex items-center gap-3">
+            <img src={value} alt="" className="h-12 w-auto max-w-[120px] object-contain bg-white/5 rounded p-1" />
+            <div className="flex-1 text-left text-xs text-muted-foreground truncate">
+              {value.split("/").pop()}
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(null);
+              }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-1 py-2 text-sm text-muted-foreground">
+            <Upload className="w-5 h-5" />
+            <div>
+              <span className="text-foreground font-medium">Arrastra una imagen</span> o haz clic
+            </div>
+            <div className="text-xs">PNG, JPG, SVG · máx 5 MB</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
