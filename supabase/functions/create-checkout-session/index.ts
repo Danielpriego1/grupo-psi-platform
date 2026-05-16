@@ -19,7 +19,7 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
 
     const body = await req.json();
-    const { items, clientName, clientPhone, successUrl, cancelUrl } = body;
+    const { items, clientName, clientPhone } = body;
 
     if (!items || items.length === 0) {
       throw new Error("No hay productos en el carrito");
@@ -75,8 +75,8 @@ serve(async (req) => {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: successUrl || `https://checkout.grupopsi.com/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&order=${orderNumber}`,
-      cancel_url: cancelUrl || `https://checkout.grupopsi.com/`,
+      success_url: `https://checkout.grupopsi.com/pago-exitoso?session_id={CHECKOUT_SESSION_ID}&order=${orderNumber}`,
+      cancel_url: `https://checkout.grupopsi.com/`,
       metadata: {
         order_number: orderNumber,
         client_name: clientName || "",
