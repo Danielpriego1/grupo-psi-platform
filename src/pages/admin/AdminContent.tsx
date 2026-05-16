@@ -30,8 +30,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Upload, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
+import { useRef, useState as useStateReact } from "react";
 import { SERVICE_ICON_OPTIONS, SERVICE_ICONS } from "@/components/ServicesSection";
 
 type Brand = {
