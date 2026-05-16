@@ -34,10 +34,12 @@ export function LeafletCompatAlert({ compat }: Props) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const reactMajor = Number(compat.reactVersion.split(".")[0]);
-  const suggestedRl =
-    reactMajor >= 19 ? "5" : reactMajor >= 17 ? "4" : "3";
+  // El major y la sugerencia vienen ya calculados desde checkLeafletCompatibility(),
+  // usando la versión leída en build-time desde node_modules/react/package.json.
+  const suggestedRl = compat.suggestedReactLeafletMajor;
   const command = buildCommand(PKG_MANAGER, "react-leaflet", suggestedRl);
+  const runtimeMismatch =
+    compat.reactRuntimeVersion && compat.reactRuntimeVersion !== compat.reactVersion;
 
   const handleCopy = async () => {
     try {
@@ -68,8 +70,16 @@ export function LeafletCompatAlert({ compat }: Props) {
       <p className="text-xs text-muted-foreground">{compat.message}</p>
 
       <dl className="text-xs grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2">
-        <dt className="text-muted-foreground">React instalado:</dt>
+        <dt className="text-muted-foreground">React instalado (node_modules):</dt>
         <dd className="font-mono text-foreground">{compat.reactVersion}</dd>
+        {runtimeMismatch && (
+          <>
+            <dt className="text-muted-foreground">React en runtime:</dt>
+            <dd className="font-mono text-destructive">
+              {compat.reactRuntimeVersion} ⚠
+            </dd>
+          </>
+        )}
         <dt className="text-muted-foreground">react-leaflet instalado:</dt>
         <dd className="font-mono text-foreground">{compat.reactLeafletVersion}</dd>
         <dt className="text-muted-foreground">React esperado:</dt>
@@ -77,7 +87,14 @@ export function LeafletCompatAlert({ compat }: Props) {
           {compat.expectedReactMajors.map((m) => `${m}.x`).join(" o ") || "—"}
         </dd>
         <dt className="text-muted-foreground">react-leaflet sugerido:</dt>
-        <dd className="font-mono text-foreground">{suggestedRl}.x</dd>
+        <dd className="font-mono text-foreground">
+          {suggestedRl}.x{" "}
+          {compat.suggestionMatchesInstalledReact ? (
+            <span className="text-emerald-500">✓ coincide con React {compat.reactVersion}</span>
+          ) : (
+            <span className="text-destructive">⚠ no coincide con React {compat.reactVersion}</span>
+          )}
+        </dd>
       </dl>
 
       <div className="pt-2 space-y-2 text-xs">
