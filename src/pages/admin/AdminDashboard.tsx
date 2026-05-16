@@ -6,6 +6,7 @@ import { KpiCards, type KpiData } from "@/components/admin/dashboard/KpiCards";
 import { DashboardCharts, type MonthlyPoint, type StatusSlice } from "@/components/admin/dashboard/DashboardCharts";
 import { PendingOrdersMap, type MapPin } from "@/components/admin/dashboard/PendingOrdersMap";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { checkLeafletCompatibility } from "@/lib/leafletCompat";
 import { AppointmentsCalendar, type CalendarEvent } from "@/components/admin/dashboard/AppointmentsCalendar";
 import { RecentOrdersTable, type OrderRow } from "@/components/admin/dashboard/RecentOrdersTable";
 
@@ -188,9 +189,27 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <KpiCards data={kpi} />
       <DashboardCharts monthly={monthly} ordersByStatus={ordersByStatus} maintByStatus={maintByStatus} />
-      <ErrorBoundary label="el mapa de pedidos y mantenimientos">
-        <PendingOrdersMap pins={pins} />
-      </ErrorBoundary>
+      {(() => {
+        const compat = checkLeafletCompatibility();
+        if (!compat.compatible) {
+          return (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm"
+            >
+              <p className="font-medium text-foreground">
+                Mapa deshabilitado por incompatibilidad de versiones.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">{compat.message}</p>
+            </div>
+          );
+        }
+        return (
+          <ErrorBoundary label="el mapa de pedidos y mantenimientos">
+            <PendingOrdersMap pins={pins} />
+          </ErrorBoundary>
+        );
+      })()}
       <AppointmentsCalendar events={events} />
       <RecentOrdersTable orders={recent} onChanged={fetchAll} />
     </div>
