@@ -47,7 +47,7 @@ export function AdminLayout() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "admin-sidebar fixed inset-y-0 left-0 z-50 w-60 border-r transform transition-transform lg:translate-x-0 lg:static lg:inset-auto",
+          "admin-sidebar fixed inset-y-0 left-0 z-50 w-[78%] max-w-[280px] sm:w-64 lg:w-60 border-r transform transition-transform duration-200 ease-out lg:translate-x-0 lg:static lg:inset-auto",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -87,7 +87,7 @@ export function AdminLayout() {
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    "group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-colors",
+                    "group flex items-center gap-3 px-3 py-2.5 lg:gap-2.5 lg:px-2.5 lg:py-1.5 rounded-md text-sm lg:text-[13px] font-medium transition-colors",
                     isActive
                       ? "bg-primary/10 text-foreground ring-1 ring-inset ring-primary/20"
                       : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
@@ -95,7 +95,7 @@ export function AdminLayout() {
                 >
                   <item.icon
                     className={cn(
-                      "w-4 h-4 shrink-0",
+                      "w-[18px] h-[18px] lg:w-4 lg:h-4 shrink-0",
                       isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
                     )}
                     strokeWidth={1.75}
