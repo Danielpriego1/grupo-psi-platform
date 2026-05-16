@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Product } from "@/data/products";
-import { ArrowRight, Flame, HardHat, Shield, Package } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useInventoryImages } from "@/hooks/useInventoryImages";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -10,37 +11,31 @@ interface ProductCardProps {
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const inventoryImages = useInventoryImages();
-  const displayImage = inventoryImages[product.id] || product.image || "/placeholder.svg";
-    const hasRealImage = !!(inventoryImages[product.id] || product.image);
-    const getCategoryIcon = () => {
-          const cat = (product.category || '').toLowerCase();
-          if (cat.includes('fuego') || cat.includes('extintor')) return <Flame className="w-16 h-16 text-orange-400" />;
-          if (cat.includes('epp') || cat.includes('proteccion')) return <Shield className="w-16 h-16 text-blue-400" />;
-          if (cat.includes('uniforme')) return <HardHat className="w-16 h-16 text-yellow-400" />;
-          return <Package className="w-16 h-16 text-gray-400" />;
-        };
+  const displayImage = inventoryImages[product.id] || product.image;
+  const [imageBroken, setImageBroken] = useState(false);
+
+  // Hide the card entirely if there is no valid image source or it failed to load,
+  // or if the product has no real price. Public catalog must never show empty cards.
+  if (!displayImage || imageBroken || !product.priceOriginalMxn || Number(product.priceOriginalMxn) <= 0) {
+    return null;
+  }
 
   return (
-    <Link to={`/product/${product.id}`} className="block w-full">
+    <Link to={`/product/${product.id}`} className="block w-full h-full">
       <div
-        className="group relative rounded-2xl overflow-hidden border border-border bg-card transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_48px_-12px_hsl(var(--primary)/0.2)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-primary before:scale-x-0 before:transition-transform before:duration-300 before:z-20 group-hover:before:scale-x-100 animate-slide-up"
+        className="group relative h-full rounded-2xl overflow-hidden border border-border bg-card transition-all duration-300 ease-out cursor-pointer hover:-translate-y-2 hover:border-primary/40 hover:bg-card/95 hover:shadow-[0_20px_50px_-12px_hsl(var(--primary)/0.45)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-primary before:scale-x-0 before:transition-transform before:duration-300 before:z-20 group-hover:before:scale-x-100 animate-slide-up"
         style={{ animationDelay: `${index * 100}ms` }}
       >
-        {/* Card content */}
         <div className="relative z-10 p-5">
           {/* Product image */}
-          <div className="aspect-[4/3] mb-5 overflow-hidden rounded-xl">
-                      {hasRealImage ? (
+          <div className="aspect-[4/3] mb-5 overflow-hidden rounded-xl bg-background/40">
             <img
               src={displayImage}
               alt={product.name}
+              loading="lazy"
+              onError={() => setImageBroken(true)}
               className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
             />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center bg-gray-800">
-              {getCategoryIcon()}
-            </div>
-          )}
           </div>
 
           {/* Text content */}
@@ -53,7 +48,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             </p>
             <div className="flex items-baseline gap-2 pt-1">
               <span className="text-lg font-bold text-primary">
-                {product.sizePricing ? "Desde " : ""}${product.priceOriginalMxn.toFixed(2)} MXN
+                ${Number(product.priceOriginalMxn).toFixed(2)} MXN
               </span>
               {product.discount && (
                 <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold text-destructive">

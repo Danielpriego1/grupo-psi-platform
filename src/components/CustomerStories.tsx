@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const stories = [
@@ -9,33 +9,33 @@ const stories = [
     quote:
       "Grupo Psi nos equipó con extintores certificados en todas nuestras plantas. Su servicio de mantenimiento es impecable.",
     tag: "Historia de cliente",
-    pattern: "repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 9px)",
   },
   {
     company: "Aceros del Norte",
     quote:
       "Los uniformes industriales que nos proveen son de la mejor calidad. Nuestro equipo está protegido y cómodo.",
     tag: "Historia de cliente",
-    pattern: "radial-gradient(circle at 85% 15%, rgba(255,255,255,0.06) 0%, transparent 55%), repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.02) 60px, rgba(255,255,255,0.02) 61px)",
   },
   {
     company: "Construcciones MX",
     quote:
       "Desde que trabajamos con Grupo Psi, nuestra calificación en auditorías de seguridad mejoró un 40%.",
     tag: "Historia de cliente",
-    pattern: "repeating-linear-gradient(135deg, transparent, transparent 40px, rgba(255,255,255,0.025) 40px, rgba(255,255,255,0.025) 41px)",
   },
   {
     company: "Plásticos Industriales",
     quote:
       "La recarga y certificación de nuestros extintores se realiza siempre a tiempo. Confiamos plenamente en su equipo.",
     tag: "Historia de cliente",
-    pattern: "radial-gradient(ellipse at 70% 80%, rgba(255,255,255,0.05) 0%, transparent 50%), repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(255,255,255,0.02) 12px, rgba(255,255,255,0.02) 13px)",
   },
 ];
 
 export function CustomerStories() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const total = stories.length;
+
+  const go = (dir: 1 | -1) =>
+    setActiveIndex((i) => (i + dir + total) % total);
 
   return (
     <section className="relative py-24">
@@ -58,47 +58,65 @@ export function CustomerStories() {
           </p>
         </motion.div>
 
-        <div className="mx-auto max-w-4xl">
-          {/* Card display */}
-          <div className="relative min-h-[380px] sm:min-h-[420px]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeIndex}
-                initial={{ opacity: 0, y: 24, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -24, scale: 0.97 }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="rounded-[1.6rem] p-[1.5px]"
-                style={{
-                  background: "linear-gradient(135deg, hsl(220 85% 62%), hsl(258 84% 67%), hsl(var(--primary)))",
-                  boxShadow: "0 14px 38px hsl(220 85% 60% / 0.24), 0 0 0 1px hsl(258 84% 67% / 0.35)",
-                }}
-              >
-                <div className="overflow-hidden rounded-[1.5rem]">
+        {/* Stacked cards */}
+        <div className="mx-auto max-w-3xl">
+          <div className="relative h-[360px] sm:h-[340px]">
+            {stories.map((story, i) => {
+              const offset = (i - activeIndex + total) % total;
+              // 0 = front, 1 = behind right, 2 = behind further... Up to 3 layers shown.
+              const visible = offset < 3;
+              const scale = 1 - offset * 0.05;
+              const translateY = offset * 18;
+              const translateX = offset * 14;
+              const opacity = offset === 0 ? 1 : 0.55 - offset * 0.15;
+              const zIndex = total - offset;
+
+              return (
+                <motion.button
+                  key={story.company}
+                  type="button"
+                  onClick={() => offset !== 0 && setActiveIndex(i)}
+                  animate={{
+                    scale,
+                    y: translateY,
+                    x: translateX,
+                    opacity: visible ? opacity : 0,
+                    pointerEvents: visible ? "auto" : "none",
+                  }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ zIndex }}
+                  className={cn(
+                    "absolute inset-0 text-left rounded-2xl overflow-hidden",
+                    "border border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.7)]",
+                    offset === 0 ? "cursor-default" : "cursor-pointer"
+                  )}
+                >
                   <div
-                    className="relative min-h-[340px] sm:min-h-[400px] flex flex-col justify-end p-8 sm:p-10"
+                    className="relative h-full flex flex-col justify-end p-8 sm:p-10"
                     style={{
-                      background: "linear-gradient(160deg, hsl(220 22% 8%), hsl(220 18% 12%), hsl(225 15% 14%))",
+                      background:
+                        "linear-gradient(160deg, hsl(220 22% 8%), hsl(220 18% 12%), hsl(225 15% 14%))",
                     }}
                   >
-                    {/* Pattern overlay */}
+                    {/* Subtle pattern */}
                     <div
-                      className="pointer-events-none absolute inset-0"
-                      style={{ backgroundImage: stories[activeIndex].pattern }}
+                      className="pointer-events-none absolute inset-0 opacity-60"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(135deg, transparent, transparent 40px, rgba(255,255,255,0.025) 40px, rgba(255,255,255,0.025) 41px)",
+                      }}
                     />
 
-                    {/* Tag */}
-                    <span className="absolute left-6 top-6 sm:left-8 sm:top-8 rounded-md border border-background/15 bg-background/10 px-2.5 py-1 text-[11px] font-mono font-medium text-background/70 backdrop-blur-sm">
-                      {stories[activeIndex].tag}
+                    <span className="absolute left-6 top-6 sm:left-8 sm:top-8 rounded-md border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-mono font-medium text-white/70 backdrop-blur-sm">
+                      {story.tag}
                     </span>
 
-                    {/* Content */}
                     <div className="relative z-10">
                       <h3 className="mb-3 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
-                        {stories[activeIndex].company}
+                        {story.company}
                       </h3>
                       <p className="mb-5 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
-                        "{stories[activeIndex].quote}"
+                        "{story.quote}"
                       </p>
 
                       <div className="inline-flex items-center gap-2 text-primary">
@@ -107,44 +125,44 @@ export function CustomerStories() {
                       </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                </motion.button>
+              );
+            })}
           </div>
 
-          {/* Navigation dots + buttons */}
-          <div className="mt-8 flex items-center justify-center gap-3">
-            {stories.map((story, i) => (
-              <button
-                key={story.company}
-                onClick={() => setActiveIndex(i)}
-                className={cn(
-                  "rounded-full transition-all duration-300",
-                  i === activeIndex
-                    ? "h-3 w-10 bg-primary shadow-lg shadow-primary/30"
-                    : "h-3 w-3 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                )}
-                aria-label={`Ver historia de ${story.company}`}
-              />
-            ))}
-          </div>
+          {/* Controls */}
+          <div className="mt-10 flex items-center justify-center gap-4">
+            <button
+              onClick={() => go(-1)}
+              aria-label="Historia anterior"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
 
-          {/* Company names as tabs */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            {stories.map((story, i) => (
-              <button
-                key={story.company}
-                onClick={() => setActiveIndex(i)}
-                className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition-all duration-300",
-                  i === activeIndex
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "bg-muted text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
-                )}
-              >
-                {story.company}
-              </button>
-            ))}
+            <div className="flex items-center gap-2">
+              {stories.map((s, i) => (
+                <button
+                  key={s.company}
+                  onClick={() => setActiveIndex(i)}
+                  className={cn(
+                    "rounded-full transition-all duration-300",
+                    i === activeIndex
+                      ? "h-2.5 w-8 bg-primary"
+                      : "h-2.5 w-2.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  )}
+                  aria-label={`Ver historia ${i + 1}`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={() => go(1)}
+              aria-label="Siguiente historia"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </div>
