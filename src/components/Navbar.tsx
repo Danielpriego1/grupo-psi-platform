@@ -20,10 +20,9 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-3">
           <img
-            src="/images/logo_fondo_negro.png"
+            src="/images/grupo-psi-logo.png"
             alt="Grupo Psi"
             className="h-14 w-auto"
-            style={{ filter: "hue-rotate(170deg) saturate(4) brightness(1.1)" }}
           />
         </Link>
 
