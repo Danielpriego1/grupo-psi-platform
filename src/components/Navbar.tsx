@@ -22,7 +22,7 @@ export function Navbar() {
           <img
             src="/images/grupo-psi-logo.png"
             alt="Grupo Psi"
-            className="h-14 w-auto"
+            className="h-8 sm:h-10 md:h-12 w-auto object-contain shrink-0"
           />
         </Link>
 
