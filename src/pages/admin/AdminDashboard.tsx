@@ -51,6 +51,7 @@ export default function AdminDashboard() {
     const todayStart = startOfDay(now).toISOString();
     const todayEnd = endOfDay(now).toISOString();
     const monthStart = startOfMonth(now);
+    const prevMonthStart = startOfMonth(subMonths(now, 1));
 
     const [
       ordersAllRes,
