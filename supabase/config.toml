@@ -1,1 +1,7 @@
 project_id = "wcnbqlpbqansyvslxlth"
+
+[functions.certificate-copy-webhook]
+verify_jwt = false
+
+[functions.download-certificate]
+verify_jwt = false

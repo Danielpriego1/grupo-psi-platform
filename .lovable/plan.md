@@ -1,118 +1,90 @@
-# Calendario unificado + Realtime bidireccional
+# Módulo de Certificados — Grupo Psi
 
-## Resumen
+Sistema completo de certificados de servicio (mantenimiento, calibración, hidrostática, pureza de aire, PosiChek) con portal de cliente, gestión admin y cobro Stripe para copias adicionales.
 
-Hoy ya existe `AppointmentsCalendar` (react-big-calendar) en el dashboard, pero solo muestra mantenimientos y entregas y no tiene filtros, panel de detalle, vista día ni realtime. No existe tabla `appointments`. Vamos a crearla, unificar los 4 orígenes de eventos en una sola vista, rediseñar la UI estilo Notion Calendar y conectar Supabase Realtime en todas las pantallas operativas.
+## Alcance
 
-Sin tocar Stripe, carrito, página pública ni edge functions existentes.
+- Emisión, almacenamiento, búsqueda y verificación QR de certificados.
+- Portal del cliente: lista, filtros, detalle y descarga.
+- Primera emisión gratuita (incluida en el servicio). Reemisiones/copias adicionales cobradas vía Stripe.
+- Panel admin: subir, regenerar, reemplazar PDFs, ver estatus de pago.
+- Sincronización en tiempo real (Supabase Realtime) con dashboard, calendario, historial de equipos.
 
----
+## Fase 1 — Esquema Supabase
 
-## Fase 1 — Esquema en Supabase
+### Nuevas tablas
 
-### 1.1 Nueva tabla `appointments` (visitas / citas comerciales)
+**`equipment`** (catálogo de equipos del cliente)
+- `client_id`, `serial_number`, `equipment_type` (enum: `scba`, `cilindro`, `compresor`, `mascara`, `otro`), `brand`, `model`, `branch_name` (sucursal/base), `notes`.
 
-Campos de dominio: `client_id`, `contact_name`, `contact_phone`, `assigned_to` (uuid del técnico/vendedor), `appointment_type` (enum: `visit`, `inspection`, `pickup`, `meeting`), `status` (enum: `scheduled`, `confirmed`, `completed`, `cancelled`, `no_show`), `scheduled_at` (timestamptz), `duration_minutes`, `address`, `state`, `municipality`, `latitude`, `longitude`, `notes`, `internal_notes`.
+**`certificates`**
+- `folio` (único, formato `PSI-{TIPO}-{YYYY}-{NNNNN}`), `client_id`, `equipment_id` (nullable), `service_type` (enum: `mantenimiento`, `calibracion`, `hidrostatica`, `pureza_aire`, `posichek`), `branch_name`, `issued_at`, `valid_until`, `pdf_url` (storage), `qr_token` (uuid público), `status` (enum: `vigente`, `por_vencer`, `vencido`, `revocado`), `issued_by` (uuid admin), `source_request_id` (referencia opcional a maintenance/order/appointment), `notes`.
 
-RLS: admin y vendor pueden gestionar; cualquier autenticado puede ver.
+**`certificate_copy_requests`**
+- `certificate_id`, `requested_by` (uuid usuario), `stripe_session_id`, `amount_mxn`, `payment_status` (enum: `pending`, `paid`, `failed`, `refunded`), `paid_at`, `download_token`, `expires_at`.
 
-### 1.2 Vista unificada `calendar_events`
+### Storage
+Bucket privado `certificates` con RLS:
+- Admins: gestión total.
+- Clientes autenticados: solo sus PDFs (primera emisión gratis O copia pagada).
 
-`CREATE VIEW public.calendar_events AS` — UNION ALL de las 4 tablas, normalizando columnas:
+### RPC pública
+`get_certificate_by_qr(_token uuid)` → SECURITY DEFINER, devuelve datos de verificación (folio, cliente, equipo, fechas, estatus) sin PDF — alimenta página pública `/verificar/{token}`.
 
-```
-id (uuid) | source ('appointment'|'maintenance'|'delivery'|'order')
-title | event_type | status | start_at (timestamptz) | end_at
-client_name | address | state | municipality
-assigned_to | contact_phone | notes | internal_notes
-source_id (uuid del registro original)
-```
+### Realtime
+Habilitar `REPLICA IDENTITY FULL` y publication para `certificates` y `certificate_copy_requests`.
 
-- `appointments` → start = `scheduled_at`, end = `scheduled_at + duration_minutes`
-- `maintenance_requests` → start = `scheduled_date + time_slot`, end = +2h
-- `deliveries` → start = `scheduled_date 09:00`, end = +1h
-- `orders` con `status IN ('pending','confirmed')` → como hito (start = `created_at`, end = +30min)
+## Fase 2 — Stripe: cobro de copias
 
-La vista corre con permisos del usuario; cada tabla ya tiene su RLS. No requiere RLS adicional.
+Edge functions nuevas:
 
-### 1.3 Habilitar Realtime
+1. **`create-certificate-copy-checkout`** — recibe `certificate_id`, valida que el solicitante sea el dueño/admin, crea sesión Stripe Checkout (price one-shot configurable, default $250 MXN), inserta `certificate_copy_requests` con `payment_status=pending`, retorna `url`.
+2. **`certificate-copy-webhook`** — endpoint público con `verify_jwt = false`, valida firma Stripe, en `checkout.session.completed` marca request como `paid`, genera `download_token` y `expires_at` (72h).
+3. **`download-certificate`** — valida que el usuario sea admin, sea dueño con primera emisión, o presente un `download_token` válido y no expirado; devuelve signed URL del PDF.
 
-`ALTER PUBLICATION supabase_realtime ADD TABLE appointments, orders, maintenance_requests, deliveries;` y `REPLICA IDENTITY FULL` en las 4 para recibir el row completo en updates/deletes.
+Secret necesario: `STRIPE_WEBHOOK_SECRET` (pedir vía add_secret cuando empecemos la fase). `STRIPE_SECRET_KEY` ya existe.
 
----
+## Fase 3 — Frontend
 
-## Fase 2 — Hook compartido de Realtime
+### Portal cliente (`/portal/certificados`)
+- Tabla SaaS con columnas: Folio, Equipo, Tipo de servicio, Sucursal, Emisión, Vigencia, Estatus (badge color).
+- Filtros: tipo, equipo, rango de fecha, estatus.
+- Sheet lateral de detalle con metadatos, botón **Descargar PDF** (gratis si primera emisión) y **Solicitar copia certificada** (abre Checkout Stripe).
+- Estado "Pago confirmado → Descarga lista" con toast y refresco realtime.
 
-`src/hooks/useRealtimeTable.ts` — wrapper genérico que suscribe a `postgres_changes` de una tabla y dispara un callback (`onInsert`, `onUpdate`, `onDelete`) o invalida una React Query key. Se usa en:
+### Admin (`/admin/certificados`)
+- Tabla con filtros + columna pago de copia.
+- Acciones: **Emitir certificado** (form: cliente, equipo, tipo, fechas, upload PDF), **Regenerar**, **Reemplazar PDF**, **Revocar**.
+- Sheet de detalle con historial de copias solicitadas/pagadas.
 
-- `AdminOrders`, `AdminMaintenance`, `AdminDeliveries`, `AdminClients`, `AdminInventory` (los que ya hacen fetch manual pasan a auto-refrescar).
-- Nuevo módulo de calendario y citas.
+### Verificación pública (`/verificar/:token`)
+- Página minimal: folio, cliente, equipo, tipo, vigencia, badge de estatus. Sin descarga.
 
-Bidireccional "gratis": cualquier insert/update desde web o app móvil que use el mismo Supabase project notifica a todos los clientes suscritos.
+### Integraciones cruzadas
+- En **detalle del equipo** (nuevo o existente): tab "Certificados" filtrado por `equipment_id`.
+- En **calendario / detalle de servicio** (maintenance, appointment): enlace "Ver certificados generados" filtrado por `source_request_id`.
+- En **historial del cliente** (admin): sección de certificados.
 
----
+### Realtime
+Reusar `useRealtimeTable` ya existente para `certificates` y `certificate_copy_requests` en las vistas admin y portal.
 
-## Fase 3 — Módulo de calendario
+## Diseño
 
-Nueva ruta `/admin/calendario` + entrada en `AdminLayout`. Reemplaza el widget actual del dashboard por una versión mini que enlaza al módulo completo (no se borra, se simplifica).
+- Tablas con `border-border/60`, badges `rounded-sm` discretos por estatus (verde vigente, ámbar por vencer, rojo vencido, gris revocado).
+- Sheet lateral 420px (mismo patrón que calendario).
+- Sin gradientes, mucho espacio en blanco, tipografía limpia.
 
-### Estructura
+## Orden de implementación
 
-```
-src/pages/admin/AdminCalendar.tsx
-src/components/admin/calendar/
-  CalendarHeader.tsx        toolbar: hoy, ‹ ›, día/semana/mes, "+ Nueva cita"
-  CalendarFilters.tsx       chips multiselect: tipo, estado, cliente, técnico
-  MonthView.tsx             grid 7×n, eventos como pills (max 3 + "+N more")
-  WeekView.tsx              7 columnas, slots de 30 min, eventos absolutos
-  DayView.tsx               1 columna ancha, slots de 15 min
-  EventPill.tsx             borde izquierdo coloreado por tipo, texto sobrio
-  EventDetailSheet.tsx      Sheet lateral con todos los campos + acciones
-  AppointmentFormDialog.tsx crear/editar cita
-useCalendarEvents.ts        query a calendar_events + filtros + realtime
-```
+1. Migración Supabase (tablas + enums + storage bucket + RLS + RPC verificación + realtime).
+2. Edge functions Stripe (checkout, webhook, download) + secret webhook.
+3. Hooks (`useCertificates`, `useCertificateCopyCheckout`) + servicios.
+4. Portal cliente: lista, filtros, detalle, flujo de pago.
+5. Admin: lista, form emisión, upload/replace PDF.
+6. Página pública de verificación QR.
+7. Integraciones en detalle equipo, calendario e historial cliente.
+8. QA: emisión, descarga gratis, pago de copia, webhook, realtime, QR.
 
-Reemplazo de `react-big-calendar` por una implementación propia con `date-fns` para tener el look Notion (no es razonable estilizar RBC a ese nivel). Mantengo RBC instalado por compatibilidad con el widget del dashboard mientras tanto.
+## Compatibilidad
 
-### Diseño Notion-like
-
-- Fondo `bg-background`, divisores `border-border/60`, sin gradientes.
-- Encabezados de día en `text-xs uppercase tracking-wide text-muted-foreground`.
-- Eventos: pill `h-6 rounded-sm` con barra izquierda 2px del color del tipo y resto en `bg-muted/40`.
-- Paleta sobria por tipo: visita `slate`, mantenimiento `amber`, entrega `sky`, recolección `violet`, orden `emerald`. Solo la barra lateral lleva color; el texto siempre `foreground`.
-- Hover: `bg-muted` + cursor pointer. "Hoy" marcado con un punto bajo el número, no con fondo.
-- Sheet lateral 420px, header con tipo + estado en badge outline, secciones: Cliente, Ubicación (con link a Maps), Responsable, Notas, Notas internas. Footer con acciones rápidas: Confirmar / Marcar completada / Cancelar / Editar / Abrir registro origen.
-
-### Acciones rápidas
-
-Cada acción es un UPDATE sobre la tabla de origen (`source` + `source_id` saben a qué tabla ir). Realtime propaga el cambio a todos los clientes incluyendo el panel abierto.
-
----
-
-## Fase 4 — Integración móvil
-
-La app móvil (consumidor existente del mismo Supabase) no requiere cambios de protocolo. Sólo necesita:
-1. Estar suscrita a las mismas tablas vía Realtime (instrucciones quedan en `README` del módulo).
-2. Si quiere mostrar el calendario unificado, leer de la vista `calendar_events`.
-
-No tocamos código de la app móvil desde este repo.
-
----
-
-## Detalles técnicos
-
-- React Query para cache; cada handler de realtime hace `queryClient.setQueryData` por id (evita refetch innecesario).
-- Filtros se resuelven en cliente sobre el array memoizado — el dataset operativo es chico (< 5k eventos visibles).
-- Zonas horarias: todo en `America/Mexico_City`, conversión con `date-fns-tz` (ya disponible vía date-fns).
-- TypeScript: tipos derivados de `Database['public']['Views']['calendar_events']['Row']` que aparecerán tras la migración.
-- A11y: navegación con teclado en grid (`role="grid"`, flechas para moverse, Enter para abrir).
-
----
-
-## Orden de ejecución
-
-1. Migración SQL (enum, tabla `appointments`, vista `calendar_events`, RLS, realtime publication, replica identity).
-2. Hook `useRealtimeTable` + suscripciones en pantallas admin existentes (refresh automático sin romper nada).
-3. Módulo de calendario: ruta, layout, vistas mes/semana/día, filtros, sheet de detalle, formulario de citas.
-4. Simplificar `AppointmentsCalendar` del dashboard a un "próximos 7 días" que enlaza al módulo.
-5. QA: crear cita en web, verificar que aparece sin recargar en una segunda pestaña; actualizar mantenimiento desde Admin Mantenimiento y ver el cambio reflejado en el calendario al instante.
+No se tocan `orders`, `maintenance_requests`, `deliveries`, `appointments`, `inventory`, ni el calendario existente — solo se agregan relaciones opcionales (`source_request_id` apunta por id sin FK estricto para permitir referencias multi-tabla).

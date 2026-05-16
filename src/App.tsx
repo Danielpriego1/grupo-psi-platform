@@ -24,6 +24,9 @@ import AdminInventory from "./pages/admin/AdminInventory";
 import AdminClients from "./pages/admin/AdminClients";
 import AdminMaintenance from "./pages/admin/AdminMaintenance";
 import AdminCalendar from "./pages/admin/AdminCalendar";
+import AdminCertificates from "./pages/admin/AdminCertificates";
+import PortalCertificates from "./pages/portal/PortalCertificates";
+import VerifyCertificate from "./pages/VerifyCertificate";
 import CategoryPage from "./pages/CategoryPage";
 import ServiceDetail from "./pages/ServiceDetail";
 import RastreoMantenimiento from "./pages/RastreoMantenimiento";
@@ -130,7 +133,12 @@ const App = () => (
                 <Route path="clients" element={<AdminClients />} />
                 <Route path="maintenance" element={<AdminMaintenance />} />
                 <Route path="calendario" element={<AdminCalendar />} />
+                <Route path="certificados" element={<AdminCertificates />} />
               </Route>
+
+              {/* Customer portal */}
+              <Route path="/portal/certificados" element={<PortalCertificates />} />
+              <Route path="/verificar/:token" element={<VerifyCertificate />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
