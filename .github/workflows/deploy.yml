@@ -1,0 +1,47 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            echo "=== Iniciando deploy ==="
+            cd /var/www/grupopsi
+            git pull origin main
+            npm ci --production=false
+            npm run build
+            rsync -av --delete dist/ /var/www/grupopsi/dist/
+            pm2 restart grupo-psi || pm2 start npm --name grupo-psi -- start
+            nginx -t && systemctl reload nginx
+            echo "=== Deploy completado ==="
