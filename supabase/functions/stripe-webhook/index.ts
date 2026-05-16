@@ -148,11 +148,39 @@ serve(async (req) => {
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        await updateAudit({
-          processing_status: "success",
+        const errMsg = paymentIntent.last_payment_error?.message ?? "Pago rechazado";
+        const orderId = (paymentIntent.metadata as any)?.order_id ?? null;
+        const orderNumber = (paymentIntent.metadata as any)?.order_number ?? null;
+
+        let updateError: string | null = null;
+        const patch = {
+          status: "cancelled" as const,
           payment_status: "failed",
           stripe_payment_intent: paymentIntent.id,
-          error_message: paymentIntent.last_payment_error?.message ?? null,
+          notes: `Stripe: ${errMsg}`,
+        };
+
+        if (orderId) {
+          const { error } = await supabase.from("orders").update(patch).eq("id", orderId);
+          if (error) updateError = error.message;
+        } else if (orderNumber) {
+          const { error } = await supabase.from("orders").update(patch).eq("order_number", orderNumber);
+          if (error) updateError = error.message;
+        } else {
+          const { error } = await supabase
+            .from("orders")
+            .update(patch)
+            .eq("stripe_payment_intent", paymentIntent.id);
+          if (error) updateError = error.message;
+        }
+
+        await updateAudit({
+          processing_status: updateError ? "error" : "success",
+          payment_status: "failed",
+          stripe_payment_intent: paymentIntent.id,
+          order_id: orderId,
+          order_number: orderNumber,
+          error_message: updateError ?? errMsg,
         });
         console.log(`Pago fallido: ${paymentIntent.id}`);
         break;
