@@ -15,6 +15,7 @@ import { Plus, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { LocationPicker } from "@/components/admin/LocationPicker";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",
