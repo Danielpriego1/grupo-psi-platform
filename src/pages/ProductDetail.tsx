@@ -77,6 +77,21 @@ const ProductDetail = () => {
 
   const specPdfUrl = (inventoryItem as any)?.spec_pdf_url;
 
+  // Earliest delivery date: today + 2 business days (skip weekends).
+  const minDeliveryDate = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    let added = 0;
+    while (added < 2) {
+      d.setDate(d.getDate() + 1);
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) added++;
+    }
+    // If the resulting date lands on a weekend (shouldn't, but safety), bump to Monday.
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    return d;
+  }, []);
+
   const handleAddToCart = () => {
     if (allSizes.length > 0 && !selectedSize) {
       toast.error("Selecciona una talla");
