@@ -94,20 +94,25 @@ const CategoryPage = () => {
 
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-12"
+          transition={{ duration: 0.8 }}
+          className="mb-16"
         >
-          <div className="flex items-center gap-4 mb-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Icon className="h-7 w-7" />
+          <div className="flex flex-col md:flex-row md:items-center gap-8">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[2rem] bg-primary/10 text-primary shadow-lg shadow-primary/5">
+              <Icon className="h-12 w-12" />
             </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+            <div className="space-y-4">
+              <div className="inline-block rounded-full bg-primary/10 px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                Catálogo Oficial
+              </div>
+              <h1 className="text-5xl sm:text-6xl font-black tracking-tight text-foreground leading-none">
                 {category.name}
               </h1>
-              <p className="text-muted-foreground">{category.description}</p>
+              <p className="text-xl text-muted-foreground max-w-2xl leading-relaxed">
+                {category.description}
+              </p>
             </div>
           </div>
         </motion.div>

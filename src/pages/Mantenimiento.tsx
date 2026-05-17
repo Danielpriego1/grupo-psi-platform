@@ -452,41 +452,58 @@ const Mantenimiento = () => {
   return (
     <div className="min-h-screen bg-background pt-20 pb-16">
       {/* ─── HERO BANNER ─── */}
-      <section className="relative overflow-hidden h-[60vh] min-h-[400px] max-h-[600px]">
+      <section className="relative overflow-hidden h-[70vh] min-h-[500px] max-h-[800px] bg-black">
         <img
           src="/images/services/plataforma-industrial.jpeg"
           alt="Servicios de mantenimiento industrial – plataforma offshore"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/80 to-foreground/50" />
-        <div className="relative z-10 h-full flex flex-col items-center justify-end pb-12 px-4 text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl text-primary-foreground mb-3">
-            Centro de Servicios y Mantenimiento
-          </h1>
-          <p className="text-primary-foreground/80 text-lg max-w-2xl mx-auto mb-6">
-            Mantenimiento profesional y certificado para todo tu equipo de seguridad industrial. Extintores, SCBA, compresores, detectores y más.
-          </p>
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Button size="lg" className="font-semibold" onClick={() => { setShowScheduler(true); setTimeout(() => document.getElementById("agendar-section")?.scrollIntoView({ behavior: "smooth" }), 100); }}>
-              <Wrench className="mr-2 h-4 w-4" /> Agendar Servicio
-            </Button>
-            <a href="#servicios">
-              <Button size="lg" variant="outline" className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
-                Ver Servicios
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl"
+          >
+            <span className="inline-block mb-6 rounded-full border border-primary/30 bg-primary/10 px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+              Certificación NOM-154
+            </span>
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white mb-8 leading-[1.1]">
+              Centro de Servicios y <span className="text-primary glow-text">Mantenimiento</span>
+            </h1>
+            <p className="text-gray-300 text-xl max-w-2xl mx-auto mb-12 leading-relaxed">
+              Mantenimiento profesional y certificado para todo tu equipo de seguridad industrial. Extintores, SCBA, compresores, detectores y más.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="py-8 px-10 text-lg font-black uppercase tracking-widest bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/20 hover:scale-105 transition-all duration-300" 
+                onClick={() => { setShowScheduler(true); setTimeout(() => document.getElementById("agendar-section")?.scrollIntoView({ behavior: "smooth" }), 100); }}
+              >
+                <Wrench className="mr-3 h-6 w-6" /> Agendar Servicio
               </Button>
-            </a>
-          </div>
+              <a href="#servicios">
+                <Button size="lg" variant="outline" className="py-8 px-10 text-lg font-black uppercase tracking-widest border-white/20 text-white hover:bg-white/10 transition-all">
+                  Ver Servicios
+                </Button>
+              </a>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ─── SERVICES GRID ─── */}
-      <section id="servicios" className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl mb-3">Nuestros Servicios</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">Selecciona un servicio para ver más detalles. Ofrecemos cobertura integral para toda tu operación.</p>
+      <section id="servicios" className="container mx-auto px-4 py-32">
+        <div className="text-center mb-20">
+          <span className="inline-block mb-6 rounded-full border border-primary/30 bg-primary/10 px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+            Catálogo de Servicios
+          </span>
+          <h2 className="text-4xl sm:text-5xl font-black tracking-tight mb-6">Nuestros <span className="text-primary glow-text">Servicios</span></h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">Selecciona un servicio para ver más detalles. Ofrecemos cobertura integral para toda tu operación industrial.</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {SERVICE_CATEGORIES.map((cat) => {
             const isExpanded = expandedService === cat.id;
             const IconComp = cat.icon;

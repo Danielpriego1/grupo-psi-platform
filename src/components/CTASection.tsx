@@ -4,20 +4,21 @@ import { Phone, Mail, MapPin } from "lucide-react";
 
 export function CTASection() {
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-32 relative overflow-hidden">
       {/* Background glow */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/10 to-background" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] -z-10 opacity-30" />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="glass rounded-2xl p-8 sm:p-12 lg:p-16 text-center max-w-4xl mx-auto border-primary/20"
+          transition={{ duration: 0.8 }}
+          className="rounded-[3rem] bg-card/40 backdrop-blur-2xl p-10 sm:p-16 lg:p-20 text-center max-w-5xl mx-auto border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)]"
         >
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-            ¿Listo para <span className="text-primary glow-text">proteger</span> a tu equipo?
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight mb-6 leading-tight">
+            ¿Listo para <span className="text-primary glow-text">proteger</span><br />a tu equipo?
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
             Contáctanos hoy y recibe asesoría personalizada sin costo.
@@ -27,11 +28,11 @@ export function CTASection() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button
               size="lg"
-              className="text-base px-8 py-6 glow-primary hover:scale-105 transition-transform"
+              className="text-lg px-10 py-8 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all duration-300"
               asChild
             >
               <a href="https://wa.me/5219931684717" target="_blank" rel="noopener noreferrer">
-                <Phone className="h-5 w-5 mr-2" />
+                <Phone className="h-6 w-6 mr-3" />
                 Solicitar cotización
               </a>
             </Button>

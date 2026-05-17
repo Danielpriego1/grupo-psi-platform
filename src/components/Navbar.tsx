@@ -16,26 +16,27 @@ export function Navbar() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/30 bg-background/60 backdrop-blur-xl">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-3">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/20 bg-background/80 backdrop-blur-2xl">
+      <div className="container mx-auto flex h-20 items-center justify-between px-4">
+        <Link to="/" className="flex items-center gap-3 hover:scale-105 transition-transform duration-300">
           <img
             src="/images/grupo-psi-logo.png"
             alt="Grupo Psi"
-            className="h-8 sm:h-10 md:h-12 w-auto object-contain shrink-0"
+            className="h-10 sm:h-12 md:h-14 w-auto object-contain shrink-0"
           />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-4">
+        <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all duration-300 relative group"
             >
-              {link.icon && <link.icon className="h-3.5 w-3.5" />}
+              {link.icon && <link.icon className="h-4 w-4" />}
               {link.label}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
           <ThemeToggle />

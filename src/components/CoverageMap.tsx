@@ -83,23 +83,23 @@ export function CoverageMap({ pins = [] }: CoverageMapProps) {
   const activeTypes = Array.from(new Set(pins.map((p) => p.type)));
 
   return (
-    <section className="relative py-24 bg-background">
+    <section className="relative py-32 bg-background">
       <div className="container mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mb-10 text-center"
+          transition={{ duration: 0.8 }}
+          className="mb-16 text-center"
         >
-          <span className="mb-4 inline-block rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-medium text-primary">
-            Cobertura
+          <span className="mb-6 inline-block rounded-full border border-primary/30 bg-primary/10 px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+            Presencia Regional
           </span>
-          <h2 className="mb-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Donde <span className="text-primary">operamos</span>
+          <h2 className="mb-4 text-4xl sm:text-5xl font-black tracking-tight">
+            Donde <span className="text-primary glow-text">operamos</span>
           </h2>
-          <p className="mx-auto max-w-xl text-muted-foreground">
-            Cobertura en Tabasco y sureste de México
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+            Contamos con una amplia red de cobertura estratégica en Tabasco y todo el sureste de México
           </p>
         </motion.div>
 

@@ -2,25 +2,26 @@ import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/30 bg-card/50 backdrop-blur-sm">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+    <footer className="border-t border-border/30 bg-black text-white">
+      <div className="container mx-auto px-4 py-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
-          <div>
-            <Link to="/" className="flex items-center gap-3 mb-4">
-              <img src="/images/logo_fondo_negro.png" alt="" className="h-10 w-auto" />
+          <div className="space-y-6">
+            <Link to="/" className="flex items-center gap-3">
+              <img src="/images/logo_fondo_negro.png" alt="Grupo Psi" className="h-14 w-auto" />
             </Link>
-            <p className="text-sm text-muted-foreground">
-              Soluciones integrales en seguridad industrial y equipamiento para tu empresa.
+            <p className="text-base text-gray-400 leading-relaxed">
+              Líderes en soluciones integrales de seguridad industrial y equipamiento certificado para la industria mexicana.
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Navegación</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/" className="hover:text-primary transition-colors">Catálogo</Link></li>
-              <li><Link to="/mantenimiento" className="hover:text-primary transition-colors">Mantenimiento</Link></li>
+            <h4 className="text-lg font-black uppercase tracking-widest text-white mb-6">Navegación</h4>
+            <ul className="space-y-4 text-base text-gray-400">
+              <li><Link to="/" className="hover:text-primary transition-all hover:translate-x-1 inline-block">Catálogo de Productos</Link></li>
+              <li><Link to="/mantenimiento" className="hover:text-primary transition-all hover:translate-x-1 inline-block">Servicios de Mantenimiento</Link></li>
+              <li><Link to="/nosotros" className="hover:text-primary transition-all hover:translate-x-1 inline-block">Nuestra Historia</Link></li>
             </ul>
           </div>
 

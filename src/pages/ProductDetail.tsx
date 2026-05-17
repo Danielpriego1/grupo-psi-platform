@@ -225,20 +225,33 @@ const ProductDetail = () => {
 
           {/* ─── RIGHT: Sticky booking widget ─── */}
           <div className="w-full lg:w-[400px]">
-            <div className="sticky top-20 space-y-6 rounded-2xl border border-border/50 bg-card p-6 shadow-xl">
-              <div className="space-y-2">
-                <div className="text-xs font-semibold uppercase tracking-wider text-primary">{product.category}</div>
-                <h1 className="text-xl font-bold text-card-foreground leading-tight">{product.name}</h1>
+            <div className="sticky top-24 space-y-8 rounded-[2rem] border border-border/50 bg-card/80 backdrop-blur-xl p-8 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] dark:shadow-[0_40px_80px_-20px_rgba(255,100,0,0.1)]">
+              <div className="space-y-4">
+                <div className="inline-block rounded-full bg-primary/10 px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                  {product.category}
+                </div>
+                <h1 className="text-3xl font-black text-card-foreground leading-[1.1] tracking-tight">
+                  {product.name}
+                </h1>
                 {basePrice > 0 ? (
-                  <div className="space-y-3">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-extrabold">${finalPrice.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      {product.sizePricing && selectedSize && (
-                        <span className="text-xs text-muted-foreground ml-1">(precio por talla)</span>
-                      )}
-                      <span className="text-sm text-muted-foreground">MXN</span>
+                  <div className="space-y-4">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1">Precio Total</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-black text-primary tracking-tighter">
+                          ${finalPrice.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                        <span className="text-sm font-bold text-muted-foreground">MXN</span>
+                      </div>
                       {product.discount && (
-                        <span className="text-sm text-muted-foreground line-through">${product.priceOriginalMxn.toFixed(2)}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm text-muted-foreground line-through decoration-primary/50">
+                            ${product.priceOriginalMxn.toFixed(2)}
+                          </span>
+                          <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-white uppercase">
+                            -{(product.discount * 100).toFixed(0)}%
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -347,8 +360,13 @@ const ProductDetail = () => {
               </div>
 
               {/* Add to cart */}
-              <Button size="lg" className="w-full text-base" onClick={handleAddToCart} disabled={!product.inStock}>
-                <ShoppingCart className="mr-2 h-5 w-5" />
+              <Button 
+                size="lg" 
+                className="w-full py-8 text-lg font-black uppercase tracking-[0.15em] shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]" 
+                onClick={handleAddToCart} 
+                disabled={!product.inStock}
+              >
+                <ShoppingCart className="mr-3 h-6 w-6" />
                 {basePrice > 0 ? `Agregar al carrito — $${(finalPrice * quantity).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Agregar al carrito"}
               </Button>
 

@@ -85,7 +85,7 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
                 initial={{ opacity: 0, scale: 0.9, letterSpacing: "0.3em" }}
                 animate={{ opacity: 1, scale: 1, letterSpacing: "0.08em" }}
                 transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-                className="text-5xl sm:text-7xl lg:text-8xl font-black text-foreground glow-text"
+                className="text-5xl sm:text-7xl lg:text-8xl font-black text-foreground glow-text drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]"
               >
                 BIENVENIDO A
               </motion.h1>
@@ -93,7 +93,7 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
                 initial={{ opacity: 0, scale: 0.9, letterSpacing: "0.3em" }}
                 animate={{ opacity: 1, scale: 1, letterSpacing: "0.08em" }}
                 transition={{ duration: 1.2, delay: 0.9, ease: "easeOut" }}
-                className="text-6xl sm:text-8xl lg:text-9xl font-black text-primary glow-text mt-2"
+                className="text-6xl sm:text-8xl lg:text-9xl font-black text-primary glow-text mt-2 drop-shadow-[0_0_50px_rgba(255,100,0,0.4)]"
               >
                 GRUPO PSI
               </motion.h1>
@@ -171,7 +171,7 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
                     <Button
                       size="lg"
                       onClick={onScrollToProducts}
-                      className="text-base px-8 py-6 glow-primary hover:scale-105 transition-transform"
+                      className="text-base px-8 py-6 glow-primary hover:scale-105 transition-all duration-300 bg-primary hover:bg-primary/90 font-black uppercase tracking-widest"
                     >
                       Ver catálogo completo
                     </Button>

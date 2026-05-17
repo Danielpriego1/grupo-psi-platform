@@ -40,13 +40,16 @@ export function BrandsTicker() {
   const loop = [...brands, ...brands];
 
   return (
-    <section className="bg-gray-900 py-14 overflow-hidden">
-      <div className="container mx-auto px-4 mb-8 text-center">
-        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-          Trabajamos con las <span className="text-primary">mejores marcas</span>
+    <section className="bg-background py-32 overflow-hidden border-y border-border/20">
+      <div className="container mx-auto px-4 mb-20 text-center">
+        <span className="mb-6 inline-block rounded-full border border-primary/30 bg-primary/10 px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+          Partners Estratégicos
+        </span>
+        <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground leading-tight">
+          Trabajamos con las <br /><span className="text-primary glow-text">mejores marcas</span>
         </h2>
-        <p className="text-gray-400 mt-2 text-sm">
-          Distribuidores autorizados de las marcas líderes en seguridad industrial
+        <p className="text-muted-foreground mt-4 text-lg max-w-2xl mx-auto leading-relaxed">
+          Distribuidores autorizados de las marcas líderes en seguridad industrial a nivel global
         </p>
       </div>
 
@@ -66,7 +69,7 @@ export function BrandsTicker() {
                 <img
                   src={b.logo_url}
                   alt={b.name}
-                  className="h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
+                  className="h-16 w-auto object-contain opacity-50 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-500"
                   loading="lazy"
                 />
               ) : (

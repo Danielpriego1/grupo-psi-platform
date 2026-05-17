@@ -38,23 +38,26 @@ export function CustomerStories() {
     setActiveIndex((i) => (i + dir + total) % total);
 
   return (
-    <section className="relative py-24">
+    <section className="relative py-32 bg-background overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10" />
+      
       <div className="container mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mb-16 text-center"
+          transition={{ duration: 0.8 }}
+          className="mb-20 text-center"
         >
-          <span className="mb-4 inline-block rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-medium text-primary">
+          <span className="mb-6 inline-block rounded-full border border-primary/30 bg-primary/10 px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
             Casos de Éxito
           </span>
-          <h2 className="mb-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Historias de <span className="text-primary">nuestros clientes</span>
+          <h2 className="mb-4 text-4xl sm:text-5xl font-black tracking-tight leading-tight">
+            Historias de <span className="text-primary glow-text">nuestros clientes</span>
           </h2>
-          <p className="mx-auto max-w-xl text-muted-foreground">
-            Empresas que confían en Grupo PSI para su seguridad industrial
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground leading-relaxed">
+            Empresas líderes que confían en Grupo PSI para garantizar la seguridad de su capital humano y activos
           </p>
         </motion.div>
 
@@ -83,18 +86,18 @@ export function CustomerStories() {
                   }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   style={{ zIndex }}
-                  className={cn(
-                    "absolute inset-0 text-left rounded-2xl overflow-hidden border-2 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.7)]",
+                    className={cn(
+                    "absolute inset-0 text-left rounded-[2.5rem] overflow-hidden border-2 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)]",
                     offset === 0
-                      ? "cursor-default border-primary"
-                      : "cursor-pointer border-white/10"
+                      ? "cursor-default border-primary/50"
+                      : "cursor-pointer border-white/5"
                   )}
                 >
                   <div
-                    className="relative h-full flex flex-col justify-end p-8 sm:p-10"
+                    className="relative h-full flex flex-col justify-end p-10 sm:p-12"
                     style={{
                       background:
-                        "linear-gradient(160deg, hsl(220 22% 8%), hsl(220 18% 12%), hsl(225 15% 14%))",
+                        "linear-gradient(160deg, hsl(220 30% 10%), hsl(220 25% 15%), hsl(225 20% 18%))",
                     }}
                   >
                     {/* Subtle pattern */}
@@ -111,16 +114,25 @@ export function CustomerStories() {
                     </span>
 
                     <div className="relative z-10">
-                      <h3 className="mb-3 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+                      <div className="mb-6 flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <svg key={star} className="h-5 w-5 text-primary fill-primary" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <h3 className="mb-4 text-3xl font-black leading-tight text-white sm:text-4xl tracking-tight">
                         {story.company}
                       </h3>
-                      <p className="mb-5 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
+                      <p className="mb-8 max-w-2xl text-lg leading-relaxed text-white/80 sm:text-xl italic font-medium">
                         "{story.quote}"
                       </p>
 
-                      <div className="inline-flex items-center gap-2 text-primary">
-                        <span className="text-sm font-medium">Más información</span>
-                        <ArrowRight size={18} />
+                      <div className="inline-flex items-center gap-3 text-primary group/btn">
+                        <span className="text-sm font-black uppercase tracking-widest">Leer caso completo</span>
+                        <div className="h-8 w-8 rounded-full border border-primary/30 flex items-center justify-center group-hover/btn:bg-primary group-hover/btn:text-white transition-all">
+                          <ArrowRight size={16} />
+                        </div>
                       </div>
                     </div>
                   </div>

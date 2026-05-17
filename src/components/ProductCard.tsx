@@ -23,47 +23,52 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   return (
     <Link to={`/product/${product.id}`} className="block w-full h-full">
       <div
-        className="group relative h-full rounded-2xl overflow-hidden border border-border bg-card transition-all duration-300 ease-out cursor-pointer hover:-translate-y-2 hover:border-primary/40 hover:bg-card/95 hover:shadow-[0_20px_50px_-12px_hsl(var(--primary)/0.45)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-primary before:scale-x-0 before:transition-transform before:duration-300 before:z-20 group-hover:before:scale-x-100 animate-slide-up"
-        style={{ animationDelay: `${index * 100}ms` }}
+        className="group relative h-full rounded-3xl overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer hover:-translate-y-3 hover:border-primary/30 hover:bg-card/80 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_30px_60px_-15px_rgba(255,100,0,0.15)] animate-slide-up"
+        style={{ animationDelay: `${index * 80}ms` }}
       >
-        <div className="relative z-10 p-5">
-          {/* Product image */}
-          <div className="aspect-[4/3] mb-5 overflow-hidden rounded-xl bg-background/40">
+        {/* Animated background glow on hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        <div className="relative z-10 p-6 flex flex-col h-full">
+          {/* Product image container */}
+          <div className="relative aspect-[4/3] mb-6 overflow-hidden rounded-2xl bg-white/5 dark:bg-black/20 border border-border/20">
             <img
               src={displayImage}
               alt={product.name}
               loading="lazy"
               onError={() => setImageBroken(true)}
-              className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
+              className="h-full w-full object-contain p-4 transition-all duration-700 ease-out group-hover:scale-110 group-hover:rotate-2"
             />
+            {product.discount && (
+              <div className="absolute top-3 right-3 rounded-full bg-primary px-3 py-1 text-[10px] font-black text-white shadow-lg shadow-primary/20 uppercase tracking-wider">
+                -{(product.discount * 100).toFixed(0)}% OFF
+              </div>
+            )}
           </div>
 
           {/* Text content */}
-          <div className="space-y-2">
-            <h3 className="line-clamp-2 min-h-[3rem] text-base font-bold text-card-foreground transition-colors duration-300">
+          <div className="flex-grow space-y-3">
+            <h3 className="line-clamp-2 min-h-[3.5rem] text-lg font-black text-card-foreground leading-tight group-hover:text-primary transition-colors duration-300">
               {product.name}
             </h3>
-            <p className="line-clamp-2 text-sm text-muted-foreground">
+            <p className="line-clamp-2 text-sm text-muted-foreground/80 leading-relaxed">
               {product.description}
             </p>
-            <div className="flex items-baseline gap-2 pt-1">
-              <span className="text-lg font-bold text-primary">
-                ${Number(product.priceOriginalMxn).toFixed(2)} MXN
-              </span>
-              {product.discount && (
-                <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold text-destructive">
-                  -{(product.discount * 100).toFixed(0)}%
-                </span>
-              )}
-            </div>
           </div>
 
-          {/* Arrow + label reveal on hover */}
-          <div className="mt-5 flex items-center text-sm font-medium text-primary">
-            <ArrowRight className="h-4 w-4 transition-transform duration-400 group-hover:translate-x-2" />
-            <span className="ml-0 max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-400 group-hover:ml-2 group-hover:max-w-[8rem] group-hover:opacity-100">
-              Información
-            </span>
+          {/* Price and Action */}
+          <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Precio</span>
+              <span className="text-xl font-black text-primary">
+                ${Number(product.priceOriginalMxn).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                <span className="text-[10px] ml-1 opacity-70">MXN</span>
+              </span>
+            </div>
+            
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-primary/30">
+              <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-0.5" />
+            </div>
           </div>
         </div>
       </div>
