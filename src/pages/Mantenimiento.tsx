@@ -460,12 +460,7 @@ const Mantenimiento = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
         <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl"
-          >
+          <div className="max-w-4xl animate-fade-in">
             <span className="inline-block mb-6 rounded-full border border-primary/30 bg-primary/10 px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
               Certificación NOM-154
             </span>
@@ -489,7 +484,7 @@ const Mantenimiento = () => {
                 </Button>
               </a>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
