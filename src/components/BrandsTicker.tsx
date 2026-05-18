@@ -40,16 +40,18 @@ export function BrandsTicker() {
   const loop = [...brands, ...brands];
 
   return (
-    <section className="bg-background py-32 overflow-hidden border-y border-border/20">
-      <div className="container mx-auto px-4 mb-20 text-center">
+    <section className="bg-[#09090b] py-32 overflow-hidden border-y border-white/5 relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+      
+      <div className="container mx-auto px-4 mb-20 text-center relative z-10">
         <span className="mb-6 inline-block rounded-full border border-primary/30 bg-primary/10 px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
           Partners Estratégicos
         </span>
-        <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground leading-tight">
-          Trabajamos con las <br /><span className="text-primary glow-text">mejores marcas</span>
+        <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight uppercase">
+          Nuestros <br /><span className="text-primary glow-text">Proveedores</span> y Marcas
         </h2>
-        <p className="text-muted-foreground mt-4 text-lg max-w-2xl mx-auto leading-relaxed">
-          Distribuidores autorizados de las marcas líderes en seguridad industrial a nivel global
+        <p className="text-muted-foreground mt-6 text-lg max-w-2xl mx-auto leading-relaxed font-bold">
+          Trabajamos con los líderes mundiales en seguridad industrial para garantizar la máxima protección en cada equipo.
         </p>
       </div>
 
@@ -62,20 +64,24 @@ export function BrandsTicker() {
             "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
         }}
       >
-        <div className="flex w-max animate-brands-marquee group-hover:[animation-play-state:paused]">
+        <div className="flex w-max animate-brands-marquee group-hover:[animation-play-state:paused] py-10">
           {loop.map((b, i) => (
-            <div key={`${b.id}-${i}`} className="shrink-0 px-6 flex items-center">
+            <div key={`${b.id}-${i}`} className="shrink-0 px-12 flex items-center">
               {b.logo_url ? (
-                <img
-                  src={b.logo_url}
-                  alt={b.name}
-                  className="h-16 w-auto object-contain opacity-50 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-500"
-                  loading="lazy"
-                />
+                <div className="relative p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-primary/30 hover:bg-white/10 transition-all duration-500 shadow-2xl group/item">
+                  <img
+                    src={b.logo_url}
+                    alt={b.name}
+                    className="h-16 w-auto object-contain brightness-0 invert opacity-40 group-hover/item:opacity-100 group-hover/item:brightness-100 transition-all duration-500"
+                    loading="lazy"
+                  />
+                </div>
               ) : (
-                <span className="inline-flex items-center px-6 py-3 rounded-full bg-gray-800 text-white font-semibold text-base tracking-wide ring-1 ring-gray-700 hover:ring-primary/50 transition">
-                  {b.name}
-                </span>
+                <div className="px-10 py-5 rounded-3xl bg-white/5 border border-white/5">
+                  <span className="text-2xl font-black text-white/30 tracking-tighter uppercase group-hover:text-primary transition-colors">
+                    {b.name}
+                  </span>
+                </div>
               )}
             </div>
           ))}

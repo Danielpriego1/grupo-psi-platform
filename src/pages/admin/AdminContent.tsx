@@ -141,28 +141,28 @@ function BrandsManager() {
   };
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-4">
+    <section className="bg-[#121214] rounded-3xl border border-white/5 p-8 shadow-2xl">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-xl font-semibold">Marcas aliadas</h2>
-          <p className="text-sm text-muted-foreground">
-            Marcas mostradas en la franja del sitio público
+          <h2 className="text-2xl font-black tracking-tight">Marcas aliadas</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Gestiona los logotipos que aparecen en el carrusel principal.
           </p>
         </div>
-        <Button onClick={openNew} size="sm">
-          <Plus className="w-4 h-4 mr-1" /> Agregar marca
+        <Button onClick={openNew} className="rounded-xl font-bold shadow-lg shadow-primary/20">
+          <Plus className="w-4 h-4 mr-2" /> Agregar marca
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border overflow-hidden">
+      <div className="rounded-2xl border border-white/5 overflow-hidden bg-black/20">
         <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-left">
+          <thead className="bg-white/5 text-left">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Orden</th>
-              <th className="px-4 py-2.5 font-medium">Nombre</th>
-              <th className="px-4 py-2.5 font-medium">Logo</th>
-              <th className="px-4 py-2.5 font-medium">Activo</th>
-              <th className="px-4 py-2.5 font-medium text-right">Acciones</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Orden</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Nombre</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Logo</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Estado</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -371,28 +371,28 @@ function ServicesManager() {
   };
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-4">
+    <section className="bg-[#121214] rounded-3xl border border-white/5 p-8 shadow-2xl">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-xl font-semibold">Servicios</h2>
-          <p className="text-sm text-muted-foreground">
-            Servicios mostrados en la sección del sitio público
+          <h2 className="text-2xl font-black tracking-tight">Servicios</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Define los servicios principales que ofrece Grupo PSI.
           </p>
         </div>
-        <Button onClick={openNew} size="sm">
-          <Plus className="w-4 h-4 mr-1" /> Agregar servicio
+        <Button onClick={openNew} className="rounded-xl font-bold shadow-lg shadow-primary/20">
+          <Plus className="w-4 h-4 mr-2" /> Agregar servicio
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border overflow-hidden">
+      <div className="rounded-2xl border border-white/5 overflow-hidden bg-black/20">
         <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-left">
+          <thead className="bg-white/5 text-left">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Orden</th>
-              <th className="px-4 py-2.5 font-medium">Icono</th>
-              <th className="px-4 py-2.5 font-medium">Título</th>
-              <th className="px-4 py-2.5 font-medium">Activo</th>
-              <th className="px-4 py-2.5 font-medium text-right">Acciones</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Orden</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Icono</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Título</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Estado</th>
+              <th className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>

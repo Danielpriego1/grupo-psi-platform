@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -55,6 +56,7 @@ export default function AdminInventory() {
     product_name: "",
     category: "",
     subcategory: "",
+    description: "",
     stock: "",
     min_stock: "5",
     unit_price: "",
@@ -75,7 +77,7 @@ export default function AdminInventory() {
 
   const openNew = () => {
     setEditItem(null);
-    setForm({ product_id: "", product_name: "", category: "", subcategory: "", stock: "", min_stock: "5", unit_price: "", location: "", image_url: "", spec_pdf_url: "" });
+    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", image_url: "", spec_pdf_url: "" });
     setImageFile(null);
     setImagePreview(null);
     setPdfFile(null);
@@ -166,6 +168,7 @@ export default function AdminInventory() {
       product_name: form.product_name,
       category: form.category || null,
       subcategory: form.subcategory || null,
+      description: form.description || null,
       stock: parseInt(form.stock) || 0,
       min_stock: parseInt(form.min_stock) || 5,
       unit_price: parseFloat(form.unit_price) || 0,
@@ -247,6 +250,15 @@ export default function AdminInventory() {
             <div className="space-y-2">
               <Label>Nombre</Label>
               <Input value={form.product_name} onChange={(e) => setForm({ ...form, product_name: e.target.value })} placeholder="Extintor PQS 6kg" />
+            </div>
+            <div className="space-y-2">
+              <Label>Descripción</Label>
+              <Textarea 
+                value={form.description} 
+                onChange={(e) => setForm({ ...form, description: e.target.value })} 
+                placeholder="Describe las características principales del producto..."
+                className="min-h-[100px]"
+              />
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">

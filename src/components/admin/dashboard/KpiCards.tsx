@@ -54,10 +54,11 @@ export function KpiCards({ data }: { data: KpiData }) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: i * 0.1, ease: "easeOut" }}
-          className="rounded-[10px] border border-white/10 bg-card/60 px-5 py-4 hover:border-white/15 transition-colors"
+          className="relative group rounded-3xl border border-white/5 bg-[#121214] p-8 hover:border-primary/30 transition-all duration-500 hover:-translate-y-1 shadow-2xl shadow-black/20 overflow-hidden"
         >
-          <p className="text-[12px] font-medium text-muted-foreground tracking-tight">{c.title}</p>
-          <p className="mt-2 text-[28px] font-semibold text-foreground tracking-tight leading-none tabular-nums">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors duration-500" />
+          <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">{c.title}</p>
+          <p className="text-4xl font-black text-foreground tracking-tighter leading-none tabular-nums group-hover:text-primary transition-colors duration-300">
             {c.value}
           </p>
           <div className="mt-3">

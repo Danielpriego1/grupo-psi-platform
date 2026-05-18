@@ -47,7 +47,7 @@ const ProductDetail = () => {
     id: inventoryItem.product_id,
     name: inventoryItem.product_name,
     category: (inventoryItem as any).subcategory || inventoryItem.category || "EPP",
-    description: inventoryItem.product_name,
+    description: inventoryItem.description || inventoryItem.product_name,
     priceOriginalMxn: Number(inventoryItem.unit_price),
     discount: null,
     purchaseUrl: null,
@@ -121,16 +121,21 @@ const ProductDetail = () => {
   })();
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-12">
-      <div className="container mx-auto px-4">
-        <Link to={`/categoria/${categorySlug}`} className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          Volver a la categoría
+    <div className="min-h-screen bg-[#09090b] text-white pt-24 pb-20">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <Link 
+          to={`/categoria/${categorySlug}`} 
+          className="group mb-10 inline-flex items-center gap-3 text-sm font-bold text-muted-foreground hover:text-primary transition-all"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 group-hover:border-primary/50 group-hover:bg-primary/10">
+            <ArrowLeft className="h-4 w-4" />
+          </div>
+          VOLVER AL CATÁLOGO
         </Link>
 
-        <div className="flex flex-col gap-8 lg:flex-row">
+        <div className="flex flex-col gap-12 lg:flex-row items-start">
           {/* ─── LEFT: Images, Description, Spec PDF, Map ─── */}
-          <div className="flex-1 space-y-8">
+          <div className="flex-1 space-y-12 w-full">
             <div
               className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/30 cursor-zoom-in"
               onMouseEnter={() => setImageZoomed(true)}
@@ -187,9 +192,9 @@ const ProductDetail = () => {
               </div>
             )}
 
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold tracking-tight">Descripción</h2>
-              <p className="whitespace-pre-wrap leading-relaxed text-muted-foreground">{product.description}</p>
+            <div className="space-y-6 bg-white/5 rounded-3xl p-8 border border-white/5">
+              <h2 className="text-2xl font-black tracking-tight uppercase text-primary">Descripción del Producto</h2>
+              <p className="whitespace-pre-wrap leading-relaxed text-gray-300 text-lg font-medium">{product.description}</p>
               {product.variants && (
                 <div className="flex flex-wrap gap-2">
                   {Object.values(product.variants).flat().map((v) => (
@@ -201,16 +206,23 @@ const ProductDetail = () => {
 
             {/* Spec PDF */}
             {specPdfUrl && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold tracking-tight">Ficha Técnica</h2>
+              <div className="space-y-6 bg-primary/5 rounded-3xl p-8 border border-primary/20">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight uppercase">Documentación Técnica</h2>
+                    <p className="text-sm text-primary/70 font-bold">Especificaciones oficiales del fabricante</p>
+                  </div>
+                </div>
                 <a
                   href={specPdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-5 py-3 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-8 py-4 text-sm font-black text-white hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 uppercase tracking-widest"
                 >
-                  <FileText className="h-5 w-5" />
-                  Ver / Descargar Ficha Técnica (PDF)
+                  Descargar PDF
                 </a>
               </div>
             )}

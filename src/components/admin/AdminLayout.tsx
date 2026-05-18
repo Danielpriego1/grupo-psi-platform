@@ -47,23 +47,23 @@ export function AdminLayout() {
     )?.label ?? "Admin";
 
   return (
-    <div className="admin-theme min-h-screen bg-background text-foreground flex">
+    <div className="admin-theme min-h-screen bg-[#09090b] text-foreground flex">
       {/* Sidebar */}
       <aside
         className={cn(
-          "admin-sidebar fixed inset-y-0 left-0 z-50 w-[78%] max-w-[280px] sm:w-64 lg:w-60 border-r transform transition-transform duration-200 ease-out lg:translate-x-0 lg:static lg:inset-auto",
+          "admin-sidebar fixed inset-y-0 left-0 z-50 w-[78%] max-w-[280px] sm:w-64 lg:w-64 border-r border-white/5 transform transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] lg:translate-x-0 lg:static lg:inset-auto bg-[#09090b]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-2.5 px-4 h-14 border-b border-[hsl(var(--admin-sidebar-border))]">
-            <div className="w-7 h-7 rounded-md bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center">
-              <span className="text-primary text-xs font-bold">P</span>
+          <div className="flex items-center gap-3 px-6 h-20 border-b border-white/5">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center shadow-lg shadow-primary/5">
+              <span className="text-primary text-sm font-black">P</span>
             </div>
             <div className="flex flex-col leading-tight">
-              <span className="text-[13px] font-semibold tracking-tight text-foreground">Grupo PSI</span>
-              <span className="text-[10px] text-muted-foreground">Admin</span>
+              <span className="text-sm font-black tracking-tight text-foreground uppercase">Grupo PSI</span>
+              <span className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-70">Control Panel</span>
             </div>
             <Button
               variant="ghost"
@@ -91,10 +91,10 @@ export function AdminLayout() {
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    "group flex items-center gap-3 px-3 py-2.5 lg:gap-2.5 lg:px-2.5 lg:py-1.5 rounded-md text-sm lg:text-[13px] font-medium transition-colors",
+                    "group flex items-center gap-3 px-4 py-3 lg:gap-3 lg:px-4 lg:py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
                     isActive
-                      ? "bg-primary/10 text-foreground ring-1 ring-inset ring-primary/20"
-                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground",
+                      ? "bg-primary text-white shadow-lg shadow-primary/20"
+                      : "text-muted-foreground hover:bg-white/[0.03] hover:text-foreground",
                   )}
                 >
                   <item.icon
