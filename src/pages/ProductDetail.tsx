@@ -29,9 +29,11 @@ const ProductDetail = () => {
   const [inventoryItem, setInventoryItem] = useState<any>(null);
   const [imageZoomed, setImageZoomed] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
     supabase
       .from("inventory")
       .select("*")
@@ -39,7 +41,9 @@ const ProductDetail = () => {
       .maybeSingle()
       .then(({ data }) => {
         if (data) setInventoryItem(data);
-      });
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [id]);
 
   // Build product from inventory if no static product
@@ -71,12 +75,28 @@ const ProductDetail = () => {
     return d;
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#09090b] pt-16">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-[0_0_20px_rgba(255,100,0,0.3)]"></div>
+          <p className="text-sm font-black uppercase tracking-[0.3em] text-primary animate-pulse">Cargando Producto...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!product) {
     return (
-      <div className="flex min-h-screen items-center justify-center pt-16">
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold">Producto no encontrado</h1>
-          <Link to="/" className="text-primary hover:underline">Volver al catálogo</Link>
+      <div className="flex min-h-screen items-center justify-center bg-[#09090b] pt-16">
+        <div className="text-center space-y-6 bg-white/5 p-12 rounded-[3rem] border border-white/10">
+          <div className="text-6xl mb-4">🔍</div>
+          <h1 className="text-3xl font-black uppercase tracking-tighter text-white">Producto no encontrado</h1>
+          <p className="text-muted-foreground font-medium">Lo sentimos, el producto que buscas no está disponible.</p>
+          <Link to="/" className="inline-flex items-center gap-2 rounded-2xl bg-primary px-8 py-4 text-sm font-black text-white hover:bg-primary/90 transition-all uppercase tracking-widest">
+            <ArrowLeft className="h-4 w-4" />
+            Volver al catálogo
+          </Link>
         </div>
       </div>
     );
