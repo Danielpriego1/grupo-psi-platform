@@ -327,104 +327,97 @@ const ServiceDetail = () => {
   const Icon = service.icon;
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-16">
-      <div className="container mx-auto px-4 max-w-5xl">
-        {/* Back link */}
-        <Link
-          to="/categoria/mantenimiento"
-          className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+    <div className="min-h-screen bg-[#09090b] text-white pt-24 pb-20">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <Link 
+          to="/mantenimiento" 
+          className="group mb-12 inline-flex items-center gap-3 text-sm font-bold text-muted-foreground hover:text-primary transition-all"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Volver a Mantenimiento
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 group-hover:border-primary/50 group-hover:bg-primary/10">
+            <ArrowLeft className="h-4 w-4" />
+          </div>
+          VOLVER A SERVICIOS
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* Left: images */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {service.images.length > 0 ? (
-              <ImageGallery images={service.images} />
-            ) : (
-              <div className="aspect-[4/3] rounded-2xl bg-muted flex items-center justify-center">
-                <Icon className="h-20 w-20 text-muted-foreground/30" />
+        <div className="grid gap-16 lg:grid-cols-[1fr_400px] items-start">
+          <div className="space-y-16">
+            <div className="space-y-6">
+              <div className="flex items-center gap-6">
+                <div className="h-20 w-20 rounded-[2rem] bg-primary shadow-[0_0_40px_rgba(255,100,0,0.2)] flex items-center justify-center text-white">
+                  <Icon className="h-10 w-10" />
+                </div>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-[0.3em] text-primary mb-2 block">Servicio Especializado</span>
+                  <h1 className="text-5xl md:text-6xl font-black tracking-tighter uppercase leading-none">{service.label}</h1>
+                </div>
               </div>
-            )}
-          </motion.div>
-
-          {/* Right: info */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="space-y-6"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Icon className="h-6 w-6" />
-              </div>
-              <h1 className="text-3xl font-extrabold tracking-tight">{service.label}</h1>
+              <p className="text-2xl text-gray-400 leading-relaxed font-medium max-w-3xl">{service.description}</p>
             </div>
 
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              {service.longDescription}
-            </p>
-
-            {/* Price */}
-            <a
-              href="https://wa.me/5219931684717"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-xl border border-green-500/30 bg-green-500/10 p-4 hover:bg-green-500/20 transition-colors group"
-            >
-              <span className="text-2xl">💬</span>
-              <div>
-                <p className="text-sm text-muted-foreground">¿Cuánto cuesta?</p>
-                <p className="text-lg font-bold text-green-600 dark:text-green-400 group-hover:underline">Cotización por WhatsApp</p>
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-primary/10 blur-3xl rounded-[3rem] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="relative">
+                {service.images.length > 0 ? (
+                  <ImageGallery images={service.images} />
+                ) : (
+                  <div className="aspect-[4/3] rounded-[3rem] bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Icon className="h-32 w-32 text-white/10" />
+                  </div>
+                )}
               </div>
-            </a>
+            </div>
 
-            {/* Details */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold">¿Qué incluye?</h2>
-              <ul className="space-y-2">
+            <div className="space-y-10 bg-white/5 rounded-[3rem] p-10 border border-white/5 backdrop-blur-sm">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
+                  <Wrench className="h-6 w-6" />
+                </div>
+                <h2 className="text-3xl font-black tracking-tight uppercase">Detalles del Servicio</h2>
+              </div>
+              
+              <p className="text-gray-300 leading-relaxed text-xl font-medium">{service.longDescription}</p>
+              
+              <div className="grid gap-6 sm:grid-cols-2 pt-6">
                 {service.details.map((detail, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                    <span className="text-muted-foreground">{detail}</span>
-                  </li>
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    key={i} 
+                    className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/30 transition-colors"
+                  >
+                    <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-bold text-gray-300 leading-snug">{detail}</span>
+                  </motion.div>
                 ))}
-              </ul>
+              </div>
             </div>
+          </div>
 
-            {/* CTA */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button asChild size="lg" className="flex-1">
-                <Link to="/mantenimiento">
-                  <Wrench className="h-4 w-4 mr-2" />
-                  Agendar servicio
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" className="flex-1" onClick={() => document.getElementById("quote-form")?.scrollIntoView({ behavior: "smooth" })}>
-                <Send className="h-4 w-4 mr-2" />
-                Solicitar cotización
-              </Button>
+          <div className="space-y-8 lg:sticky lg:top-28">
+            <div className="rounded-[2.5rem] border border-white/10 bg-card/80 backdrop-blur-2xl p-10 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.4)]">
+              <div className="space-y-6">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2 block">Inversión Estimada</span>
+                  <div className="text-3xl font-black text-white tracking-tight">{service.price}</div>
+                </div>
+                
+                <Button className="w-full h-16 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all" asChild>
+                  <a href={`https://wa.me/5219931684717?text=${encodeURIComponent(`Hola, me interesa el servicio de: ${service.label}`)}`} target="_blank" rel="noopener noreferrer">
+                    <Phone className="mr-2 h-5 w-5" />
+                    Cotizar por WhatsApp
+                  </a>
+                </Button>
+
+                <div className="pt-6 border-t border-white/5">
+                  <QuoteForm serviceName={service.label} />
+                </div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </div>
-
-        {/* Quote Form */}
-        <motion.div
-          id="quote-form"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-16"
-        >
-          <QuoteForm serviceName={service.label} />
-        </motion.div>
       </div>
     </div>
   );
