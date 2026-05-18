@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2 } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -216,12 +216,18 @@ export default function AdminInventory() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Buscar producto..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" />Agregar Producto</Button>
+        <Button onClick={openNew} className="rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <Plus className="w-4 h-4 mr-2" /> Agregar Producto
+        </Button>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editItem ? "Editar Producto" : "Agregar Producto"}</DialogTitle></DialogHeader>
+        <DialogContent className="max-h-[90vh] overflow-y-auto bg-[#121214] border-white/10 rounded-[2rem] shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black tracking-tight uppercase">
+              {editItem ? "Editar Producto" : "Nuevo Producto"}
+            </DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -315,7 +321,18 @@ export default function AdminInventory() {
                 </Button>
               )}
             </div>
-            <Button onClick={saveItem} className="w-full" disabled={uploading}>{uploading ? "Subiendo..." : editItem ? "Guardar Cambios" : "Agregar"}</Button>
+            <Button 
+              onClick={saveItem} 
+              className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" 
+              disabled={uploading}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Subiendo...
+                </>
+              ) : editItem ? "Guardar Cambios" : "Agregar al Inventario"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

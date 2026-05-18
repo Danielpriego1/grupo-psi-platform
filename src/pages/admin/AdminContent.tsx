@@ -149,12 +149,12 @@ function BrandsManager() {
             Gestiona los logotipos que aparecen en el carrusel principal.
           </p>
         </div>
-        <Button onClick={openNew} className="rounded-xl font-bold shadow-lg shadow-primary/20">
+        <Button onClick={openNew} className="rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
           <Plus className="w-4 h-4 mr-2" /> Agregar marca
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-white/5 overflow-hidden bg-black/20">
+      <div className="rounded-2xl border border-white/5 overflow-hidden bg-black/20 backdrop-blur-sm">
         <table className="w-full text-sm">
           <thead className="bg-white/5 text-left">
             <tr>
@@ -379,12 +379,12 @@ function ServicesManager() {
             Define los servicios principales que ofrece Grupo PSI.
           </p>
         </div>
-        <Button onClick={openNew} className="rounded-xl font-bold shadow-lg shadow-primary/20">
+        <Button onClick={openNew} className="rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
           <Plus className="w-4 h-4 mr-2" /> Agregar servicio
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-white/5 overflow-hidden bg-black/20">
+      <div className="rounded-2xl border border-white/5 overflow-hidden bg-black/20 backdrop-blur-sm">
         <table className="w-full text-sm">
           <thead className="bg-white/5 text-left">
             <tr>
