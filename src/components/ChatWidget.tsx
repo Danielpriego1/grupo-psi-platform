@@ -51,18 +51,20 @@ function renderMarkdown(text: string) {
 const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   const content = useMemo(() => renderMarkdown(msg.content), [msg.content]);
   return (
-    <div className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+    <div className={cn("flex w-full mb-4", msg.role === "user" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+          "max-w-[85%] rounded-[1.5rem] px-5 py-3.5 text-sm leading-relaxed shadow-sm transition-all duration-300",
           msg.role === "user"
-            ? "bg-[#ea580c] text-white rounded-br-md"
-            : "bg-muted text-foreground rounded-bl-md"
+            ? "bg-gradient-to-br from-[#ea580c] to-[#c2410c] text-white rounded-br-none shadow-[#ea580c]/20"
+            : "bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-bl-none"
         )}
       >
-        {content}
+        <div className="prose prose-invert max-w-none">
+          {content}
+        </div>
         {msg.isTyping && (
-          <span className="inline-block w-0.5 h-4 bg-foreground/60 animate-pulse ml-0.5 align-text-bottom" />
+          <span className="inline-block w-1.5 h-4 bg-primary/60 animate-pulse ml-1 align-text-bottom rounded-full" />
         )}
       </div>
     </div>
@@ -251,41 +253,41 @@ export function ChatWidget() {
 
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex w-[370px] flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl",
-          "max-h-[540px] transition-all duration-400",
-          open ? "animate-scale-in opacity-100" : "scale-90 opacity-0 pointer-events-none"
+          "fixed bottom-6 right-6 z-50 flex w-[400px] flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#09090b]/95 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]",
+          "max-h-[600px] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          open ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-95 opacity-0 pointer-events-none"
         )}
       >
-        <div className="relative flex items-center gap-3 overflow-hidden px-4 py-3">
-          <video src="/videos/sora-2.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover brightness-50" />
-          <div className="relative z-10 flex items-center gap-3 w-full">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-white/30">
-              <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
+        <div className="relative flex items-center gap-4 overflow-hidden px-6 py-5 border-b border-white/5">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-50" />
+          <div className="relative z-10 flex items-center gap-4 w-full">
+            <div className="relative">
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl ring-2 ring-primary/30 shadow-lg shadow-primary/20">
+                <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
+              </div>
+              <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[#09090b] bg-green-500 shadow-sm" />
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-white">Sora · Ejecutiva Grupo PSI</div>
-              <div className="flex items-center gap-1.5 text-xs text-white/70">
-                <span className="h-2 w-2 rounded-full bg-green-400 animate-bounce-soft" />
-                En línea
-              </div>
+              <div className="text-base font-black tracking-tight text-white uppercase">Sora</div>
+              <div className="text-[10px] font-bold text-primary uppercase tracking-widest">IA Ejecutiva · Grupo PSI</div>
             </div>
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/70 hover:text-green-400 transition-colors mr-1"
-              title="Escribir por WhatsApp"
-              aria-label="Escribir por WhatsApp"
-            >
-              <MessageCircle className="h-5 w-5" />
-            </a>
-            <button
-              onClick={() => setOpen(false)}
-              className="text-white/70 hover:text-white transition-colors"
-              aria-label="Cerrar chat"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
+                title="WhatsApp"
+              >
+                <MessageCircle className="h-5 w-5" />
+              </a>
+              <button
+                onClick={() => setOpen(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -341,26 +343,29 @@ export function ChatWidget() {
           )}
         </div>
 
-        <div className="border-t border-border p-3">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
+        <div className="p-5 bg-white/5 border-t border-white/5">
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-center gap-3">
             <input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Pregunta sobre productos, precios..."
-              className="flex-1 rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none transition-colors duration-200 focus:ring-2 focus:ring-[#ea580c] focus:border-[#ea580c]"
+              placeholder="Escribe tu mensaje..."
+              className="flex-1 h-14 rounded-2xl border border-white/10 bg-white/5 px-6 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10"
               disabled={isLoading || anyTyping}
               autoFocus
             />
             <Button
               type="submit"
               size="icon"
-              className="shrink-0 rounded-xl bg-[#ea580c] text-white hover:bg-[#c2410c] active:scale-95"
-              disabled={isLoading || anyTyping}
+              className="absolute right-2 h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+              disabled={isLoading || anyTyping || !input.trim()}
             >
               <Send className="h-4 w-4" />
             </Button>
           </form>
+          <div className="mt-3 text-center">
+            <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">Powered by Grupo PSI Intelligence</span>
+          </div>
         </div>
       </div>
     </>
