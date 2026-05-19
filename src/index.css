@@ -10,19 +10,19 @@
     --card-foreground: 220 40% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 40% 10%;
-    --primary: 21 90% 48%;
+    --primary: 215 65% 55%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 15% 92%;
     --secondary-foreground: 220 40% 10%;
     --muted: 220 15% 92%;
     --muted-foreground: 220 10% 45%;
-    --accent: 21 90% 48%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 84 70% 55%;
+    --accent-foreground: 0 0% 10%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 15% 88%;
     --input: 220 15% 88%;
-    --ring: 21 90% 48%;
+    --ring: 215 65% 55%;
     --radius: 0.75rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -31,37 +31,40 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 215 65% 55%;
   }
 
   .dark {
-    --background: 220 25% 6%;
-    --foreground: 210 20% 95%;
-    --card: 220 25% 9%;
-    --card-foreground: 210 20% 95%;
-    --popover: 220 25% 9%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 21 90% 48%;
+    /* === PALETA VPS - Grafito Petróleo + Azul Acero + Verde Lima === */
+    --background: 220 18% 11%;
+    --foreground: 210 20% 94%;
+    --card: 220 18% 14%;
+    --card-foreground: 210 20% 94%;
+    --popover: 220 18% 13%;
+    --popover-foreground: 210 20% 94%;
+    /* Azul acero del prompt del VPS */
+    --primary: 215 65% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 20% 14%;
-    --secondary-foreground: 210 20% 95%;
-    --muted: 220 20% 14%;
-    --muted-foreground: 220 10% 55%;
-    --accent: 21 90% 48%;
-    --accent-foreground: 0 0% 100%;
+    --secondary: 220 16% 19%;
+    --secondary-foreground: 210 20% 94%;
+    --muted: 220 16% 19%;
+    --muted-foreground: 220 12% 58%;
+    /* Verde lima del VPS como accent */
+    --accent: 84 70% 50%;
+    --accent-foreground: 0 0% 8%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 220 20% 16%;
-    --input: 220 20% 16%;
-    --ring: 21 90% 48%;
-    --sidebar-background: 220 25% 8%;
+    --border: 220 16% 22%;
+    --input: 220 16% 22%;
+    --ring: 215 65% 60%;
+    --sidebar-background: 220 20% 9%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 21 90% 48%;
+    --sidebar-primary: 215 65% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 14%;
+    --sidebar-accent: 220 16% 19%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 220 20% 16%;
-    --sidebar-ring: 21 90% 48%;
+    --sidebar-border: 220 16% 22%;
+    --sidebar-ring: 215 65% 60%;
   }
 }
 
@@ -99,72 +102,179 @@ html.light {
 
 /* Glow utilities */
 .glow-primary {
-  box-shadow: 0 0 30px 5px hsl(var(--primary) / 0.4), 0 0 80px 10px hsl(var(--primary) / 0.15);
+  box-shadow: 0 0 30px 5px hsl(var(--primary) / 0.35),
+              0 0 80px 10px hsl(var(--primary) / 0.12);
 }
 .glow-text {
   text-shadow: 0 0 40px hsl(var(--primary) / 0.6);
 }
 .glass {
-  background: hsl(var(--card) / 0.4);
+  background: hsl(var(--card) / 0.45);
   backdrop-filter: blur(24px);
-  border: 1px solid hsl(var(--border) / 0.3);
+  border: 1px solid hsl(var(--border) / 0.35);
 }
 .glass-dark {
-  background: rgba(0, 0, 0, 0.4);
+  background: hsl(var(--background) / 0.5);
   backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid hsl(var(--border) / 0.2);
+}
+
+/* === VPS PROMPT VISUAL ELEMENTS === */
+/* Powerline-style segment chips */
+.vps-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  transition: all 0.2s ease;
+}
+.vps-chip:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  color: hsl(var(--primary));
+}
+.vps-chip-primary {
+  background: hsl(var(--primary) / 0.15);
+  border-color: hsl(var(--primary) / 0.4);
+  color: hsl(var(--primary));
+}
+.vps-chip-accent {
+  background: hsl(var(--accent) / 0.12);
+  border-color: hsl(var(--accent) / 0.35);
+  color: hsl(var(--accent));
+}
+/* Branch/main status indicator */
+.branch-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  background: hsl(var(--primary) / 0.1);
+  border: 1px solid hsl(var(--primary) / 0.25);
+  border-radius: 6px;
+  font-size: 0.7rem;
+  color: hsl(var(--primary));
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+/* Powerline segment separator */
+.powerline-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.powerline-seg {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.powerline-seg-blue {
+  background: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary));
+  border-right: 2px solid hsl(var(--border));
+}
+.powerline-seg-green {
+  background: hsl(var(--accent) / 0.15);
+  color: hsl(var(--accent));
+}
+.powerline-seg-muted {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border-right: 2px solid hsl(var(--border));
+}
+/* Tech badge for OS/Ubuntu/Linux logos */
+.tech-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.2s ease;
+}
+.tech-badge:hover {
+  border-color: hsl(var(--primary) / 0.4);
+  color: hsl(var(--foreground));
+  background: hsl(var(--card) / 0.8);
+}
+/* Status dot indicators */
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-dot-active {
+  background: hsl(var(--accent));
+  box-shadow: 0 0 6px hsl(var(--accent) / 0.6);
+}
+.status-dot-primary {
+  background: hsl(var(--primary));
+  box-shadow: 0 0 6px hsl(var(--primary) / 0.5);
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-20px); }
   100% { transform: translateY(0px); }
 }
-
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
 
 @keyframes pulse-glow {
-  0% { box-shadow: 0 0 20px 2px hsl(var(--primary) / 0.2); }
-  50% { box-shadow: 0 0 40px 8px hsl(var(--primary) / 0.4); }
+  0%   { box-shadow: 0 0 20px 2px hsl(var(--primary) / 0.2); }
+  50%  { box-shadow: 0 0 40px 8px hsl(var(--primary) / 0.4); }
   100% { box-shadow: 0 0 20px 2px hsl(var(--primary) / 0.2); }
 }
-
 .animate-pulse-glow {
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ===========================================================
-   Admin SaaS theme (Linear / Vercel / Supabase inspired)
-   Scoped via .admin-theme wrapper so the public brand
-   (orange) stays untouched.
-   =========================================================== */
+/*
+  ===========================================================
+  Admin SaaS theme (Linear / Vercel / Supabase inspired)
+  Scoped via .admin-theme wrapper so the public brand stays untouched.
+  ===========================================================
+*/
 .admin-theme {
-  --background: 222 16% 9%;          /* main area  ~#13151b */
+  --background: 222 16% 9%;
   --foreground: 210 20% 96%;
-  --card: 222 16% 11%;               /* card surface */
+  --card: 222 16% 11%;
   --card-foreground: 210 20% 96%;
   --popover: 222 18% 10%;
   --popover-foreground: 210 20% 96%;
-  --primary: 239 84% 60%;            /* indigo #4f46e5 */
+  --primary: 239 84% 60%;
   --primary-foreground: 0 0% 100%;
   --secondary: 222 14% 14%;
   --secondary-foreground: 210 20% 96%;
   --muted: 222 14% 14%;
   --muted-foreground: 220 9% 60%;
-  --accent: 217 91% 60%;             /* blue #3b82f6 */
+  --accent: 217 91% 60%;
   --accent-foreground: 0 0% 100%;
   --border: 220 14% 18%;
   --input: 220 14% 18%;
   --ring: 239 84% 60%;
   --radius: 0.625rem;
-  --admin-sidebar: 222 22% 7%;       /* #0f1117 */
+  --admin-sidebar: 222 22% 7%;
   --admin-sidebar-border: 220 14% 14%;
   --admin-chart: 217 91% 60%;
 }
@@ -176,6 +286,5 @@ html.light {
 
 @keyframes adminFadeSlide {
   from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
