@@ -763,6 +763,25 @@ export type Database = {
       }
     }
     Functions: {
+      create_maintenance_request: {
+        Args: {
+          _additional_notes: string
+          _address: string
+          _contact_email: string
+          _contact_name: string
+          _contact_phone: string
+          _equipment_items: Json
+          _latitude: number
+          _longitude: number
+          _municipality: string
+          _postal_code: string
+          _scheduled_date: string
+          _state: string
+          _time_slot: string
+          _total_units: number
+        }
+        Returns: string
+      }
       generate_certificate_folio: {
         Args: {
           _service_type: Database["public"]["Enums"]["certificate_service_type"]

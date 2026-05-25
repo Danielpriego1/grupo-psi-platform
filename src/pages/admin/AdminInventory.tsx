@@ -92,6 +92,7 @@ export default function AdminInventory() {
       product_name: item.product_name,
       category: item.category ?? "",
       subcategory: item.subcategory ?? "",
+      description: item.description ?? "",
       stock: String(item.stock),
       min_stock: String(item.min_stock),
       unit_price: String(item.unit_price),

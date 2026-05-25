@@ -361,29 +361,36 @@ const Mantenimiento = () => {
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
     const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
 
-    const { data: inserted, error } = await supabase.from("maintenance_requests").insert({
-      contact_name: contact.name,
-      contact_phone: contact.phone,
-      contact_email: contact.email,
-      address,
-      state: selectedState?.name ?? null,
-      municipality: selectedMunicipality?.name ?? null,
-      postal_code: selectedPostalCode,
-      latitude: location.lat,
-      longitude: location.lng,
-      scheduled_date: format(date, "yyyy-MM-dd"),
-      time_slot: slotLabel,
-      equipment_items: equipmentItems as any,
-      total_units: totalUnits,
-      additional_notes: additionalNotes || null,
-    }).select("tracking_code").single();
-    if (error) {
+    try {
+      const { data: trackingCodeResult, error } = await supabase.rpc("create_maintenance_request", {
+        _contact_name: contact.name,
+        _contact_phone: contact.phone,
+        _contact_email: contact.email,
+        _address: address,
+        _state: selectedState?.name ?? null,
+        _municipality: selectedMunicipality?.name ?? null,
+        _postal_code: selectedPostalCode,
+        _latitude: location.lat,
+        _longitude: location.lng,
+        _scheduled_date: format(date, "yyyy-MM-dd"),
+        _time_slot: slotLabel,
+        _equipment_items: equipmentItems as any,
+        _total_units: totalUnits,
+        _additional_notes: additionalNotes || null,
+      });
+      if (error) {
+        console.error("maintenance submit error", error);
+        toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
+        return;
+      }
+      const code = (trackingCodeResult as unknown as string) ?? null;
+      setTrackingCode(code);
+      setStep(4);
+      toast.success(`¡Solicitud enviada! Tu código de rastreo es ${code}.`);
+    } catch (e) {
+      console.error("maintenance submit exception", e);
       toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
-      return;
     }
-    setTrackingCode(inserted?.tracking_code ?? null);
-    setStep(4);
-    toast.success(`¡Solicitud enviada! Tu código de rastreo es ${inserted?.tracking_code}.`);
   };
 
   const hasValidEquipment = equipmentItems.some(item => {
