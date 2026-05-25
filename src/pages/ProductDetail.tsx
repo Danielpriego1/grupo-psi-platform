@@ -34,9 +34,6 @@ const ProductDetail = () => {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    supabase
-      .from("inventory")
-      .select("*")
     (async () => {
       try {
         const { data } = await supabase
