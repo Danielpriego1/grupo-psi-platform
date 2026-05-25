@@ -1,57 +1,48 @@
-## Reporte de auditoría + plan de correcciones
+# Fix: confirmación de solicitud de mantenimiento en producción
 
-### Estado actual verificado
+## Causa raíz
 
-| Área | Estado |
-|---|---|
-| Frontend público, auth, portal, admin (12 secciones), 9 edge functions | OK estructural |
-| Stripe webhook recibe eventos y los registra | OK |
-| **Stripe webhook → tabla `orders`** | 🔴 No actualiza la orden (1 evento `success` en auditoría pero 0 órdenes `paid`) |
-| `scripts/keep-alive.sh` | 🟠 Dos scripts concatenados, segunda mitad apunta a un proyecto Supabase distinto |
-| `supabase/.temp/linked-project.json` | 🟠 Ref `faadsipcsecmulwhbjah` ≠ proyecto activo `wcnbqlpbqansyvslxlth` |
-| Portal cliente | 🟡 Vacío porque `clients` = 0 filas y el trigger solo vincula si ya existe el cliente |
-| Linter Supabase | 28 warnings, todas `SECURITY DEFINER` aceptadas — sin acción |
+En `src/pages/Mantenimiento.tsx` (handler `handleSubmit`, línea 364) se hace:
 
-Datos: 16 órdenes (0 pagadas), 168 productos, 2 mantenimientos, 1 evento Stripe.
+```ts
+supabase.from("maintenance_requests").insert({...}).select("tracking_code").single()
+```
 
-### Correcciones a aplicar
+La tabla `maintenance_requests` tiene:
+- Política **INSERT** pública con `WITH CHECK` de validación. ✅ permite insertar.
+- Políticas **SELECT** solo para `admin` o para clientes cuyo `contact_email` coincide con `auth.jwt() ->> 'email'`.
 
-**1. 🔴 Stripe webhook → órdenes (bloqueador)**
-- Revisar `supabase/functions/stripe-webhook/index.ts` y reforzar el matching de la orden por `session.id`, `payment_intent` y `metadata.order_number` (los 3, en cascada).
-- Agregar logs explícitos cuando no se encuentre la orden y marcar `processing_status='orphan'` en `stripe_webhook_events` en vez de `success` falso.
-- Actualizar `orders` con `payment_status='paid'`, `status='confirmed'`, `paid_at=now()`, `ticket_token=gen_random_uuid()` cuando llegue `checkout.session.completed`.
-- Manejar `payment_intent.payment_failed`: marcar `payment_status='failed'`, `status='cancelled'`, guardar mensaje en `notes`.
-- Redesplegar la función.
+El formulario de mantenimiento es público (usuario anónimo, sin sesión). Cuando PostgREST ejecuta el `INSERT ... RETURNING` para resolver `.select().single()`, RLS bloquea la lectura del row recién insertado y `.single()` devuelve el error `PGRST116` ("no rows"). Resultado:
 
-**2. 🟠 Reparar `scripts/keep-alive.sh`**
-- Dejar un solo bloque apuntando a `wcnbqlpbqansyvslxlth`.
+- A veces el row sí queda guardado pero el cliente ve "No se pudo enviar la solicitud".
+- A veces (según orden de evaluación) PostgREST aborta y la solicitud no se guarda en absoluto.
 
-**3. 🟠 Sincronizar `linked-project.json`**
-- Actualizar `ref` y `name` al proyecto activo para que el repo `grupo-psi-app` en GitHub no haga push a la BD equivocada.
+Esto explica por qué no hay registros nuevos desde el 16-may y el toast rojo del screenshot.
 
-**4. 🟡 Auto-vincular cliente al registrarse**
-- Modificar el trigger `handle_new_user` para que, si no existe un `clients` con ese email, **cree uno** con `email`, `contact_name` (de `full_name`) y `user_id = NEW.id`. Así el portal funciona desde el primer login.
+Además el handler no tiene `try/catch` ni `console.error`, por eso el error real no aparece en consola.
 
-**5. 🟢 Limpieza opcional**
-- Marcar las 4 órdenes `COT-...` de abril como `archived` (campo `notes`) o dejarlas como están — dime.
-- Silenciar los warnings de React Router v6 con `future={{ v7_startTransition: true, v7_relativeSplatPath: true }}`.
+## Cambios (solo el flujo de envío)
 
-### Cómo voy a validar después
+### 1. Migración: RPC `create_maintenance_request`
 
-1. `curl_edge_functions` al webhook con un payload simulado de `checkout.session.completed` con `metadata.order_number` de una orden real → debe quedar `paid` con `ticket_token`.
-2. Revisar `edge_function_logs` de `stripe-webhook` para confirmar branch correcto.
-3. Crear un usuario de prueba y verificar que aparece en `clients`.
+Función `SECURITY DEFINER` que recibe los campos del formulario, inserta y devuelve `tracking_code`. Así no dependemos de RLS para la lectura del retorno, y mantenemos la tabla protegida.
 
-### Lo que necesito de ti después
+- Mismas validaciones que el `WITH CHECK` actual (nombre, teléfono, email, notas ≤ 5000).
+- `GRANT EXECUTE ... TO anon, authenticated`.
+- `SET search_path = public`.
 
-- Hacer **un pago real de prueba** con `4242 4242 4242 4242` desde el sitio para confirmar el ciclo completo end-to-end (no puedo hacerlo yo desde el sandbox).
-- Confirmar en Stripe Dashboard que el webhook apunta a:
-  `https://wcnbqlpbqansyvslxlth.supabase.co/functions/v1/stripe-webhook`
+### 2. `src/pages/Mantenimiento.tsx` — solo `handleSubmit`
 
-### Sobre el repo GitHub `grupo-psi-app`
+- Reemplazar el `.from("maintenance_requests").insert(...).select().single()` por `supabase.rpc("create_maintenance_request", { ... })`.
+- Envolver en `try/catch`, hacer `console.error("maintenance submit error", error)` y mostrar el toast actual.
+- No tocar pasos previos del formulario, validaciones, ni UI.
 
-No tengo acceso directo a GitHub. Si el repo está sincronizado con este proyecto Lovable, los cambios se pushean solos. Si es un fork separado, dime su URL para revisarlo aparte.
+## Verificación
 
----
+- Probar en preview con sesión anónima: completar pasos 1-3 → clic en "Solicitar Recolección" → debe mostrar `Step 4` con código `MNT-XXXXXX` y aparecer en `maintenance_requests`.
+- Confirmar que admin sigue viendo la solicitud en `/admin/maintenance`.
+- Si falla, el `console.error` deja el motivo real para diagnóstico.
 
-**Aprueba este plan y ejecuto los 4 puntos críticos (1-4) en orden.** El punto 5 lo hago solo si me lo confirmas.
+## Fuera de alcance
+
+- No se modifica ningún otro paso del formulario, mapas, validaciones de campo, ni otras rutas.
