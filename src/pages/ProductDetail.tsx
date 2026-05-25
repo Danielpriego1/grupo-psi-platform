@@ -37,13 +37,18 @@ const ProductDetail = () => {
     supabase
       .from("inventory")
       .select("*")
-      .eq("product_id", id)
-      .maybeSingle()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("inventory")
+          .select("*")
+          .eq("product_id", id)
+          .maybeSingle();
         if (data) setInventoryItem(data);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    })();
   }, [id]);
 
   // Build product from inventory if no static product
