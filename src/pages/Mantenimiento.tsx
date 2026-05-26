@@ -307,6 +307,23 @@ const Mantenimiento = () => {
   const [step, setStep] = useState(1);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
+  const [confirmationData, setConfirmationData] = useState<{
+    folio: string;
+    createdAt: Date;
+    scheduledDate: Date | null;
+    timeSlot: string | null;
+    contact: { name: string; phone: string; email: string };
+    address: string | null;
+    state: string | null;
+    municipality: string | null;
+    postalCode: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    equipmentItems: EquipmentItem[];
+    totalUnits: number;
+    additionalNotes: string | null;
+  } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const defaultEquipmentItem: EquipmentItem = { category: "", type: "", weight: "", quantity: 1, scbaLastMaintenance: "", scbaPsi: "", scbaMinutes: "", detectorBrand: "", detectorGases: "", detectorLastMaintenance: "", notes: "" };
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ ...defaultEquipmentItem }]);
@@ -361,8 +378,9 @@ const Mantenimiento = () => {
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
     const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
 
+    setSubmitting(true);
     try {
-      const { data: trackingCodeResult, error } = await supabase.rpc("create_maintenance_request", {
+      const { data: result, error } = await supabase.rpc("create_maintenance_request", {
         _contact_name: contact.name,
         _contact_phone: contact.phone,
         _contact_email: contact.email,
@@ -380,16 +398,51 @@ const Mantenimiento = () => {
       });
       if (error) {
         console.error("maintenance submit error", error);
-        toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
+        toast.error(`No se pudo enviar la solicitud: ${error.message ?? "intenta de nuevo"}. Tus datos siguen aquí.`);
         return;
       }
-      const code = (trackingCodeResult as unknown as string) ?? null;
-      setTrackingCode(code);
+      const payload = (result ?? {}) as { folio?: string; created_at?: string };
+      const folio = payload.folio ?? null;
+      if (!folio) {
+        console.error("maintenance submit: no folio returned", result);
+        toast.error("No se generó el folio. Intenta de nuevo.");
+        return;
+      }
+      setTrackingCode(folio);
+      setConfirmationData({
+        folio,
+        createdAt: payload.created_at ? new Date(payload.created_at) : new Date(),
+        scheduledDate: date ?? null,
+        timeSlot: slotLabel,
+        contact: { name: contact.name, phone: contact.phone, email: contact.email },
+        address,
+        state: selectedState?.name ?? null,
+        municipality: selectedMunicipality?.name ?? null,
+        postalCode: selectedPostalCode,
+        latitude: location.lat,
+        longitude: location.lng,
+        equipmentItems,
+        totalUnits,
+        additionalNotes: additionalNotes || null,
+      });
       setStep(4);
-      toast.success(`¡Solicitud enviada! Tu código de rastreo es ${code}.`);
-    } catch (e) {
+      toast.success(`¡Solicitud registrada! Folio ${folio}.`);
+    } catch (e: any) {
       console.error("maintenance submit exception", e);
-      toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
+      toast.error(`No se pudo enviar la solicitud: ${e?.message ?? "error desconocido"}. Tus datos siguen aquí.`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!confirmationData) return;
+    try {
+      const { downloadMaintenanceReceipt } = await import("@/lib/maintenanceReceipt");
+      await downloadMaintenanceReceipt(confirmationData);
+    } catch (e) {
+      console.error("receipt download error", e);
+      toast.error("No se pudo generar el comprobante.");
     }
   };
 
