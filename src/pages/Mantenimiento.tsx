@@ -307,6 +307,23 @@ const Mantenimiento = () => {
   const [step, setStep] = useState(1);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
+  const [confirmationData, setConfirmationData] = useState<{
+    folio: string;
+    createdAt: Date;
+    scheduledDate: Date | null;
+    timeSlot: string | null;
+    contact: { name: string; phone: string; email: string };
+    address: string | null;
+    state: string | null;
+    municipality: string | null;
+    postalCode: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    equipmentItems: EquipmentItem[];
+    totalUnits: number;
+    additionalNotes: string | null;
+  } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const defaultEquipmentItem: EquipmentItem = { category: "", type: "", weight: "", quantity: 1, scbaLastMaintenance: "", scbaPsi: "", scbaMinutes: "", detectorBrand: "", detectorGases: "", detectorLastMaintenance: "", notes: "" };
   const [equipmentItems, setEquipmentItems] = useState<EquipmentItem[]>([{ ...defaultEquipmentItem }]);
@@ -361,8 +378,9 @@ const Mantenimiento = () => {
     const slotLabel = TIME_SLOTS.find(s => s.id === selectedTimeSlot)?.label || "";
     const totalUnits = equipmentItems.reduce((sum, item) => sum + item.quantity, 0);
 
+    setSubmitting(true);
     try {
-      const { data: trackingCodeResult, error } = await supabase.rpc("create_maintenance_request", {
+      const { data: result, error } = await supabase.rpc("create_maintenance_request", {
         _contact_name: contact.name,
         _contact_phone: contact.phone,
         _contact_email: contact.email,
@@ -380,16 +398,51 @@ const Mantenimiento = () => {
       });
       if (error) {
         console.error("maintenance submit error", error);
-        toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
+        toast.error(`No se pudo enviar la solicitud: ${error.message ?? "intenta de nuevo"}. Tus datos siguen aquí.`);
         return;
       }
-      const code = (trackingCodeResult as unknown as string) ?? null;
-      setTrackingCode(code);
+      const payload = (result ?? {}) as { folio?: string; created_at?: string };
+      const folio = payload.folio ?? null;
+      if (!folio) {
+        console.error("maintenance submit: no folio returned", result);
+        toast.error("No se generó el folio. Intenta de nuevo.");
+        return;
+      }
+      setTrackingCode(folio);
+      setConfirmationData({
+        folio,
+        createdAt: payload.created_at ? new Date(payload.created_at) : new Date(),
+        scheduledDate: date ?? null,
+        timeSlot: slotLabel,
+        contact: { name: contact.name, phone: contact.phone, email: contact.email },
+        address,
+        state: selectedState?.name ?? null,
+        municipality: selectedMunicipality?.name ?? null,
+        postalCode: selectedPostalCode,
+        latitude: location.lat,
+        longitude: location.lng,
+        equipmentItems,
+        totalUnits,
+        additionalNotes: additionalNotes || null,
+      });
       setStep(4);
-      toast.success(`¡Solicitud enviada! Tu código de rastreo es ${code}.`);
-    } catch (e) {
+      toast.success(`¡Solicitud registrada! Folio ${folio}.`);
+    } catch (e: any) {
       console.error("maintenance submit exception", e);
-      toast.error("No se pudo enviar la solicitud. Intenta de nuevo.");
+      toast.error(`No se pudo enviar la solicitud: ${e?.message ?? "error desconocido"}. Tus datos siguen aquí.`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!confirmationData) return;
+    try {
+      const { downloadMaintenanceReceipt } = await import("@/lib/maintenanceReceipt");
+      await downloadMaintenanceReceipt(confirmationData);
+    } catch (e) {
+      console.error("receipt download error", e);
+      toast.error("No se pudo generar el comprobante.");
     }
   };
 
@@ -1069,8 +1122,8 @@ const Mantenimiento = () => {
                       {/* Navigation */}
                       <div className="flex gap-3 pt-2">
                         <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>← Fecha</Button>
-                        <Button size="lg" className="flex-1 transition-transform hover:scale-[1.02] active:scale-[0.98]" disabled={!isLocationComplete} onClick={handleSubmit}>
-                          <Wrench className="mr-2 h-5 w-5" /> Solicitar Recolección
+                        <Button size="lg" className="flex-1 transition-transform hover:scale-[1.02] active:scale-[0.98]" disabled={!isLocationComplete || submitting} onClick={handleSubmit}>
+                          <Wrench className="mr-2 h-5 w-5" /> {submitting ? "Enviando..." : "Solicitar Recolección"}
                         </Button>
                       </div>
                     </div>
@@ -1103,47 +1156,99 @@ const Mantenimiento = () => {
                 </div>
               )}
 
-              {/* Step 4: Success / Tracking code */}
-              {step === 4 && trackingCode && (
-                <div className="animate-fade-in space-y-6 rounded-2xl border border-primary/30 bg-card p-8 shadow-lg text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                    <CheckCircle className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h2 className="text-2xl font-extrabold">¡Solicitud registrada!</h2>
+              {/* Step 4: Success / Confirmation */}
+              {step === 4 && trackingCode && confirmationData && (
+                <div className="animate-fade-in space-y-6 rounded-2xl border border-primary/30 bg-card p-6 md:p-8 shadow-lg">
+                  <div className="text-center space-y-3">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <CheckCircle className="h-8 w-8 text-primary" />
+                    </div>
+                    <h2 className="text-2xl md:text-3xl font-extrabold">Solicitud registrada correctamente</h2>
                     <p className="text-muted-foreground">
-                      Guarda tu código de rastreo para dar seguimiento a tu solicitud en cualquier momento.
+                      Conserva tu folio. Lo necesitarás para dar seguimiento a tu solicitud.
                     </p>
                   </div>
-                  <div className="mx-auto inline-flex flex-col items-center gap-2 rounded-2xl border border-border bg-muted/30 px-8 py-5">
-                    <span className="text-xs uppercase tracking-wider text-muted-foreground">Código de rastreo</span>
-                    <span className="text-3xl font-mono font-bold text-primary tracking-widest select-all">
-                      {trackingCode}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(trackingCode);
-                        toast.success("Código copiado");
-                      }}
-                    >
-                      Copiar código
-                    </Button>
+
+                  <div className="rounded-2xl border border-primary/40 bg-primary/5 px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <span className="block text-xs uppercase tracking-wider text-muted-foreground">Folio</span>
+                      <span className="text-2xl md:text-3xl font-mono font-bold text-primary tracking-wider select-all">
+                        {confirmationData.folio}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground">Estatus inicial</span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-yellow-500/15 text-yellow-600 px-3 py-1 text-xs font-semibold">
+                        <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" /> Pendiente
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(confirmationData.folio);
+                          toast.success("Folio copiado");
+                        }}
+                      >
+                        Copiar folio
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    También enviaremos los detalles a <span className="font-medium text-foreground">{contact.email}</span>.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                    <a href={`/rastreo?code=${trackingCode}`}>
-                      <Button size="lg" className="w-full sm:w-auto">Ver estado de mi solicitud</Button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Fechas</p>
+                      <p><span className="text-muted-foreground">Solicitud:</span> {format(confirmationData.createdAt, "d 'de' MMMM yyyy, HH:mm", { locale: es })}</p>
+                      <p><span className="text-muted-foreground">Recolección:</span> {confirmationData.scheduledDate ? format(confirmationData.scheduledDate, "d 'de' MMMM yyyy", { locale: es }) : "—"}{confirmationData.timeSlot ? ` · ${confirmationData.timeSlot}` : ""}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Contacto</p>
+                      <p>{confirmationData.contact.name}</p>
+                      <p className="text-muted-foreground">{confirmationData.contact.phone}</p>
+                      <p className="text-muted-foreground break-all">{confirmationData.contact.email}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1 md:col-span-2">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Dirección</p>
+                      <p>{confirmationData.address || "—"}</p>
+                      <p className="text-muted-foreground">
+                        {confirmationData.municipality ?? "—"}, {confirmationData.state ?? "—"} · CP {confirmationData.postalCode ?? "—"}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-muted/30 p-4 md:col-span-2">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Equipos ({confirmationData.totalUnits} unid.)</p>
+                      <div className="space-y-1.5">
+                        {confirmationData.equipmentItems.map((it, i) => (
+                          <div key={i} className="text-xs text-muted-foreground bg-background/40 rounded p-2">
+                            <span className="font-medium text-foreground capitalize">{it.category || "—"}</span>
+                            {it.type && ` · ${it.type}`}
+                            {it.weight && ` · ${it.weight}`}
+                            {it.scbaPsi && ` · ${it.scbaPsi}`}
+                            {it.scbaMinutes && ` · ${it.scbaMinutes}`}
+                            {it.detectorBrand && ` · ${it.detectorBrand}`}
+                            {` · x${it.quantity}`}
+                          </div>
+                        ))}
+                      </div>
+                      {confirmationData.additionalNotes && (
+                        <p className="mt-3 text-xs italic text-muted-foreground">"{confirmationData.additionalNotes}"</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Button size="lg" className="flex-1" onClick={handleDownloadReceipt}>
+                      <FileCheck className="mr-2 h-5 w-5" /> Descargar comprobante
+                    </Button>
+                    <a href={`/rastreo?code=${confirmationData.folio}`} className="flex-1">
+                      <Button size="lg" variant="outline" className="w-full">Ver estado</Button>
                     </a>
                     <Button
                       variant="outline"
                       size="lg"
+                      className="flex-1"
                       onClick={() => {
                         setShowScheduler(false);
                         setTrackingCode(null);
+                        setConfirmationData(null);
                         setStep(1);
                         setEquipmentItems([{ ...defaultEquipmentItem }]);
                         setContact({ name: "", phone: "", email: "" });
@@ -1159,7 +1264,7 @@ const Mantenimiento = () => {
                         setAdditionalNotes("");
                       }}
                     >
-                      Nueva solicitud
+                      Finalizar
                     </Button>
                   </div>
                 </div>
