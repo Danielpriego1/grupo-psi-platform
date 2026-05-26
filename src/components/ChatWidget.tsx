@@ -350,8 +350,8 @@ export function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Escribe tu mensaje..."
-              className="flex-1 h-14 rounded-2xl border border-white/10 bg-white/5 px-6 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10"
-              disabled={isLoading || anyTyping}
+              className="flex-1 h-14 rounded-2xl border border-white/10 bg-white/5 pl-6 pr-16 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10"
+              disabled={isLoading}
               autoFocus
             />
             <Button
