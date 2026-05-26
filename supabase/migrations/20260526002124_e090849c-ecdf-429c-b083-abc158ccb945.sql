@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.create_maintenance_request(text,text,text,text,text,text,text,double precision,double precision,date,text,jsonb,integer,text);
