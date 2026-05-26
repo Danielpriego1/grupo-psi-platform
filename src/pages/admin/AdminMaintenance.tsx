@@ -40,6 +40,8 @@ const STATUS_HEX: Record<ReqStatus, string> = {
 
 interface MaintReq {
   id: string;
+  folio: string | null;
+  tracking_code: string | null;
   contact_name: string;
   contact_phone: string;
   contact_email: string;
@@ -54,6 +56,8 @@ interface MaintReq {
   equipment_items: any;
   total_units: number;
   additional_notes: string | null;
+  service_type: string | null;
+  equipment_type: string | null;
   status: ReqStatus;
   created_at: string;
 }
@@ -167,8 +171,18 @@ export default function AdminMaintenance() {
     }
   };
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const todayCount = requests.filter((r) => r.created_at?.slice(0, 10) === todayStr).length;
+
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="border-border"><CardContent className="p-4"><p className="text-xs text-muted-foreground uppercase tracking-wider">Pendientes</p><p className="text-2xl font-bold text-yellow-500">{pendingCount}</p></CardContent></Card>
+        <Card className="border-border"><CardContent className="p-4"><p className="text-xs text-muted-foreground uppercase tracking-wider">Nuevas hoy</p><p className="text-2xl font-bold text-primary">{todayCount}</p></CardContent></Card>
+        <Card className="border-border"><CardContent className="p-4"><p className="text-xs text-muted-foreground uppercase tracking-wider">Total</p><p className="text-2xl font-bold text-foreground">{requests.length}</p></CardContent></Card>
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="flex items-center gap-3">
           <Wrench className="w-5 h-5 text-primary" />
