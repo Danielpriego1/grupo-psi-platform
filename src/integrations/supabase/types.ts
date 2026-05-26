@@ -419,17 +419,21 @@ export type Database = {
         Row: {
           additional_notes: string | null
           address: string | null
+          confirmation_file_url: string | null
           contact_email: string
           contact_name: string
           contact_phone: string
           created_at: string
           equipment_items: Json
+          equipment_type: string | null
+          folio: string | null
           id: string
           latitude: number | null
           longitude: number | null
           municipality: string | null
           postal_code: string | null
           scheduled_date: string | null
+          service_type: string | null
           state: string | null
           status: Database["public"]["Enums"]["maintenance_request_status"]
           time_slot: string | null
@@ -440,17 +444,21 @@ export type Database = {
         Insert: {
           additional_notes?: string | null
           address?: string | null
+          confirmation_file_url?: string | null
           contact_email: string
           contact_name: string
           contact_phone: string
           created_at?: string
           equipment_items?: Json
+          equipment_type?: string | null
+          folio?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           municipality?: string | null
           postal_code?: string | null
           scheduled_date?: string | null
+          service_type?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["maintenance_request_status"]
           time_slot?: string | null
@@ -461,17 +469,21 @@ export type Database = {
         Update: {
           additional_notes?: string | null
           address?: string | null
+          confirmation_file_url?: string | null
           contact_email?: string
           contact_name?: string
           contact_phone?: string
           created_at?: string
           equipment_items?: Json
+          equipment_type?: string | null
+          folio?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           municipality?: string | null
           postal_code?: string | null
           scheduled_date?: string | null
+          service_type?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["maintenance_request_status"]
           time_slot?: string | null
@@ -763,29 +775,55 @@ export type Database = {
       }
     }
     Functions: {
-      create_maintenance_request: {
-        Args: {
-          _additional_notes: string
-          _address: string
-          _contact_email: string
-          _contact_name: string
-          _contact_phone: string
-          _equipment_items: Json
-          _latitude: number
-          _longitude: number
-          _municipality: string
-          _postal_code: string
-          _scheduled_date: string
-          _state: string
-          _time_slot: string
-          _total_units: number
-        }
-        Returns: string
-      }
+      create_maintenance_request:
+        | {
+            Args: {
+              _additional_notes: string
+              _address: string
+              _contact_email: string
+              _contact_name: string
+              _contact_phone: string
+              _equipment_items: Json
+              _latitude: number
+              _longitude: number
+              _municipality: string
+              _postal_code: string
+              _scheduled_date: string
+              _state: string
+              _time_slot: string
+              _total_units: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _additional_notes: string
+              _address: string
+              _contact_email: string
+              _contact_name: string
+              _contact_phone: string
+              _equipment_items: Json
+              _equipment_type?: string
+              _latitude: number
+              _longitude: number
+              _municipality: string
+              _postal_code: string
+              _scheduled_date: string
+              _service_type?: string
+              _state: string
+              _time_slot: string
+              _total_units: number
+            }
+            Returns: Json
+          }
       generate_certificate_folio: {
         Args: {
           _service_type: Database["public"]["Enums"]["certificate_service_type"]
         }
+        Returns: string
+      }
+      generate_maintenance_folio: {
+        Args: { _pickup_date: string }
         Returns: string
       }
       generate_maintenance_tracking_code: { Args: never; Returns: string }
