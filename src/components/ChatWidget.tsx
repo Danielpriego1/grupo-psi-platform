@@ -253,8 +253,8 @@ export function ChatWidget() {
 
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex w-[400px] flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#09090b]/95 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]",
-          "max-h-[600px] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px] flex-col overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-[#09090b]/95 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]",
+          "max-h-[min(600px,calc(100vh-2rem))] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
           open ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-95 opacity-0 pointer-events-none"
         )}
       >
