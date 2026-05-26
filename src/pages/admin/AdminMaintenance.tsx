@@ -227,7 +227,10 @@ export default function AdminMaintenance() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="font-medium text-foreground text-sm">{r.contact_name}</p>
+                    <div className="min-w-0">
+                      <p className="font-mono text-[11px] text-primary truncate">{r.folio ?? r.tracking_code ?? "—"}</p>
+                      <p className="font-medium text-foreground text-sm truncate">{r.contact_name}</p>
+                    </div>
                     <Badge className={STATUS_COLOR[r.status]} variant="secondary">
                       {STATUS_LABEL[r.status]}
                     </Badge>
@@ -253,8 +256,14 @@ export default function AdminMaintenance() {
         return (
           <Card className="border-border">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-foreground">{r.contact_name}</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-mono text-xs text-primary">{r.folio ?? r.tracking_code ?? "—"}</p>
+                  <CardTitle className="text-foreground">{r.contact_name}</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Solicitado: {format(new Date(r.created_at), "d 'de' MMM yyyy, HH:mm", { locale: es })}
+                  </p>
+                </div>
                 <Select value={r.status} onValueChange={(v) => updateStatus(r.id, v as ReqStatus)}>
                   <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
