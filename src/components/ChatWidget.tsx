@@ -157,6 +157,17 @@ export function ChatWidget() {
     typingTimeoutRef.current = setTimeout(tick, 18);
   }, []);
 
+  // Auto-resize textarea
+  const adjustHeight = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const maxH = 160; // max ~5-6 lines
+    const target = Math.min(el.scrollHeight, maxH);
+    el.style.height = target + "px";
+    setInputHeight(target);
+  }, []);
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: input.trim() };
@@ -165,6 +176,9 @@ export function ChatWidget() {
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
+    // reset textarea height
+    setInputHeight(56);
+    if (inputRef.current) inputRef.current.style.height = "56px";
     requestAnimationFrame(() => inputRef.current?.focus());
 
     try {
@@ -201,6 +215,13 @@ export function ChatWidget() {
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   };
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }, [input, isLoading]);
 
   // Cleanup on unmount
   useEffect(() => {
