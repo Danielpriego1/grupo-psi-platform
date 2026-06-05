@@ -77,7 +77,8 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [inputHeight, setInputHeight] = useState(56); // base height in px
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stickToBottomRef = useRef(true);
   const [atBottom, setAtBottom] = useState(true);
@@ -156,6 +157,17 @@ export function ChatWidget() {
     typingTimeoutRef.current = setTimeout(tick, 18);
   }, []);
 
+  // Auto-resize textarea
+  const adjustHeight = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const maxH = 160; // max ~5-6 lines
+    const target = Math.min(el.scrollHeight, maxH);
+    el.style.height = target + "px";
+    setInputHeight(target);
+  }, []);
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: input.trim() };
@@ -164,6 +176,9 @@ export function ChatWidget() {
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
+    // reset textarea height
+    setInputHeight(56);
+    if (inputRef.current) inputRef.current.style.height = "56px";
     requestAnimationFrame(() => inputRef.current?.focus());
 
     try {
@@ -200,6 +215,13 @@ export function ChatWidget() {
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   };
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }, [input, isLoading]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -344,20 +366,22 @@ export function ChatWidget() {
         </div>
 
         <div className="p-5 bg-white/5 border-t border-white/5">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-center gap-3">
-            <input
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end gap-3">
+            <textarea
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
+              onKeyDown={handleKeyDown}
               placeholder="Escribe tu mensaje..."
-              className="flex-1 h-14 rounded-2xl border border-white/10 bg-white/5 pl-6 pr-16 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10"
+              rows={1}
+              className="flex-1 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-6 pr-16 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-hidden"
               disabled={isLoading}
               autoFocus
             />
             <Button
               type="submit"
               size="icon"
-              className="absolute right-2 h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+              className="absolute right-2 bottom-2 h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
               disabled={isLoading || anyTyping || !input.trim()}
             >
               <Send className="h-4 w-4" />
