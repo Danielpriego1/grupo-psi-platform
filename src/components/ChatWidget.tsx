@@ -374,7 +374,8 @@ export function ChatWidget() {
               onKeyDown={handleKeyDown}
               placeholder="Escribe tu mensaje..."
               rows={1}
-              className="flex-1 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-6 pr-16 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-hidden"
+              wrap="soft"
+              className="block w-full flex-1 min-w-0 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 sm:pl-6 pr-14 sm:pr-16 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
               disabled={isLoading}
               autoFocus
             />
