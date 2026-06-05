@@ -366,20 +366,22 @@ export function ChatWidget() {
         </div>
 
         <div className="p-5 bg-white/5 border-t border-white/5">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-center gap-3">
-            <input
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end gap-3">
+            <textarea
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
+              onKeyDown={handleKeyDown}
               placeholder="Escribe tu mensaje..."
-              className="flex-1 h-14 rounded-2xl border border-white/10 bg-white/5 pl-6 pr-16 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10"
+              rows={1}
+              className="flex-1 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-6 pr-16 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-hidden"
               disabled={isLoading}
               autoFocus
             />
             <Button
               type="submit"
               size="icon"
-              className="absolute right-2 h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+              className="absolute right-2 bottom-2 h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
               disabled={isLoading || anyTyping || !input.trim()}
             >
               <Send className="h-4 w-4" />
