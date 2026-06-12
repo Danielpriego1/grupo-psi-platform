@@ -72,9 +72,10 @@ export function BrandsTicker() {
                   <img
                     src={b.logo_url}
                     alt={b.name}
-                    className="h-16 w-auto object-contain brightness-0 invert opacity-40 group-hover/item:opacity-100 group-hover/item:brightness-100 transition-all duration-500"
+                    className="h-16 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-500"
                     loading="lazy"
                   />
+
                 </div>
               ) : (
                 <div className="px-10 py-5 rounded-3xl bg-white/5 border border-white/5">
