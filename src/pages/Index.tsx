@@ -10,13 +10,15 @@ import { ServicesSection } from "@/components/ServicesSection";
 import { categories } from "@/data/categories";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import catFuego from "@/assets/cat-fuego.jpg";
+import catUniformes from "@/assets/cat-uniformes.jpg";
 
 // Vallen-style hero images per category
 const CATEGORY_IMAGES: Record<string, string> = {
-  "equipos-contra-fuego":
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  "equipos-contra-fuego": catFuego,
   epp:
     "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80",
+  uniformes: catUniformes,
   "senalizacion-industrial":
     "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=600&q=80",
   "primeros-auxilios":
