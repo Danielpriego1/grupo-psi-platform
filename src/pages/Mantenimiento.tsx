@@ -506,7 +506,17 @@ const Mantenimiento = () => {
   };
 
   const toggleService = (id: string) => {
-    setExpandedService(prev => prev === id ? null : id);
+    setExpandedService(prev => {
+      const isClosing = prev === id;
+      const next = isClosing ? null : id;
+      setTimeout(() => {
+        const target = isClosing
+          ? document.getElementById(`servicio-${id}`)
+          : document.getElementById("service-detail");
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+      return next;
+    });
   };
 
   return (
@@ -558,13 +568,14 @@ const Mantenimiento = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg">Selecciona un servicio para ver más detalles. Ofrecemos cobertura integral para toda tu operación industrial.</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div id="servicios-grid" className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 scroll-mt-24">
           {SERVICE_CATEGORIES.map((cat) => {
             const isExpanded = expandedService === cat.id;
             const IconComp = cat.icon;
             return (
               <button
                 key={cat.id}
+                id={`servicio-${cat.id}`}
                 onClick={() => toggleService(cat.id)}
                 className={cn(
                   "relative flex flex-col items-start gap-3 rounded-2xl border p-5 text-left transition-all duration-300 group",
@@ -596,14 +607,27 @@ const Mantenimiento = () => {
         if (!service) return null;
         const IconComp = service.icon;
         return (
-          <section className="container mx-auto px-4 pb-16 animate-fade-in">
+          <section id="service-detail" className="container mx-auto px-4 pb-16 animate-fade-in scroll-mt-24">
             <div className="rounded-2xl border border-primary/20 bg-card shadow-lg overflow-hidden">
               <div className="grid md:grid-cols-2 gap-0">
                 {/* Left: Info */}
                 <div className="p-8 md:p-10 space-y-6">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-                    <IconComp className="h-4 w-4" />
-                    {service.label}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+                      <IconComp className="h-4 w-4" />
+                      {service.label}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-primary"
+                      onClick={() => {
+                        setExpandedService(null);
+                        setTimeout(() => document.getElementById("servicios-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+                      }}
+                    >
+                      <ChevronLeft className="mr-1 h-4 w-4" /> Volver a servicios
+                    </Button>
                   </div>
                   <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
                     {service.label}
@@ -624,6 +648,16 @@ const Mantenimiento = () => {
                     <a href="#contacto">
                       <Button variant="outline">Solicitar Cotización</Button>
                     </a>
+                    <Button
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-primary"
+                      onClick={() => {
+                        setExpandedService(null);
+                        setTimeout(() => document.getElementById("servicios-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+                      }}
+                    >
+                      <ChevronLeft className="mr-2 h-4 w-4" /> Ver más servicios
+                    </Button>
                   </div>
                 </div>
                 {/* Right: Gallery */}
