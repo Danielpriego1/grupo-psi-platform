@@ -506,7 +506,17 @@ const Mantenimiento = () => {
   };
 
   const toggleService = (id: string) => {
-    setExpandedService(prev => prev === id ? null : id);
+    setExpandedService(prev => {
+      const isClosing = prev === id;
+      const next = isClosing ? null : id;
+      setTimeout(() => {
+        const target = isClosing
+          ? document.getElementById(`servicio-${id}`)
+          : document.getElementById("service-detail");
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+      return next;
+    });
   };
 
   return (
