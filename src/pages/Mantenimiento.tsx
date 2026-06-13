@@ -568,13 +568,14 @@ const Mantenimiento = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg">Selecciona un servicio para ver más detalles. Ofrecemos cobertura integral para toda tu operación industrial.</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div id="servicios-grid" className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 scroll-mt-24">
           {SERVICE_CATEGORIES.map((cat) => {
             const isExpanded = expandedService === cat.id;
             const IconComp = cat.icon;
             return (
               <button
                 key={cat.id}
+                id={`servicio-${cat.id}`}
                 onClick={() => toggleService(cat.id)}
                 className={cn(
                   "relative flex flex-col items-start gap-3 rounded-2xl border p-5 text-left transition-all duration-300 group",
