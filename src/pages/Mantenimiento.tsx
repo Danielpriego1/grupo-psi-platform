@@ -607,14 +607,27 @@ const Mantenimiento = () => {
         if (!service) return null;
         const IconComp = service.icon;
         return (
-          <section className="container mx-auto px-4 pb-16 animate-fade-in">
+          <section id="service-detail" className="container mx-auto px-4 pb-16 animate-fade-in scroll-mt-24">
             <div className="rounded-2xl border border-primary/20 bg-card shadow-lg overflow-hidden">
               <div className="grid md:grid-cols-2 gap-0">
                 {/* Left: Info */}
                 <div className="p-8 md:p-10 space-y-6">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-                    <IconComp className="h-4 w-4" />
-                    {service.label}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+                      <IconComp className="h-4 w-4" />
+                      {service.label}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-primary"
+                      onClick={() => {
+                        setExpandedService(null);
+                        setTimeout(() => document.getElementById("servicios-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+                      }}
+                    >
+                      <ChevronLeft className="mr-1 h-4 w-4" /> Volver a servicios
+                    </Button>
                   </div>
                   <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
                     {service.label}
@@ -635,6 +648,16 @@ const Mantenimiento = () => {
                     <a href="#contacto">
                       <Button variant="outline">Solicitar Cotización</Button>
                     </a>
+                    <Button
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-primary"
+                      onClick={() => {
+                        setExpandedService(null);
+                        setTimeout(() => document.getElementById("servicios-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+                      }}
+                    >
+                      <ChevronLeft className="mr-2 h-4 w-4" /> Ver más servicios
+                    </Button>
                   </div>
                 </div>
                 {/* Right: Gallery */}
