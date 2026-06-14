@@ -3,6 +3,7 @@ import { getCategoryBySlug, mapStaticCategory, mapInventorySubcategory } from "@
 import { products as allStaticProducts, isCatalogReady } from "@/data/products";
 import { useInventoryCatalog } from "@/hooks/useInventoryCatalog";
 import { ProductCard } from "@/components/ProductCard";
+import { SEO } from "@/components/SEO";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
@@ -82,6 +83,18 @@ const CategoryPage = () => {
 
   return (
     <div className="min-h-screen bg-background pt-20 pb-16">
+      <SEO
+        title={`${category.name} | Grupo PSI`}
+        description={category.description}
+        path={`/categoria/${category.slug}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: category.name,
+          description: category.description,
+          url: `https://psi-spark-grid.lovable.app/categoria/${category.slug}`,
+        }}
+      />
       <div className="container mx-auto px-4">
         {/* Back link */}
         <Link

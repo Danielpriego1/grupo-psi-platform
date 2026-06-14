@@ -7,6 +7,7 @@ import { CustomerStories } from "@/components/CustomerStories";
 import { CoverageMap } from "@/components/CoverageMap";
 import { BrandsTicker } from "@/components/BrandsTicker";
 import { ServicesSection } from "@/components/ServicesSection";
+import { SEO } from "@/components/SEO";
 import { categories } from "@/data/categories";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
@@ -37,7 +38,20 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Grupo PSI | Equipamiento y Mantenimiento Industrial Certificado"
+        description="Catálogo de extintores NOM-154, EPP, uniformes industriales, señalización y servicios de mantenimiento para empresas en México."
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Grupo PSI",
+          url: "https://psi-spark-grid.lovable.app/",
+          inLanguage: "es-MX",
+        }}
+      />
       <HeroSection onScrollToProducts={scrollToProducts} />
+
 
       {/* Vallen-style Category cards section */}
       <main ref={catalogRef} className="container mx-auto px-4 py-20">
