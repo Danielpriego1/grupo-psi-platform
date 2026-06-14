@@ -427,6 +427,28 @@ const Mantenimiento = () => {
       });
       setStep(4);
       toast.success(`¡Solicitud registrada! Folio ${folio}.`);
+      // Notificación admin (no bloquea)
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "nueva-solicitud-mantenimiento",
+          idempotencyKey: `maintenance-${folio}`,
+          templateData: {
+            folio,
+            contactName: contact.name,
+            contactPhone: contact.phone,
+            contactEmail: contact.email,
+            address,
+            state: selectedState?.name ?? "",
+            municipality: selectedMunicipality?.name ?? "",
+            postalCode: selectedPostalCode,
+            scheduledDate: date ? format(date, "yyyy-MM-dd") : "",
+            timeSlot: slotLabel,
+            totalUnits,
+            additionalNotes: additionalNotes || null,
+            equipmentItems: equipmentItems.map((e: any) => ({ category: e.category, quantity: e.quantity })),
+          },
+        },
+      }).catch((e) => console.warn("notify email failed", e));
     } catch (e: any) {
       console.error("maintenance submit exception", e);
       toast.error(`No se pudo enviar la solicitud: ${e?.message ?? "error desconocido"}. Tus datos siguen aquí.`);
