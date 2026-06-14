@@ -1,0 +1,20 @@
+# Grupo PSI
+
+> Protección industrial certificada en México: extintores, EPP, uniformes, señalización, primeros auxilios y servicios de mantenimiento (recarga, prueba hidrostática, pureza de aire, PosiChek, certificación NOM).
+
+Grupo PSI atiende a más de 500 empresas desde Nacajuca, Tabasco, con cobertura nacional. Todos los precios incluyen IVA. Pedidos mayores a 10 unidades se cotizan por WhatsApp.
+
+## Pages
+
+- [Inicio](/): Catálogo principal y resumen de servicios.
+- [Mantenimiento](/mantenimiento): Solicitud de servicios de recarga, prueba hidrostática, calibración y certificación.
+- [Equipos contra fuego](/categoria/equipos-contra-fuego): Extintores PQS, CO₂ y unidades móviles certificados NOM-154.
+- [EPP](/categoria/epp): Equipo de protección personal industrial.
+- [Uniformes](/categoria/uniformes): Overoles, playeras y uniformes industriales.
+- [Señalización industrial](/categoria/senalizacion-industrial): Señalética NOM para plantas y obras.
+- [Primeros auxilios](/categoria/primeros-auxilios): Botiquines y consumibles de emergencia.
+
+## Optional
+
+- [Privacidad](/privacidad)
+- [Términos](/terminos)
