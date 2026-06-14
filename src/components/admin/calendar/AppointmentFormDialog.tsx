@@ -91,6 +91,31 @@ export function AppointmentFormDialog({ open, onOpenChange, initialDate, editing
       return;
     }
     toast({ title: editing ? "Cita actualizada" : "Cita creada" });
+    if (!editing) {
+      const typeLabels: Record<string, string> = {
+        visit: "Visita", inspection: "Inspección", pickup: "Recolección", meeting: "Reunión",
+      };
+      const clientName = clients.find((c) => c.id === form.client_id)?.company_name ?? "Sin cliente";
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "nueva-cita-agendada",
+          idempotencyKey: `appointment-${scheduled_at}-${form.client_id || form.contact_phone}`,
+          templateData: {
+            appointmentType: typeLabels[form.appointment_type] ?? form.appointment_type,
+            clientName,
+            contactName: form.contact_name,
+            contactPhone: form.contact_phone,
+            scheduledDate: form.scheduled_date,
+            scheduledTime: form.scheduled_time,
+            durationMinutes: Number(form.duration_minutes) || 60,
+            address: form.address,
+            municipality: form.municipality,
+            state: form.state,
+            notes: form.notes,
+          },
+        },
+      }).catch((e) => console.warn("notify email failed", e));
+    }
     onOpenChange(false);
     onSaved?.();
   };
