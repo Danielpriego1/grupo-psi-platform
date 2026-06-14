@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { useInventoryImages } from "@/hooks/useInventoryImages";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -142,8 +143,35 @@ const ProductDetail = () => {
     return mapped.mainCategory;
   })();
 
+  const seoDescription = (product.description || product.name).slice(0, 158);
+  const seoImage = allImages[0]?.startsWith("http") ? allImages[0] : undefined;
+
   return (
     <div className="min-h-screen bg-[#09090b] text-white pt-24 pb-20">
+      <SEO
+        title={`${product.name} | Grupo PSI`}
+        description={seoDescription}
+        path={`/product/${product.id}`}
+        type="product"
+        image={seoImage}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.description || product.name,
+          image: allImages.filter((i) => i && !i.includes("placeholder")),
+          brand: { "@type": "Brand", name: "Grupo PSI" },
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "MXN",
+            price: finalPrice.toFixed(2),
+            availability: product.inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            url: `https://psi-spark-grid.lovable.app/product/${product.id}`,
+          },
+        }}
+      />
       <div className="container mx-auto px-4 max-w-7xl">
         <Link 
           to={`/categoria/${categorySlug}`} 
