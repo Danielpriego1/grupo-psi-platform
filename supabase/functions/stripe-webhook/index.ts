@@ -133,6 +133,30 @@ serve(async (req) => {
           console.warn(`ORPHAN checkout.session.completed: order_number=${orderNumber} session=${session.id}`);
         } else {
           console.log(`Pago confirmado: ${orderNumber} | Session: ${session.id} | matched=${matched}`);
+          // Notificación admin (no bloquea)
+          try {
+            const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+            const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+            const amount = session.amount_total ? (session.amount_total / 100).toLocaleString("es-MX", { style: "currency", currency: (session.currency || "mxn").toUpperCase() }) : "—";
+            await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${svcKey}`, apikey: svcKey },
+              body: JSON.stringify({
+                templateName: "nuevo-pedido-pagado",
+                idempotencyKey: `paid-${session.id}`,
+                templateData: {
+                  orderNumber: orderNumber ?? session.id,
+                  amount,
+                  currency: (session.currency || "MXN").toUpperCase(),
+                  customerName: session.customer_details?.name ?? "Cliente",
+                  customerEmail: session.customer_details?.email ?? "—",
+                  paidAt: new Date().toLocaleString("es-MX"),
+                },
+              }),
+            });
+          } catch (e) {
+            console.warn("notify email failed", (e as Error).message);
+          }
         }
         break;
       }
