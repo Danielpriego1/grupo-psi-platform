@@ -12,3 +12,15 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /portal
+Disallow: /auth
+Disallow: /login
+Disallow: /registro
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /unsubscribe
+Disallow: /ticket
+Disallow: /verificar
+
+Sitemap: https://psi-spark-grid.lovable.app/sitemap.xml

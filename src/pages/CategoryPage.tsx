@@ -3,6 +3,7 @@ import { getCategoryBySlug, mapStaticCategory, mapInventorySubcategory } from "@
 import { products as allStaticProducts, isCatalogReady } from "@/data/products";
 import { useInventoryCatalog } from "@/hooks/useInventoryCatalog";
 import { ProductCard } from "@/components/ProductCard";
+import { SEO } from "@/components/SEO";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
@@ -82,6 +83,18 @@ const CategoryPage = () => {
 
   return (
     <div className="min-h-screen bg-background pt-20 pb-16">
+      <SEO
+        title={`${category.name} | Grupo PSI`}
+        description={category.description}
+        path={`/categoria/${category.slug}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: category.name,
+          description: category.description,
+          url: `https://psi-spark-grid.lovable.app/categoria/${category.slug}`,
+        }}
+      />
       <div className="container mx-auto px-4">
         {/* Back link */}
         <Link
@@ -138,7 +151,7 @@ const CategoryPage = () => {
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] transition-all duration-300">
                         <SIcon className="h-5 w-5" />
                       </div>
-                      <h3 className="text-lg font-bold">{service.label}</h3>
+                      <h2 className="text-lg font-bold">{service.label}</h2>
                     </div>
                     <p className="text-sm text-muted-foreground flex-1 mb-4 line-clamp-2">
                       {service.description}

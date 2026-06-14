@@ -81,22 +81,24 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
               >
                 Protección · Seguridad · Innovación
               </motion.p>
-              <motion.h1
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9, letterSpacing: "0.3em" }}
                 animate={{ opacity: 1, scale: 1, letterSpacing: "0.08em" }}
                 transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
                 className="text-5xl sm:text-7xl lg:text-8xl font-black text-foreground glow-text drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                aria-hidden="true"
               >
                 BIENVENIDO A
-              </motion.h1>
-              <motion.h1
+              </motion.div>
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9, letterSpacing: "0.3em" }}
                 animate={{ opacity: 1, scale: 1, letterSpacing: "0.08em" }}
                 transition={{ duration: 1.2, delay: 0.9, ease: "easeOut" }}
                 className="text-6xl sm:text-8xl lg:text-9xl font-black text-primary glow-text mt-2 drop-shadow-[0_0_50px_rgba(255,100,0,0.4)]"
+                aria-hidden="true"
               >
                 GRUPO PSI
-              </motion.h1>
+              </motion.div>
               <motion.div
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
@@ -242,8 +244,9 @@ export function HeroSection({ onScrollToProducts }: { onScrollToProducts: () => 
                     animate={{ y: [0, 8, 0] }}
                     transition={{ repeat: Infinity, duration: 2 }}
                     className="text-muted-foreground hover:text-primary transition-colors"
+                    aria-label="Desplazarse al catálogo"
                   >
-                    <ArrowDown className="h-6 w-6" />
+                    <ArrowDown className="h-6 w-6" aria-hidden="true" />
                   </motion.button>
                 </motion.div>
               </motion.div>
