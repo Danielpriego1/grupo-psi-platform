@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { mexicoStates, type MexicoState, type Municipality } from "@/data/mexicoLocations";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 
 // ─── ALL SERVICE CATEGORIES ──────────────────────────────────
 const SERVICE_CATEGORIES = [
@@ -543,6 +544,19 @@ const Mantenimiento = () => {
 
   return (
     <div className="min-h-screen bg-background pt-20 pb-16">
+      <SEO
+        title="Mantenimiento Industrial NOM-154 | Grupo PSI"
+        description="Recarga y mantenimiento de extintores, compresores, prueba hidrostática, pureza de aire y PosiChek certificados NOM. Servicio en sitio en todo México."
+        path="/mantenimiento"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: "Mantenimiento Industrial Certificado",
+          provider: { "@type": "Organization", name: "Grupo PSI" },
+          areaServed: "MX",
+          serviceType: "Mantenimiento de equipos contra incendio y aire respirable",
+        }}
+      />
       {/* ─── HERO BANNER ─── */}
       <section className="relative overflow-hidden h-[70vh] min-h-[500px] max-h-[800px] bg-black">
         <img
