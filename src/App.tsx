@@ -46,6 +46,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import AuthCallback from "./pages/auth/Callback";
 import Privacidad from "./pages/Privacidad";
 import Terminos from "./pages/Terminos";
+import Unsubscribe from "./pages/Unsubscribe";
 
 const queryClient = new QueryClient({});
 
@@ -143,6 +144,7 @@ const App = () => (
               {/* Legal */}
               <Route path="/privacidad" element={<Privacidad />} />
               <Route path="/terminos" element={<Terminos />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
 
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
