@@ -1,4 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,6 +126,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "registrar_oportunidad_crm",
+          description:
+            "Registrar un lead u oportunidad de venta en el CRM cuando el cliente expresa interés comercial real: pide cotización, menciona volumen (10+ unidades), solicita visita técnica, requiere especialista, o describe un riesgo/normativa específica. NO usar para preguntas casuales.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Resumen corto, ej: 'Cotización 50 extintores PQS - Pemex Villahermosa'" },
+              contact_name: { type: "string" },
+              contact_phone: { type: "string" },
+              contact_email: { type: "string" },
+              priority_line: {
+                type: "string",
+                description: "Línea de negocio (Extintores, SCBA y equipos de escape rápido, Detectores de gas portátiles y fijos, Pruebas PosiChek, Pruebas hidrostáticas, Pruebas de pureza de aire, Calibraciones, Certificaciones, Uniformes corporativos, Bordado, Equipo de protección personal, Cascadas, Motores aire grado D, Cajas de filtración)",
+              },
+              urgency: { type: "string", enum: ["baja", "media", "alta", "critica"] },
+              estimated_value: { type: "number" },
+              diagnostic_summary: { type: "string", description: "Qué riesgo, actividad, normativa y consecuencias identificaste" },
+              risk_notes: { type: "string" },
+              normativa: { type: "string" },
+              needs_human_escalation: { type: "boolean", description: "true cuando se requiera visita, inspección, prueba especializada o propuesta técnica compleja" },
+              escalation_reason: { type: "string" },
+            },
+            required: ["title"],
+          },
+        },
+      },
+    ];
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -134,8 +167,9 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: apiMessages,
-        max_tokens: 600,
+        max_tokens: 700,
         temperature: 0.6,
+        tools,
       }),
     });
 
@@ -148,10 +182,78 @@ Deno.serve(async (req) => {
     }
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "Intenta de nuevo en un momento.";
+    const choice = data.choices?.[0]?.message;
+    let reply = choice?.content || "";
+    let captured: { id?: string } | null = null;
+
+    // Manejar tool call para capturar lead
+    const toolCalls = choice?.tool_calls ?? [];
+    if (toolCalls.length > 0) {
+      try {
+        const call = toolCalls[0];
+        const args = JSON.parse(call.function.arguments || "{}");
+        const sb = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        );
+
+        let clientId: string | null = null;
+        if (args.contact_email) {
+          const { data: c } = await sb
+            .from("clients")
+            .select("id")
+            .ilike("email", String(args.contact_email).trim())
+            .maybeSingle();
+          clientId = c?.id ?? null;
+        }
+
+        const { data: opp } = await sb
+          .from("crm_opportunities")
+          .insert({
+            title: args.title,
+            client_id: clientId,
+            contact_name: args.contact_name ?? null,
+            contact_phone: args.contact_phone ?? null,
+            contact_email: args.contact_email ?? null,
+            stage: args.needs_human_escalation ? "diagnostico" : "nuevo",
+            source: "chat_sora",
+            priority_line: args.priority_line ?? null,
+            urgency: args.urgency ?? "media",
+            estimated_value: args.estimated_value ?? 0,
+            diagnostic_summary: args.diagnostic_summary ?? null,
+            risk_notes: args.risk_notes ?? null,
+            normativa: args.normativa ?? null,
+            needs_human_escalation: args.needs_human_escalation ?? false,
+            escalation_reason: args.escalation_reason ?? null,
+            created_by_sora: true,
+          })
+          .select("id")
+          .single();
+
+        if (opp) {
+          captured = { id: opp.id };
+          await sb.from("crm_activities").insert({
+            opportunity_id: opp.id,
+            type: "sora_msg",
+            content: args.diagnostic_summary ?? "Oportunidad capturada desde el chat",
+            created_by_sora: true,
+          });
+        }
+
+        if (!reply) {
+          reply = args.needs_human_escalation
+            ? "Perfecto, voy a conectarte con un especialista de Grupo PSI para coordinar la revisión. Te contactamos en breve. 🙌"
+            : "Listo, ya tengo tu solicitud registrada. Un agente te dará seguimiento muy pronto. 🙌";
+        }
+      } catch (err) {
+        console.error("tool capture error", err);
+      }
+    }
+
+    if (!reply) reply = "Intenta de nuevo en un momento.";
 
     return new Response(
-      JSON.stringify({ reply }),
+      JSON.stringify({ reply, lead_captured: !!captured, lead_id: captured?.id ?? null }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
