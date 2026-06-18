@@ -86,6 +86,8 @@ interface ReconcileResult {
 
 export default function AdminPaymentEvents() {
   const qc = useQueryClient();
+  const { isPaymentsAdmin, rolesLoading } = useAuth();
+  const [sendingReport, setSendingReport] = useState(false);
   const [kind, setKind] = useState<"all" | PaymentEventKind>("all");
   const [q, setQ] = useState("");
   const [dateFrom, setDateFrom] = useState<string>("");
