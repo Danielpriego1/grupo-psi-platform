@@ -280,7 +280,7 @@ export function ChatWidget() {
       const historyForApi = updatedMessages
         .filter(m => m.id !== "welcome")
         .slice(-10)
-        .map(m => ({ role: m.role, content: m.content }));
+        .map(m => ({ role: m.role, content: m.content.replace(ORDER_MARKER_RE, "").trim() }));
 
       const { data, error } = await supabase.functions.invoke("sora-chat", {
         body: { messages: historyForApi },
