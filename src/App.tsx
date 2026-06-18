@@ -218,6 +218,7 @@ const App = () => (
                 <Route path="contenido" element={<AdminContent />} />
                 <Route path="auditoria" element={<AdminStripeAudit />} />
                 <Route path="crm" element={<AdminCRM />} />
+                <Route path="payment-events" element={<AdminPaymentEvents />} />
               </Route>
 
               {/* Print view (admin auth required) */}
