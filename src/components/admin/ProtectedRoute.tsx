@@ -20,8 +20,9 @@ export function ProtectedRoute({ children }: AdminProtectedRouteProps) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  // Admin area requires admin or vendor role
-  const hasAdminAccess = roles.includes("admin") || roles.includes("vendor");
+  // Admin area requires admin, superadmin or vendor role
+  const hasAdminAccess =
+    roles.includes("admin") || roles.includes("superadmin") || roles.includes("vendor");
   if (!hasAdminAccess) {
     return <Navigate to="/" replace />;
   }
