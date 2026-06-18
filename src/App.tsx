@@ -36,6 +36,7 @@ import AdminEquipment from "./pages/admin/AdminEquipment";
 import AdminQrPrint from "./pages/admin/AdminQrPrint";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminStripeAudit from "./pages/admin/AdminStripeAudit";
+import AdminCRM from "./pages/admin/AdminCRM";
 import CategoryPage from "./pages/CategoryPage";
 import ServiceDetail from "./pages/ServiceDetail";
 import RastreoMantenimiento from "./pages/RastreoMantenimiento";
@@ -215,6 +216,7 @@ const App = () => (
                 <Route path="equipos" element={<AdminEquipment />} />
                 <Route path="contenido" element={<AdminContent />} />
                 <Route path="auditoria" element={<AdminStripeAudit />} />
+                <Route path="crm" element={<AdminCRM />} />
               </Route>
 
               {/* Print view (admin auth required) */}
