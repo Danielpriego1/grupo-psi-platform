@@ -30,20 +30,45 @@ const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 const MAX_RENDERED_MESSAGES = 60; // virtualize tail; older still kept for context
 const NEAR_BOTTOM_PX = 80;
 
-function renderMarkdown(text: string) {
-  // Split on bold + newlines in a single pass to avoid nested spans
-  const parts = text.split(/(\*\*.*?\*\*)/);
-  const out: React.ReactNode[] = [];
-  parts.forEach((part, idx) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      out.push(<strong key={`b${idx}`}>{part.slice(2, -2)}</strong>);
-      return;
+function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
+  // 1) negritas, 2) links markdown [txt](url), 3) urls sueltas
+  const tokens = text.split(/(\*\*.*?\*\*|\[[^\]]+\]\([^)]+\)|https?:\/\/[^\s)]+)/g);
+  return tokens.map((tok, i) => {
+    if (!tok) return null;
+    if (tok.startsWith("**") && tok.endsWith("**")) {
+      return <strong key={`${keyPrefix}-b${i}`}>{tok.slice(2, -2)}</strong>;
     }
-    const lines = part.split("\n");
-    lines.forEach((line, li) => {
-      if (li > 0) out.push(<br key={`br${idx}-${li}`} />);
-      if (line) out.push(line);
-    });
+    const md = tok.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (md) {
+      return (
+        <a
+          key={`${keyPrefix}-l${i}`}
+          href={md[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 px-3 py-1.5 my-1 rounded-full bg-[#ea580c] text-white font-semibold no-underline hover:bg-[#c2410c] transition"
+        >
+          {md[1]} →
+        </a>
+      );
+    }
+    if (/^https?:\/\//.test(tok)) {
+      return (
+        <a key={`${keyPrefix}-u${i}`} href={tok} target="_blank" rel="noopener noreferrer" className="underline text-[#ffb380] break-all">
+          {tok}
+        </a>
+      );
+    }
+    return <span key={`${keyPrefix}-t${i}`}>{tok}</span>;
+  });
+}
+
+function renderMarkdown(text: string) {
+  const out: React.ReactNode[] = [];
+  const lines = text.split("\n");
+  lines.forEach((line, li) => {
+    if (li > 0) out.push(<br key={`br-${li}`} />);
+    if (line) out.push(...renderInline(line, `l${li}`));
   });
   return out;
 }
