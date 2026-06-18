@@ -47,6 +47,8 @@ import AuthCallback from "./pages/auth/Callback";
 import Privacidad from "./pages/Privacidad";
 import Terminos from "./pages/Terminos";
 import Unsubscribe from "./pages/Unsubscribe";
+import CambiosDevoluciones from "./pages/CambiosDevoluciones";
+import PrivacidadGlobal from "./pages/PrivacidadGlobal";
 
 const queryClient = new QueryClient({});
 
@@ -161,6 +163,30 @@ const App = () => (
                     <Navbar />
                     <CartDrawer />
                     <Terminos />
+                    <Footer />
+                    <ChatWidget />
+                  </>
+                }
+              />
+              <Route
+                path="/cambios-devoluciones"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <CambiosDevoluciones />
+                    <Footer />
+                    <ChatWidget />
+                  </>
+                }
+              />
+              <Route
+                path="/privacidad-global"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <PrivacidadGlobal />
                     <Footer />
                     <ChatWidget />
                   </>
