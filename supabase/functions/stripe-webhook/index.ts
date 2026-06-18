@@ -254,6 +254,21 @@ serve(async (req) => {
           error_message: updateError,
         });
 
+        // CRM: registrar expiración (no cerrar como perdida; el cliente puede retomar)
+        try {
+          const metaOpp = (session.metadata?.opportunity_id as string) || null;
+          const oppId = await resolveOpportunityId(metaOpp, orderNumber);
+          if (oppId) {
+            await logCrmActivity(
+              oppId,
+              `⌛ Sesión de pago expirada — Orden ${orderNumber ?? session.id}. Requiere seguimiento.`,
+              { order_number: orderNumber, stripe_session_id: session.id, event: "expired" },
+            );
+          }
+        } catch (e) {
+          console.warn("crm sync (expired) failed", (e as Error).message);
+        }
+
         console.log(`Sesion expirada: ${orderNumber}`);
         break;
       }
