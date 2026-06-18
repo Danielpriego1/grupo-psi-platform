@@ -183,6 +183,10 @@ export function OpportunityDetail({ opp, onClose }: Props) {
 
             <Separator />
 
+            <PaymentEventsSection activities={activities.data ?? []} />
+
+            <Separator />
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-[11px] uppercase text-muted-foreground font-semibold">Bitácora</Label>
