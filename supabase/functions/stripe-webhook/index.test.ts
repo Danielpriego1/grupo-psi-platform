@@ -37,9 +37,6 @@ const ENV_READY =
   Boolean(SUPABASE_URL) && Boolean(WEBHOOK_SECRET) && Boolean(DB_URL);
 
 const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/stripe-webhook`;
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "sk_test_dummy", {
-  apiVersion: "2024-06-20",
-});
 
 /** Build a Stripe.Event envelope around a `data.object`. */
 function buildEvent(type: string, object: Record<string, unknown>) {
@@ -56,14 +53,29 @@ function buildEvent(type: string, object: Record<string, unknown>) {
   };
 }
 
+/** Compute a Stripe-compatible `stripe-signature` header using WebCrypto. */
+async function signPayload(payload: string, secret: string): Promise<string> {
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(`${ts}.${payload}`));
+  const hex = Array.from(new Uint8Array(sigBuf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `t=${ts},v1=${hex}`;
+}
+
 /** POST a Stripe event to the deployed webhook, signed like Stripe CLI does. */
 async function postEvent(type: string, object: Record<string, unknown>) {
   const event = buildEvent(type, object);
   const payload = JSON.stringify(event);
-  const signature = stripe.webhooks.generateTestHeaderString({
-    payload,
-    secret: WEBHOOK_SECRET,
-  });
+  const signature = await signPayload(payload, WEBHOOK_SECRET);
   const res = await fetch(WEBHOOK_URL, {
     method: "POST",
     headers: {
