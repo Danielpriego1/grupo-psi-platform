@@ -317,7 +317,7 @@ serve(async (req) => {
             await logCrmActivity(
               oppId,
               `❌ Pago rechazado — Orden ${orderNumber ?? paymentIntent.id}. Motivo: ${errMsg}`,
-              { order_number: orderNumber, payment_intent: paymentIntent.id, event: "payment_failed", reason: errMsg },
+              { event_kind: "failed", order_number: orderNumber, payment_intent: paymentIntent.id, reason: errMsg },
             );
           }
         } catch (e) {
