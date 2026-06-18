@@ -112,8 +112,10 @@ serve(async (req) => {
         const nullIfEmpty = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : null);
         const orderNumber = nullIfEmpty(session.metadata?.order_number);
         const orderId = nullIfEmpty(session.metadata?.order_id);
+        const metaOppId = nullIfEmpty(session.metadata?.opportunity_id);
         const paymentIntentId = nullIfEmpty(session.payment_intent as string);
         const ticketToken = crypto.randomUUID();
+        const amountTotal = session.amount_total ? session.amount_total / 100 : null;
 
         const updates = {
           status: "confirmed" as const,
