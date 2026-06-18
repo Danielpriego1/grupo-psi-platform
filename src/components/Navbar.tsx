@@ -1,10 +1,23 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Wrench, Menu, X } from "lucide-react";
+import { ShoppingCart, Wrench, Menu, X, ChevronDown, Scale, ShieldCheck, RefreshCw, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "./ThemeToggle";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
+
+const legalLinks = [
+  { to: "/terminos", label: "Términos y Condiciones", icon: Scale },
+  { to: "/privacidad", label: "Aviso de Privacidad", icon: ShieldCheck },
+  { to: "/cambios-devoluciones", label: "Cambios y Devoluciones", icon: RefreshCw },
+  { to: "/privacidad-global", label: "Privacidad Global", icon: Globe },
+];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -39,6 +52,30 @@ export function Navbar() {
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
+
+          {/* Legal dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1 text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all duration-300">
+                Legal
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {legalLinks.map((link) => (
+                <DropdownMenuItem key={link.to} asChild>
+                  <Link
+                    to={link.to}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <link.icon className="h-4 w-4 text-muted-foreground" />
+                    {link.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <ThemeToggle />
           <Button variant="outline" size="icon" className="relative" onClick={() => setIsOpen(true)}>
             <ShoppingCart className="h-4 w-4" />
@@ -85,6 +122,20 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <div className="border-t border-border/40 pt-3 mt-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Legal</p>
+              {legalLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </nav>
         </div>
       )}
