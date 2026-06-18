@@ -1120,6 +1120,12 @@ export type Database = {
         Returns: string
       }
       generate_maintenance_tracking_code: { Args: never; Returns: string }
+      get_admin_recipient_emails: {
+        Args: never
+        Returns: {
+          email: string
+        }[]
+      }
       get_certificate_by_qr: {
         Args: { _token: string }
         Returns: {
