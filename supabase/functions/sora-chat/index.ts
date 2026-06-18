@@ -217,76 +217,143 @@ Deno.serve(async (req) => {
     const choice = data.choices?.[0]?.message;
     let reply = choice?.content || "";
     let captured: { id?: string } | null = null;
+    let checkout: { url: string; order_number: string; total: number } | null = null;
 
-    // Manejar tool call para capturar lead
     const toolCalls = choice?.tool_calls ?? [];
     if (toolCalls.length > 0) {
-      try {
-        const call = toolCalls[0];
-        const args = JSON.parse(call.function.arguments || "{}");
-        const sb = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-        );
+      const sb = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
 
-        let clientId: string | null = null;
-        if (args.contact_email) {
-          const { data: c } = await sb
-            .from("clients")
-            .select("id")
-            .ilike("email", String(args.contact_email).trim())
-            .maybeSingle();
-          clientId = c?.id ?? null;
+      for (const call of toolCalls) {
+        try {
+          const fnName = call.function?.name;
+          const args = JSON.parse(call.function?.arguments || "{}");
+
+          if (fnName === "registrar_oportunidad_crm") {
+            let clientId: string | null = null;
+            if (args.contact_email) {
+              const { data: c } = await sb
+                .from("clients")
+                .select("id")
+                .ilike("email", String(args.contact_email).trim())
+                .maybeSingle();
+              clientId = c?.id ?? null;
+            }
+            const { data: opp } = await sb
+              .from("crm_opportunities")
+              .insert({
+                title: args.title,
+                client_id: clientId,
+                contact_name: args.contact_name ?? null,
+                contact_phone: args.contact_phone ?? null,
+                contact_email: args.contact_email ?? null,
+                stage: args.needs_human_escalation ? "diagnostico" : "nuevo",
+                source: "chat_sora",
+                priority_line: args.priority_line ?? null,
+                urgency: args.urgency ?? "media",
+                estimated_value: args.estimated_value ?? 0,
+                diagnostic_summary: args.diagnostic_summary ?? null,
+                risk_notes: args.risk_notes ?? null,
+                normativa: args.normativa ?? null,
+                needs_human_escalation: args.needs_human_escalation ?? false,
+                escalation_reason: args.escalation_reason ?? null,
+                created_by_sora: true,
+              })
+              .select("id")
+              .single();
+
+            if (opp) {
+              captured = { id: opp.id };
+              await sb.from("crm_activities").insert({
+                opportunity_id: opp.id,
+                type: "sora_msg",
+                content: args.diagnostic_summary ?? "Oportunidad capturada desde el chat",
+                created_by_sora: true,
+              });
+            }
+          }
+
+          if (fnName === "cerrar_venta_y_cobrar") {
+            const items = (args.items || []).filter(
+              (i: any) => i?.name && i?.unit_amount_mxn > 0 && i?.quantity > 0,
+            );
+            if (items.length === 0) continue;
+
+            // Si hay oportunidad recién capturada, ligarla
+            let oppId: string | null = captured?.id ?? null;
+            if (!oppId && args.contact_email) {
+              const { data: o } = await sb
+                .from("crm_opportunities")
+                .select("id")
+                .ilike("contact_email", args.contact_email)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              oppId = o?.id ?? null;
+            }
+
+            // Llamar al edge function sora-checkout internamente
+            const checkoutResp = await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/sora-checkout`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                  origin: req.headers.get("origin") || "",
+                },
+                body: JSON.stringify({
+                  items,
+                  contact_name: args.contact_name,
+                  contact_email: args.contact_email,
+                  contact_phone: args.contact_phone,
+                  notes: args.notes,
+                  opportunity_id: oppId,
+                }),
+              },
+            );
+            const co = await checkoutResp.json();
+            if (checkoutResp.ok && co.url) {
+              checkout = { url: co.url, order_number: co.order_number, total: co.total };
+              const lines = items
+                .map(
+                  (i: any) =>
+                    `• ${i.quantity} × ${i.name} — $${(i.unit_amount_mxn * i.quantity).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`,
+                )
+                .join("\n");
+              const totalFmt = co.total.toLocaleString("es-MX", { minimumFractionDigits: 2 });
+              reply = `${reply ? reply + "\n\n" : ""}**Resumen de tu pedido** (${co.order_number}):\n${lines}\n\n**Total: $${totalFmt} MXN** (IVA incluido)\n\n💳 [Paga seguro aquí con tarjeta](${co.url})\n\nEn cuanto se confirme el pago coordinamos la entrega. 🙌`;
+            } else {
+              console.error("sora-checkout error", co);
+              reply = (reply || "") + "\n\nNo pude generar el link de pago en este momento. Te conecto con un agente para finalizar.";
+            }
+          }
+        } catch (err) {
+          console.error("tool call error", err);
         }
-
-        const { data: opp } = await sb
-          .from("crm_opportunities")
-          .insert({
-            title: args.title,
-            client_id: clientId,
-            contact_name: args.contact_name ?? null,
-            contact_phone: args.contact_phone ?? null,
-            contact_email: args.contact_email ?? null,
-            stage: args.needs_human_escalation ? "diagnostico" : "nuevo",
-            source: "chat_sora",
-            priority_line: args.priority_line ?? null,
-            urgency: args.urgency ?? "media",
-            estimated_value: args.estimated_value ?? 0,
-            diagnostic_summary: args.diagnostic_summary ?? null,
-            risk_notes: args.risk_notes ?? null,
-            normativa: args.normativa ?? null,
-            needs_human_escalation: args.needs_human_escalation ?? false,
-            escalation_reason: args.escalation_reason ?? null,
-            created_by_sora: true,
-          })
-          .select("id")
-          .single();
-
-        if (opp) {
-          captured = { id: opp.id };
-          await sb.from("crm_activities").insert({
-            opportunity_id: opp.id,
-            type: "sora_msg",
-            content: args.diagnostic_summary ?? "Oportunidad capturada desde el chat",
-            created_by_sora: true,
-          });
-        }
-
-        if (!reply) {
-          reply = args.needs_human_escalation
-            ? "Perfecto, voy a conectarte con un especialista de Grupo PSI para coordinar la revisión. Te contactamos en breve. 🙌"
-            : "Listo, ya tengo tu solicitud registrada. Un agente te dará seguimiento muy pronto. 🙌";
-        }
-      } catch (err) {
-        console.error("tool capture error", err);
       }
     }
 
-    if (!reply) reply = "Intenta de nuevo en un momento.";
+    if (!reply) {
+      reply = captured
+        ? (captured.id
+            ? "Listo, ya tengo tu solicitud registrada. Un agente te dará seguimiento muy pronto. 🙌"
+            : "Intenta de nuevo en un momento.")
+        : "Intenta de nuevo en un momento.";
+    }
 
     return new Response(
-      JSON.stringify({ reply, lead_captured: !!captured, lead_id: captured?.id ?? null }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        reply,
+        lead_captured: !!captured,
+        lead_id: captured?.id ?? null,
+        checkout_url: checkout?.url ?? null,
+        order_number: checkout?.order_number ?? null,
+        total: checkout?.total ?? null,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
     console.error("Sora chat error:", error);
