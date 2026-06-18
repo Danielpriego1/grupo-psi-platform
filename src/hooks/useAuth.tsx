@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "admin" | "vendor" | "tecnico" | "client";
+type AppRole = "admin" | "superadmin" | "vendor" | "tecnico" | "client";
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +13,8 @@ interface AuthContextType {
   roles: AppRole[];
   hasRole: (role: AppRole) => boolean;
   isAdmin: boolean;
+  isSuperadmin: boolean;
+  isPaymentsAdmin: boolean;
   isTecnico: boolean;
   isClient: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -118,6 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roles,
         hasRole,
         isAdmin: roles.includes("admin"),
+        isSuperadmin: roles.includes("superadmin"),
+        isPaymentsAdmin: roles.includes("admin") || roles.includes("superadmin"),
         isTecnico: roles.includes("tecnico"),
         isClient: roles.includes("client"),
         signIn,

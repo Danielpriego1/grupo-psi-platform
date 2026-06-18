@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireRole } from "../_shared/admin-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,30 +24,19 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   if (!stripeKey) return new Response("STRIPE_SECRET_KEY no configurada", { status: 500, headers: corsHeaders });
 
-  // Auth: require admin
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-  const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data: userData, error: userErr } = await userClient.auth.getUser();
-  if (userErr || !userData.user) {
-    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  // Auth: require admin or superadmin
+  const auth = await requireRole(req, ["admin", "superadmin"]);
+  if (!auth.ok) {
+    return new Response(
+      JSON.stringify({ error: auth.error ?? "unauthorized" }),
+      { status: auth.status ?? 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
-  const { data: isAdmin } = await supabase.rpc("has_role", {
-    _user_id: userData.user.id,
-    _role: "admin",
-  });
-  if (!isAdmin) {
-    return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
+
 
   let body: { since?: string; until?: string; dry_run?: boolean } = {};
   try {

@@ -1120,6 +1120,12 @@ export type Database = {
         Returns: string
       }
       generate_maintenance_tracking_code: { Args: never; Returns: string }
+      get_admin_recipient_emails: {
+        Args: never
+        Returns: {
+          email: string
+        }[]
+      }
       get_certificate_by_qr: {
         Args: { _token: string }
         Returns: {
@@ -1198,7 +1204,13 @@ export type Database = {
       user_owns_client: { Args: { _client_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "technician" | "vendor" | "tecnico" | "client"
+      app_role:
+        | "admin"
+        | "technician"
+        | "vendor"
+        | "tecnico"
+        | "client"
+        | "superadmin"
       appointment_status:
         | "scheduled"
         | "confirmed"
@@ -1387,7 +1399,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "technician", "vendor", "tecnico", "client"],
+      app_role: [
+        "admin",
+        "technician",
+        "vendor",
+        "tecnico",
+        "client",
+        "superadmin",
+      ],
       appointment_status: [
         "scheduled",
         "confirmed",

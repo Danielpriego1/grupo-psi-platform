@@ -24,9 +24,12 @@ import {
   ChevronRight,
   RefreshCw,
   ChevronDown,
+  Mail,
+  Lock,
 } from "lucide-react";
 import type { PaymentEventKind } from "@/hooks/useCrm";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Row {
   id: string;
@@ -83,6 +86,8 @@ interface ReconcileResult {
 
 export default function AdminPaymentEvents() {
   const qc = useQueryClient();
+  const { isPaymentsAdmin, rolesLoading } = useAuth();
+  const [sendingReport, setSendingReport] = useState(false);
   const [kind, setKind] = useState<"all" | PaymentEventKind>("all");
   const [q, setQ] = useState("");
   const [dateFrom, setDateFrom] = useState<string>("");
@@ -262,6 +267,25 @@ export default function AdminPaymentEvents() {
     }
   };
 
+  const sendDailyReportNow = async () => {
+    setSendingReport(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("export-payment-events-csv", {
+        body: {},
+      });
+      if (error) throw error;
+      const result = data as { recipients: Array<{ email: string; ok: boolean }>; total: number };
+      const okCount = result.recipients.filter((r) => r.ok).length;
+      toast.success(
+        `Reporte enviado a ${okCount}/${result.recipients.length} admins (${result.total} eventos).`,
+      );
+    } catch (e) {
+      toast.error("No se pudo enviar el reporte: " + (e as Error).message);
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -323,12 +347,33 @@ export default function AdminPaymentEvents() {
           <Label className="text-xs text-muted-foreground">Hasta</Label>
           <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
         </div>
-        <Button onClick={handleExport} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> CSV
-        </Button>
+        {isPaymentsAdmin ? (
+          <>
+            <Button onClick={handleExport} variant="outline" className="gap-2">
+              <Download className="w-4 h-4" /> CSV
+            </Button>
+            <Button
+              onClick={sendDailyReportNow}
+              disabled={sendingReport || rolesLoading}
+              variant="outline"
+              className="gap-2"
+            >
+              <Mail className="w-4 h-4" /> {sendingReport ? "Enviando…" : "Enviar reporte"}
+            </Button>
+          </>
+        ) : (
+          !rolesLoading && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground border border-dashed border-border rounded-md px-3 py-2">
+              <Lock className="w-3 h-3" />
+              Solo admin/superadmin pueden exportar o enviar reportes.
+            </div>
+          )
+        )}
       </div>
 
-      <Collapsible className="rounded-lg border border-border bg-muted/10">
+      {isPaymentsAdmin && (
+        <Collapsible className="rounded-lg border border-border bg-muted/10">
+
         <CollapsibleTrigger className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition">
           <div className="flex items-center gap-2">
             <RefreshCw className="w-4 h-4 text-primary" />
@@ -408,6 +453,7 @@ export default function AdminPaymentEvents() {
           )}
         </CollapsibleContent>
       </Collapsible>
+      )}
 
       <div className="rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
