@@ -453,6 +453,7 @@ export default function AdminPaymentEvents() {
           )}
         </CollapsibleContent>
       </Collapsible>
+      )}
 
       <div className="rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
