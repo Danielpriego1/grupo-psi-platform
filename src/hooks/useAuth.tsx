@@ -114,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         loading,
+        rolesLoading,
         roles,
         hasRole,
         isAdmin: roles.includes("admin"),
