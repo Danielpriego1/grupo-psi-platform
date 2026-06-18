@@ -17,6 +17,7 @@ import {
   Sparkles,
   ShieldCheck,
   Target,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
