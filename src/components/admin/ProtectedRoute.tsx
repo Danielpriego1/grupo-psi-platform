@@ -6,9 +6,9 @@ interface AdminProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: AdminProtectedRouteProps) {
-  const { user, loading, roles } = useAuth();
+  const { user, loading, rolesLoading, roles } = useAuth();
 
-  if (loading) {
+  if (loading || (user && rolesLoading)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
