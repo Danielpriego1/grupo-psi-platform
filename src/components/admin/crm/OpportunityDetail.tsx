@@ -11,7 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
+  CrmActivity,
   CrmOpportunity,
+  PaymentEventKind,
   STAGE_META,
   URGENCY_META,
   useActivities,
