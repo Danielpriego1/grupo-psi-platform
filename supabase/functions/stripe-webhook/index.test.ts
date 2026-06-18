@@ -21,7 +21,6 @@ import {
   assert,
   assertEquals,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
 import { Client as PgClient } from "https://deno.land/x/postgres@v0.19.3/mod.ts";
 
 const SUPABASE_URL =
