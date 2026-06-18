@@ -120,6 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roles,
         hasRole,
         isAdmin: roles.includes("admin"),
+        isSuperadmin: roles.includes("superadmin"),
+        isPaymentsAdmin: roles.includes("admin") || roles.includes("superadmin"),
         isTecnico: roles.includes("tecnico"),
         isClient: roles.includes("client"),
         signIn,
