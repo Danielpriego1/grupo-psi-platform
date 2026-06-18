@@ -267,6 +267,25 @@ export default function AdminPaymentEvents() {
     }
   };
 
+  const sendDailyReportNow = async () => {
+    setSendingReport(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("export-payment-events-csv", {
+        body: {},
+      });
+      if (error) throw error;
+      const result = data as { recipients: Array<{ email: string; ok: boolean }>; total: number };
+      const okCount = result.recipients.filter((r) => r.ok).length;
+      toast.success(
+        `Reporte enviado a ${okCount}/${result.recipients.length} admins (${result.total} eventos).`,
+      );
+    } catch (e) {
+      toast.error("No se pudo enviar el reporte: " + (e as Error).message);
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
