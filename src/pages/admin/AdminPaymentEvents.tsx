@@ -24,9 +24,12 @@ import {
   ChevronRight,
   RefreshCw,
   ChevronDown,
+  Mail,
+  Lock,
 } from "lucide-react";
 import type { PaymentEventKind } from "@/hooks/useCrm";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Row {
   id: string;
