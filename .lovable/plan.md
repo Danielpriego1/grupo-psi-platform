@@ -1,36 +1,32 @@
-- Problema
+## Objetivo
+Cuando Sora cierra una venta, mostrar dentro del chat una tarjeta visual con: número de orden, líneas del pedido, total con IVA, y un botón naranja grande que abra Stripe Checkout en una nueva pestaña.
 
-En `/mantenimiento`, al tocar una tarjeta de servicio (Extintores, Compresores, etc.):
+Hoy la respuesta ya genera `checkout_url`, `order_number` y `total` desde `sora-chat`, pero en el chat sólo aparece un pequeño pill markdown. Vamos a renderizar una tarjeta dedicada.
 
-La página **no hace scroll** al panel de detalles, así que en móvil parece que no pasa nada.
+## Cambios
 
-- Al terminar de leer los detalles **no hay forma rápida de volver** al servico solicitado
+### 1. `supabase/functions/sora-chat/index.ts`
+- Quitar el bloque markdown `[Paga seguro aquí…](url)` del `reply` para evitar duplicar el botón.
+- Adjuntar al texto un marcador estructurado al final del mensaje:
+  `\n\n<!--ORDER:{"order_number":"SOR-…","total":1234.56,"url":"https://checkout.stripe.com/…","items":[{"name":"…","quantity":2,"unit_amount_mxn":500}]}-->`
+- Seguir devolviendo `checkout_url`, `order_number`, `total` en el JSON (sin cambios).
 
-## Cambios (solo `src/pages/Mantenimiento.tsx`)
+### 2. `src/components/ChatWidget.tsx`
+- Extender `Message` con `order?: { order_number, total, url, items }`.
+- Al recibir la respuesta del edge, si trae `checkout_url`, parsear el marcador `<!--ORDER:…-->`, removerlo del `content`, y guardar el objeto en `msg.order`.
+- En `MessageBubble`, si `msg.order` existe, renderizar bajo el texto una tarjeta:
+  - Encabezado: "Resumen de tu pedido" + chip con `order_number`.
+  - Lista de items: `qty × nombre` … `$subtotal`.
+  - Separador y fila **Total $X MXN (IVA incluido)**.
+  - Botón `<a>` grande, full-width, color naranja (`bg-[#ea580c] hover:bg-[#c2410c]`), texto blanco semibold, ícono de candado/tarjeta, `target="_blank" rel="noopener noreferrer"` apuntando a la URL de Stripe. Texto: "Pagar ahora con tarjeta — $X MXN".
+  - Pie pequeño: "Pago seguro procesado por Stripe".
+- Estilo coherente con la burbuja del asistente (fondo `bg-white/10` con borde, esquinas redondeadas).
 
-### 1. Auto-scroll al abrir un servicio
+### Notas técnicas
+- El marcador HTML-comentario es ignorado por `renderMarkdown` (ya filtramos antes de renderizar), así no se ve en el texto.
+- Mantener el link markdown como fallback solo si el parseo falla.
+- No tocar `sora-checkout` ni el esquema de DB.
 
-- Añadir `id="service-detail"` a la `<section>` del detalle expandido (línea ~599).
-- En `toggleService(id)`, tras expandir un servicio:
-  ```ts
-  setTimeout(() => {
-    document.getElementById("service-detail")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 120);
-  ```
-- Si el usuario toca la misma tarjeta para **cerrar**, hacer auto-scroll a la ficha de servicio que seleccionó (`id="servicio-${id}"` en cada `<button>`).
-
-### 2. Botón "Volver a servicios"
-
-- Añadir un botón tipo `ghost` dentro de la tarjeta de detalle (debajo de la descripción o junto a los CTA).
-- Al hacer click:
-  - `setExpandedService(null)`
-  - Luego `scrollIntoView({ behavior: "smooth", block: "start" })` hacia el contenedor del grid (`id="servicios-grid"`).
-
-### 3. Identificadores para navegación
-
-- Añadir `id="servicios-grid"` al `<div className="grid ...">` de las tarjetas para que el scroll de regreso las posicione correctamente debajo del header sticky.
-
-## No se modifica
-
-- Contenido de los servicios, flujo de agendamiento, ni lógica de cotización.
+## Archivos
+- `supabase/functions/sora-chat/index.ts` (editar formato del reply)
+- `src/components/ChatWidget.tsx` (parsear marcador + tarjeta + botón)
