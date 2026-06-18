@@ -262,7 +262,7 @@ serve(async (req) => {
             await logCrmActivity(
               oppId,
               `⌛ Sesión de pago expirada — Orden ${orderNumber ?? session.id}. Requiere seguimiento.`,
-              { order_number: orderNumber, stripe_session_id: session.id, event: "expired" },
+              { event_kind: "expired", order_number: orderNumber, stripe_session_id: session.id },
             );
           }
         } catch (e) {
