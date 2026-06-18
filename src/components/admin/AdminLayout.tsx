@@ -16,12 +16,14 @@ import {
   QrCode,
   Sparkles,
   ShieldCheck,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
+  { label: "CRM Ventas", icon: Target, path: "/admin/crm" },
   { label: "Calendario", icon: CalendarDays, path: "/admin/calendario" },
   { label: "Pedidos", icon: ShoppingCart, path: "/admin/orders" },
   { label: "Mantenimiento", icon: Wrench, path: "/admin/maintenance" },

@@ -278,6 +278,199 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_activities: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          created_by_sora: boolean
+          id: string
+          metadata: Json | null
+          opportunity_id: string
+          type: Database["public"]["Enums"]["crm_activity_type"]
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          created_by_sora?: boolean
+          id?: string
+          metadata?: Json | null
+          opportunity_id: string
+          type?: Database["public"]["Enums"]["crm_activity_type"]
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_sora?: boolean
+          id?: string
+          metadata?: Json | null
+          opportunity_id?: string
+          type?: Database["public"]["Enums"]["crm_activity_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "crm_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_opportunities: {
+        Row: {
+          assigned_to: string | null
+          client_id: string | null
+          closed_at: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by_sora: boolean
+          diagnostic_summary: string | null
+          escalation_reason: string | null
+          estimated_value: number | null
+          id: string
+          lost_reason: string | null
+          needs_human_escalation: boolean
+          next_action_at: string | null
+          normativa: string | null
+          priority_line: string | null
+          risk_notes: string | null
+          source: Database["public"]["Enums"]["crm_source"]
+          source_ref: string | null
+          stage: Database["public"]["Enums"]["crm_stage"]
+          title: string
+          updated_at: string
+          urgency: Database["public"]["Enums"]["crm_urgency"]
+          won_amount: number | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id?: string | null
+          closed_at?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by_sora?: boolean
+          diagnostic_summary?: string | null
+          escalation_reason?: string | null
+          estimated_value?: number | null
+          id?: string
+          lost_reason?: string | null
+          needs_human_escalation?: boolean
+          next_action_at?: string | null
+          normativa?: string | null
+          priority_line?: string | null
+          risk_notes?: string | null
+          source?: Database["public"]["Enums"]["crm_source"]
+          source_ref?: string | null
+          stage?: Database["public"]["Enums"]["crm_stage"]
+          title: string
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["crm_urgency"]
+          won_amount?: number | null
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string | null
+          closed_at?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by_sora?: boolean
+          diagnostic_summary?: string | null
+          escalation_reason?: string | null
+          estimated_value?: number | null
+          id?: string
+          lost_reason?: string | null
+          needs_human_escalation?: boolean
+          next_action_at?: string | null
+          normativa?: string | null
+          priority_line?: string | null
+          risk_notes?: string | null
+          source?: Database["public"]["Enums"]["crm_source"]
+          source_ref?: string | null
+          stage?: Database["public"]["Enums"]["crm_stage"]
+          title?: string
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["crm_urgency"]
+          won_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_tasks: {
+        Row: {
+          assigned_to: string | null
+          client_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_at: string | null
+          id: string
+          opportunity_id: string | null
+          status: Database["public"]["Enums"]["crm_task_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          opportunity_id?: string | null
+          status?: Database["public"]["Enums"]["crm_task_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          opportunity_id?: string | null
+          status?: Database["public"]["Enums"]["crm_task_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "crm_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deliveries: {
         Row: {
           assigned_driver: string | null
@@ -907,6 +1100,7 @@ export type Database = {
         }
         Returns: Json
       }
+      crm_mark_overdue_tasks: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1020,6 +1214,31 @@ export type Database = {
         | "pureza_aire"
         | "posichek"
       certificate_status: "vigente" | "por_vencer" | "vencido" | "revocado"
+      crm_activity_type:
+        | "nota"
+        | "llamada"
+        | "email"
+        | "whatsapp"
+        | "visita"
+        | "sora_msg"
+        | "escalamiento"
+        | "cambio_etapa"
+        | "tarea"
+      crm_source:
+        | "chat_sora"
+        | "cotizacion"
+        | "mantenimiento"
+        | "manual"
+        | "web"
+      crm_stage:
+        | "nuevo"
+        | "diagnostico"
+        | "cotizado"
+        | "negociacion"
+        | "ganado"
+        | "perdido"
+      crm_task_status: "pendiente" | "completada" | "vencida" | "cancelada"
+      crm_urgency: "baja" | "media" | "alta" | "critica"
       delivery_status:
         | "pending"
         | "assigned"
@@ -1185,6 +1404,28 @@ export const Constants = {
         "posichek",
       ],
       certificate_status: ["vigente", "por_vencer", "vencido", "revocado"],
+      crm_activity_type: [
+        "nota",
+        "llamada",
+        "email",
+        "whatsapp",
+        "visita",
+        "sora_msg",
+        "escalamiento",
+        "cambio_etapa",
+        "tarea",
+      ],
+      crm_source: ["chat_sora", "cotizacion", "mantenimiento", "manual", "web"],
+      crm_stage: [
+        "nuevo",
+        "diagnostico",
+        "cotizado",
+        "negociacion",
+        "ganado",
+        "perdido",
+      ],
+      crm_task_status: ["pendiente", "completada", "vencida", "cancelada"],
+      crm_urgency: ["baja", "media", "alta", "critica"],
       delivery_status: [
         "pending",
         "assigned",
