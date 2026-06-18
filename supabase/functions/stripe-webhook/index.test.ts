@@ -116,12 +116,18 @@ async function seedFixture() {
 }
 
 async function cleanupFixture(orderNumber: string, opportunityId: string) {
-  await withDb(async (db) => {
-    await db.queryArray`DELETE FROM public.crm_activities WHERE opportunity_id = ${opportunityId}`;
-    await db.queryArray`DELETE FROM public.crm_opportunities WHERE id = ${opportunityId}`;
-    await db.queryArray`DELETE FROM public.orders WHERE order_number = ${orderNumber}`;
-    await db.queryArray`DELETE FROM public.stripe_webhook_events WHERE order_number = ${orderNumber}`;
-  });
+  try {
+    await withDb(async (db) => {
+      await db.queryArray`DELETE FROM public.crm_activities WHERE opportunity_id = ${opportunityId}`;
+      await db.queryArray`DELETE FROM public.crm_opportunities WHERE id = ${opportunityId}`;
+      await db.queryArray`DELETE FROM public.orders WHERE order_number = ${orderNumber}`;
+      await db.queryArray`DELETE FROM public.stripe_webhook_events WHERE order_number = ${orderNumber}`;
+    });
+  } catch (e) {
+    // Best-effort: el rol del sandbox puede no tener DELETE; no enmascarar
+    // fallas reales del test si el cleanup no puede ejecutarse.
+    console.error("cleanup (best-effort) failed:", (e as Error).message);
+  }
 }
 
 interface OrderRow {
