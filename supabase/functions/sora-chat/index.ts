@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
         function: {
           name: "registrar_oportunidad_crm",
           description:
-            "Registrar un lead u oportunidad de venta en el CRM cuando el cliente expresa interés comercial real: pide cotización, menciona volumen (10+ unidades), solicita visita técnica, requiere especialista, o describe un riesgo/normativa específica. NO usar para preguntas casuales.",
+            "Registrar un lead u oportunidad de venta en el CRM cuando el cliente expresa interés comercial real: pide cotización, menciona volumen (10+ unidades), solicita visita técnica, requiere especialista, o describe un riesgo/normativa específica. NO usar para preguntas casuales ni cuando ya estás cerrando la venta con cerrar_venta_y_cobrar.",
           parameters: {
             type: "object",
             properties: {
@@ -153,6 +153,38 @@ Deno.serve(async (req) => {
               escalation_reason: { type: "string" },
             },
             required: ["title"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "cerrar_venta_y_cobrar",
+          description:
+            "Cerrar una venta cuando el cliente ya confirmó qué quiere comprar y cuántos. Genera un link de pago seguro de Stripe con el total. Úsalo solo cuando: (1) tienes lista clara de productos con cantidad, (2) cada producto tiene precio confirmado (usa los precios IVA incluido del catálogo), (3) NO son 10+ unidades de un mismo SKU (eso requiere cotización humana). Después de llamarlo, comparte el link de pago y el total con el cliente.",
+          parameters: {
+            type: "object",
+            properties: {
+              items: {
+                type: "array",
+                description: "Productos a cobrar",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string", description: "Nombre del producto (ej. 'Extintor PQS ABC 6 kg')" },
+                    description: { type: "string" },
+                    unit_amount_mxn: { type: "number", description: "Precio unitario en MXN, IVA incluido" },
+                    quantity: { type: "integer", minimum: 1 },
+                  },
+                  required: ["name", "unit_amount_mxn", "quantity"],
+                },
+              },
+              contact_name: { type: "string" },
+              contact_email: { type: "string" },
+              contact_phone: { type: "string" },
+              notes: { type: "string" },
+            },
+            required: ["items"],
           },
         },
       },
