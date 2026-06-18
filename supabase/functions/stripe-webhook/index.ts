@@ -187,7 +187,7 @@ serve(async (req) => {
                 `✅ Pago confirmado — Orden ${orderNumber ?? session.id}${
                   amountTotal != null ? ` — $${amountTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })} MXN` : ""
                 }`,
-                { order_number: orderNumber, stripe_session_id: session.id, payment_intent: paymentIntentId },
+                { event_kind: "paid", order_number: orderNumber, amount: amountTotal, currency: (session.currency || "mxn").toUpperCase(), stripe_session_id: session.id, payment_intent: paymentIntentId, ticket_token: ticketToken },
               );
               console.log(`CRM oportunidad ${oppId} marcada como ganada`);
             } else {
