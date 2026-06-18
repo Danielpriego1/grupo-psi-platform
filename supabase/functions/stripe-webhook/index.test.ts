@@ -351,7 +351,7 @@ Deno.test({
       };
       const event = buildEvent("checkout.session.completed", session);
       const payload = JSON.stringify(event);
-      const signature = stripe.webhooks.generateTestHeaderString({ payload, secret: WEBHOOK_SECRET });
+      const signature = await signPayload(payload, WEBHOOK_SECRET);
       const headers = { "Content-Type": "application/json", "stripe-signature": signature, apikey: ANON_KEY };
 
       const first = await fetch(WEBHOOK_URL, { method: "POST", headers, body: payload });
