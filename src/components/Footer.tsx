@@ -59,8 +59,12 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-border/30 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Grupo Psi. Todos los derechos reservados.
+        <div className="mt-12 pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <span>© {new Date().getFullYear()} Grupo Psi. Todos los derechos reservados.</span>
+          <div className="flex gap-6">
+            <Link to="/terminos" className="hover:text-primary transition-colors">Términos y Condiciones</Link>
+            <Link to="/privacidad" className="hover:text-primary transition-colors">Aviso de Privacidad</Link>
+          </div>
         </div>
       </div>
     </footer>
