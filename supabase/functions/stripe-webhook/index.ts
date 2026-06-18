@@ -73,6 +73,38 @@ serve(async (req) => {
     if (error) console.error("updateAudit error:", error.message);
   };
 
+  // ---- CRM helpers ----------------------------------------------------------
+  const resolveOpportunityId = async (
+    metaOppId: string | null,
+    orderNumber: string | null,
+  ): Promise<string | null> => {
+    if (metaOppId) return metaOppId;
+    if (!orderNumber) return null;
+    const { data } = await supabase
+      .from("crm_opportunities")
+      .select("id")
+      .eq("source_ref", orderNumber)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data?.id ?? null;
+  };
+
+  const logCrmActivity = async (
+    opportunityId: string,
+    content: string,
+    metadata: Record<string, unknown> = {},
+  ) => {
+    const { error } = await supabase.from("crm_activities").insert({
+      opportunity_id: opportunityId,
+      type: "sora_msg",
+      content,
+      created_by_sora: true,
+      metadata,
+    });
+    if (error) console.error("crm activity insert error:", error.message);
+  };
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -80,8 +112,10 @@ serve(async (req) => {
         const nullIfEmpty = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : null);
         const orderNumber = nullIfEmpty(session.metadata?.order_number);
         const orderId = nullIfEmpty(session.metadata?.order_id);
+        const metaOppId = nullIfEmpty(session.metadata?.opportunity_id);
         const paymentIntentId = nullIfEmpty(session.payment_intent as string);
         const ticketToken = crypto.randomUUID();
+        const amountTotal = session.amount_total ? session.amount_total / 100 : null;
 
         const updates = {
           status: "confirmed" as const,
@@ -133,6 +167,36 @@ serve(async (req) => {
           console.warn(`ORPHAN checkout.session.completed: order_number=${orderNumber} session=${session.id}`);
         } else {
           console.log(`Pago confirmado: ${orderNumber} | Session: ${session.id} | matched=${matched}`);
+
+          // --- Actualizar CRM: marcar oportunidad como ganada -----------------
+          try {
+            const oppId = await resolveOpportunityId(metaOppId, orderNumber);
+            if (oppId) {
+              const { error: oppErr } = await supabase
+                .from("crm_opportunities")
+                .update({
+                  stage: "ganado",
+                  won_amount: amountTotal,
+                  closed_at: new Date().toISOString(),
+                  needs_human_escalation: false,
+                })
+                .eq("id", oppId);
+              if (oppErr) console.error("crm opp update error:", oppErr.message);
+              await logCrmActivity(
+                oppId,
+                `✅ Pago confirmado — Orden ${orderNumber ?? session.id}${
+                  amountTotal != null ? ` — $${amountTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })} MXN` : ""
+                }`,
+                { order_number: orderNumber, stripe_session_id: session.id, payment_intent: paymentIntentId },
+              );
+              console.log(`CRM oportunidad ${oppId} marcada como ganada`);
+            } else {
+              console.log(`Sin oportunidad CRM ligada a ${orderNumber}`);
+            }
+          } catch (e) {
+            console.warn("crm sync failed", (e as Error).message);
+          }
+
           // Notificación admin (no bloquea)
           try {
             const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -190,6 +254,21 @@ serve(async (req) => {
           error_message: updateError,
         });
 
+        // CRM: registrar expiración (no cerrar como perdida; el cliente puede retomar)
+        try {
+          const metaOpp = (session.metadata?.opportunity_id as string) || null;
+          const oppId = await resolveOpportunityId(metaOpp, orderNumber);
+          if (oppId) {
+            await logCrmActivity(
+              oppId,
+              `⌛ Sesión de pago expirada — Orden ${orderNumber ?? session.id}. Requiere seguimiento.`,
+              { order_number: orderNumber, stripe_session_id: session.id, event: "expired" },
+            );
+          }
+        } catch (e) {
+          console.warn("crm sync (expired) failed", (e as Error).message);
+        }
+
         console.log(`Sesion expirada: ${orderNumber}`);
         break;
       }
@@ -230,6 +309,21 @@ serve(async (req) => {
           order_number: orderNumber,
           error_message: updateError ?? errMsg,
         });
+        // CRM: registrar pago fallido (no cerrar como perdida automáticamente)
+        try {
+          const metaOpp = (paymentIntent.metadata as any)?.opportunity_id ?? null;
+          const oppId = await resolveOpportunityId(metaOpp, orderNumber);
+          if (oppId) {
+            await logCrmActivity(
+              oppId,
+              `❌ Pago rechazado — Orden ${orderNumber ?? paymentIntent.id}. Motivo: ${errMsg}`,
+              { order_number: orderNumber, payment_intent: paymentIntent.id, event: "payment_failed", reason: errMsg },
+            );
+          }
+        } catch (e) {
+          console.warn("crm sync (failed) failed", (e as Error).message);
+        }
+
         console.log(`Pago fallido: ${paymentIntent.id}`);
         break;
       }
