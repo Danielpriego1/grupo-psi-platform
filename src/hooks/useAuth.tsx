@@ -13,6 +13,8 @@ interface AuthContextType {
   roles: AppRole[];
   hasRole: (role: AppRole) => boolean;
   isAdmin: boolean;
+  isSuperadmin: boolean;
+  isPaymentsAdmin: boolean;
   isTecnico: boolean;
   isClient: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
