@@ -97,7 +97,7 @@ serve(async (req) => {
   ) => {
     const { error } = await supabase.from("crm_activities").insert({
       opportunity_id: opportunityId,
-      type: "sora_msg",
+      type: "pago",
       content,
       created_by_sora: true,
       metadata,
@@ -187,7 +187,7 @@ serve(async (req) => {
                 `✅ Pago confirmado — Orden ${orderNumber ?? session.id}${
                   amountTotal != null ? ` — $${amountTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })} MXN` : ""
                 }`,
-                { order_number: orderNumber, stripe_session_id: session.id, payment_intent: paymentIntentId },
+                { event_kind: "paid", order_number: orderNumber, amount: amountTotal, currency: (session.currency || "mxn").toUpperCase(), stripe_session_id: session.id, payment_intent: paymentIntentId, ticket_token: ticketToken },
               );
               console.log(`CRM oportunidad ${oppId} marcada como ganada`);
             } else {
@@ -262,7 +262,7 @@ serve(async (req) => {
             await logCrmActivity(
               oppId,
               `⌛ Sesión de pago expirada — Orden ${orderNumber ?? session.id}. Requiere seguimiento.`,
-              { order_number: orderNumber, stripe_session_id: session.id, event: "expired" },
+              { event_kind: "expired", order_number: orderNumber, stripe_session_id: session.id },
             );
           }
         } catch (e) {
@@ -317,7 +317,7 @@ serve(async (req) => {
             await logCrmActivity(
               oppId,
               `❌ Pago rechazado — Orden ${orderNumber ?? paymentIntent.id}. Motivo: ${errMsg}`,
-              { order_number: orderNumber, payment_intent: paymentIntent.id, event: "payment_failed", reason: errMsg },
+              { event_kind: "failed", order_number: orderNumber, payment_intent: paymentIntent.id, reason: errMsg },
             );
           }
         } catch (e) {
@@ -325,6 +325,85 @@ serve(async (req) => {
         }
 
         console.log(`Pago fallido: ${paymentIntent.id}`);
+        break;
+      }
+
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        const paymentIntentId = (typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id) ?? null;
+        const metaOrderNumber = (charge.metadata as any)?.order_number ?? null;
+        const metaOppId = (charge.metadata as any)?.opportunity_id ?? null;
+        const amountRefunded = typeof charge.amount_refunded === "number" ? charge.amount_refunded / 100 : null;
+        const currency = (charge.currency || "mxn").toUpperCase();
+
+        // Buscar la orden por payment_intent o por order_number (metadata)
+        let orderRow: { id: string; order_number: string | null } | null = null;
+        if (paymentIntentId) {
+          const { data } = await supabase
+            .from("orders")
+            .select("id, order_number")
+            .eq("stripe_payment_intent", paymentIntentId)
+            .maybeSingle();
+          orderRow = data ?? null;
+        }
+        if (!orderRow && metaOrderNumber) {
+          const { data } = await supabase
+            .from("orders")
+            .select("id, order_number")
+            .eq("order_number", metaOrderNumber)
+            .maybeSingle();
+          orderRow = data ?? null;
+        }
+
+        let updateError: string | null = null;
+        if (orderRow) {
+          const { error } = await supabase
+            .from("orders")
+            .update({
+              status: "cancelled",
+              payment_status: "refunded",
+              notes: `Stripe: reembolso ${amountRefunded ?? "?"} ${currency}`,
+            })
+            .eq("id", orderRow.id);
+          if (error) updateError = error.message;
+        }
+
+        const orderNumber = orderRow?.order_number ?? metaOrderNumber;
+
+        // CRM: marcar oportunidad como perdida y registrar actividad
+        try {
+          const oppId = await resolveOpportunityId(metaOppId, orderNumber);
+          if (oppId) {
+            const { error: oppErr } = await supabase
+              .from("crm_opportunities")
+              .update({
+                stage: "perdido",
+                lost_reason: `Reembolso Stripe${amountRefunded != null ? ` $${amountRefunded.toLocaleString("es-MX", { minimumFractionDigits: 2 })} ${currency}` : ""}`,
+                closed_at: new Date().toISOString(),
+              })
+              .eq("id", oppId);
+            if (oppErr) console.error("crm opp refund update error:", oppErr.message);
+            await logCrmActivity(
+              oppId,
+              `↩️ Reembolso emitido — Orden ${orderNumber ?? charge.id}${
+                amountRefunded != null ? ` — $${amountRefunded.toLocaleString("es-MX", { minimumFractionDigits: 2 })} ${currency}` : ""
+              }`,
+              { event_kind: "refunded", order_number: orderNumber, amount: amountRefunded, currency, payment_intent: paymentIntentId, charge_id: charge.id },
+            );
+          }
+        } catch (e) {
+          console.warn("crm sync (refunded) failed", (e as Error).message);
+        }
+
+        await updateAudit({
+          processing_status: updateError ? "error" : orderRow ? "success" : "orphan",
+          payment_status: "refunded",
+          stripe_payment_intent: paymentIntentId,
+          order_number: orderNumber,
+          error_message: updateError ?? (orderRow ? null : `No se encontró orden para charge ${charge.id}`),
+        });
+
+        console.log(`Reembolso procesado: ${orderNumber ?? charge.id}`);
         break;
       }
 

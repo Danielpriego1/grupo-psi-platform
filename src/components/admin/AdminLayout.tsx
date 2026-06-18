@@ -17,6 +17,7 @@ import {
   Sparkles,
   ShieldCheck,
   Target,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ const navItems = [
   { label: "Certificados", icon: FileText, path: "/admin/certificados" },
   { label: "Equipos", icon: QrCode, path: "/admin/equipos" },
   { label: "Contenido Web", icon: Sparkles, path: "/admin/contenido" },
+  { label: "Eventos de pago", icon: Receipt, path: "/admin/payment-events" },
   { label: "Auditoría Stripe", icon: ShieldCheck, path: "/admin/auditoria" },
 ];
 

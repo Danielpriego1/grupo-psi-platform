@@ -1224,6 +1224,7 @@ export type Database = {
         | "escalamiento"
         | "cambio_etapa"
         | "tarea"
+        | "pago"
       crm_source:
         | "chat_sora"
         | "cotizacion"
@@ -1414,6 +1415,7 @@ export const Constants = {
         "escalamiento",
         "cambio_etapa",
         "tarea",
+        "pago",
       ],
       crm_source: ["chat_sora", "cotizacion", "mantenimiento", "manual", "web"],
       crm_stage: [

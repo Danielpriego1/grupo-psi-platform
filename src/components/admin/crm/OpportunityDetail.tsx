@@ -11,7 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
+  CrmActivity,
   CrmOpportunity,
+  PaymentEventKind,
   STAGE_META,
   URGENCY_META,
   useActivities,
@@ -19,12 +21,74 @@ import {
   useUpdateOpportunity,
   useCreateTask,
 } from "@/hooks/useCrm";
-import { AlertTriangle, Bot, Calendar, ClipboardList, Mail, MessageSquare, Phone, Sparkles, UserCircle } from "lucide-react";
+import { AlertTriangle, Bot, Calendar, CheckCircle2, ClipboardList, Clock, Mail, MessageSquare, Phone, RotateCcw, Sparkles, UserCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
   opp: CrmOpportunity | null;
   onClose: () => void;
+}
+
+const PAYMENT_META: Record<PaymentEventKind, { label: string; tone: string; Icon: typeof CheckCircle2 }> = {
+  paid: { label: "Pago confirmado", tone: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", Icon: CheckCircle2 },
+  failed: { label: "Pago rechazado", tone: "bg-red-500/15 text-red-300 border-red-500/30", Icon: XCircle },
+  expired: { label: "Sesión expirada", tone: "bg-amber-500/15 text-amber-300 border-amber-500/30", Icon: Clock },
+  refunded: { label: "Reembolso", tone: "bg-orange-500/15 text-orange-300 border-orange-500/30", Icon: RotateCcw },
+};
+
+function PaymentEventsSection({ activities }: { activities: CrmActivity[] }) {
+  const events = activities.filter((a) => a.type === "pago");
+  if (events.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <Label className="text-[11px] uppercase text-muted-foreground font-semibold">
+        Eventos de pago
+      </Label>
+      <div className="space-y-2">
+        {events.map((a) => {
+          const meta = (a.metadata ?? {}) as Record<string, unknown>;
+          const kind = (meta.event_kind as PaymentEventKind) || "paid";
+          const cfg = PAYMENT_META[kind] ?? PAYMENT_META.paid;
+          const amount = typeof meta.amount === "number" ? meta.amount : null;
+          const currency = (meta.currency as string) || "MXN";
+          const orderNumber = (meta.order_number as string) || null;
+          const ticketToken = (meta.ticket_token as string) || null;
+          return (
+            <div key={a.id} className={`rounded-md border p-3 text-sm ${cfg.tone}`}>
+              <div className="flex items-center justify-between text-[11px] mb-1.5">
+                <span className="flex items-center gap-1.5 font-semibold">
+                  <cfg.Icon className="w-3.5 h-3.5" />
+                  {cfg.label}
+                </span>
+                <span className="opacity-80">{format(new Date(a.created_at), "PPp", { locale: es })}</span>
+              </div>
+              <div className="flex items-baseline justify-between gap-3">
+                <div className="text-xs opacity-90">
+                  {orderNumber && <span className="font-mono">{orderNumber}</span>}
+                  {ticketToken && (
+                    <a
+                      href={`/ticket/${ticketToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 underline"
+                    >
+                      Ver ticket
+                    </a>
+                  )}
+                </div>
+                {amount != null && (
+                  <span className="font-bold tabular-nums">
+                    ${amount.toLocaleString("es-MX", { minimumFractionDigits: 2 })} {currency}
+                  </span>
+                )}
+              </div>
+              {a.content && <p className="mt-1.5 text-xs opacity-80 whitespace-pre-wrap">{a.content}</p>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function OpportunityDetail({ opp, onClose }: Props) {
@@ -180,6 +244,10 @@ export function OpportunityDetail({ opp, onClose }: Props) {
                 ))}
               </div>
             </div>
+
+            <Separator />
+
+            <PaymentEventsSection activities={activities.data ?? []} />
 
             <Separator />
 
