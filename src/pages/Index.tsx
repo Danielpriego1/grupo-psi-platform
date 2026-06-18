@@ -85,15 +85,18 @@ const Index = () => {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
               >
                 <Link to={`/categoria/${cat.slug}`} className="block group">
-                  <div className="relative overflow-hidden rounded-2xl h-72 shadow-md transition-all duration-500 group-hover:shadow-[0_20px_60px_-12px_hsl(var(--primary)/0.35)] group-hover:-translate-y-2">
+                  <div className="relative overflow-hidden rounded-2xl h-72 shadow-md transition-all duration-500 group-hover:shadow-[0_20px_60px_-12px_hsl(var(--primary)/0.35)] group-hover:-translate-y-2 bg-black">
                     {/* Background image */}
                     <img
                       src={img}
                       alt={cat.name}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
+                      loading="eager"
                     />
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 transition-opacity duration-300 group-hover:from-black/90" />
+                    {/* Dark gradient overlay — static to avoid repaint flash */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+                    {/* Slightly darker overlay on hover using opacity */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     {/* Orange accent bar on hover */}
                     <div className="absolute top-0 inset-x-0 h-1 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                     {/* Content */}
