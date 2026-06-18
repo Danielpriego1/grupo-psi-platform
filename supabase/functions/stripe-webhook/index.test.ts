@@ -96,9 +96,8 @@ async function seedFixture() {
     .toUpperCase()}`;
   return withDb(async (db) => {
     const order = await db.queryObject<{ id: string }>`
-      INSERT INTO public.orders (order_number, status, payment_status, total, currency, contact_email, contact_name)
-      VALUES (${orderNumber}, 'pending_payment', 'unpaid', 1234.56, 'mxn',
-              'test+webhook@grupopsi.com', 'Webhook Test')
+      INSERT INTO public.orders (order_number, status, payment_status, total)
+      VALUES (${orderNumber}, 'pending', 'unpaid', 1234.56)
       RETURNING id
     `;
     const opp = await db.queryObject<{ id: string }>`
