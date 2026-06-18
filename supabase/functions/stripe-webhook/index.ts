@@ -167,6 +167,36 @@ serve(async (req) => {
           console.warn(`ORPHAN checkout.session.completed: order_number=${orderNumber} session=${session.id}`);
         } else {
           console.log(`Pago confirmado: ${orderNumber} | Session: ${session.id} | matched=${matched}`);
+
+          // --- Actualizar CRM: marcar oportunidad como ganada -----------------
+          try {
+            const oppId = await resolveOpportunityId(metaOppId, orderNumber);
+            if (oppId) {
+              const { error: oppErr } = await supabase
+                .from("crm_opportunities")
+                .update({
+                  stage: "ganado",
+                  won_amount: amountTotal,
+                  closed_at: new Date().toISOString(),
+                  needs_human_escalation: false,
+                })
+                .eq("id", oppId);
+              if (oppErr) console.error("crm opp update error:", oppErr.message);
+              await logCrmActivity(
+                oppId,
+                `✅ Pago confirmado — Orden ${orderNumber ?? session.id}${
+                  amountTotal != null ? ` — $${amountTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })} MXN` : ""
+                }`,
+                { order_number: orderNumber, stripe_session_id: session.id, payment_intent: paymentIntentId },
+              );
+              console.log(`CRM oportunidad ${oppId} marcada como ganada`);
+            } else {
+              console.log(`Sin oportunidad CRM ligada a ${orderNumber}`);
+            }
+          } catch (e) {
+            console.warn("crm sync failed", (e as Error).message);
+          }
+
           // Notificación admin (no bloquea)
           try {
             const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
