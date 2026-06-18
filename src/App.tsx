@@ -142,8 +142,30 @@ const App = () => (
               <Route path="/auth/callback" element={<AuthCallback />} />
 
               {/* Legal */}
-              <Route path="/privacidad" element={<Privacidad />} />
-              <Route path="/terminos" element={<Terminos />} />
+              <Route
+                path="/privacidad"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <Privacidad />
+                    <Footer />
+                    <ChatWidget />
+                  </>
+                }
+              />
+              <Route
+                path="/terminos"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <Terminos />
+                    <Footer />
+                    <ChatWidget />
+                  </>
+                }
+              />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
 
               {/* Admin routes */}
