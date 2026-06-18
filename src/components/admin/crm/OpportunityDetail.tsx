@@ -19,7 +19,7 @@ import {
   useUpdateOpportunity,
   useCreateTask,
 } from "@/hooks/useCrm";
-import { AlertTriangle, Bot, Calendar, ClipboardList, Mail, MessageSquare, Phone, Sparkles, UserCircle } from "lucide-react";
+import { AlertTriangle, Bot, Calendar, CheckCircle2, ClipboardList, Clock, Mail, MessageSquare, Phone, RotateCcw, Sparkles, UserCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
