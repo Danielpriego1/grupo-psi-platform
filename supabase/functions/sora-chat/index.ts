@@ -322,14 +322,20 @@ Deno.serve(async (req) => {
             const co = await checkoutResp.json();
             if (checkoutResp.ok && co.url) {
               checkout = { url: co.url, order_number: co.order_number, total: co.total };
-              const lines = items
-                .map(
-                  (i: any) =>
-                    `• ${i.quantity} × ${i.name} — $${(i.unit_amount_mxn * i.quantity).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`,
-                )
-                .join("\n");
-              const totalFmt = co.total.toLocaleString("es-MX", { minimumFractionDigits: 2 });
-              reply = `${reply ? reply + "\n\n" : ""}**Resumen de tu pedido** (${co.order_number}):\n${lines}\n\n**Total: $${totalFmt} MXN** (IVA incluido)\n\n💳 [Paga seguro aquí con tarjeta](${co.url})\n\nEn cuanto se confirme el pago coordinamos la entrega. 🙌`;
+              const orderPayload = {
+                order_number: co.order_number,
+                total: co.total,
+                url: co.url,
+                items: items.map((i: any) => ({
+                  name: i.name,
+                  quantity: i.quantity,
+                  unit_amount_mxn: i.unit_amount_mxn,
+                })),
+              };
+              const intro = reply?.trim()
+                ? reply.trim()
+                : "Listo, preparé tu pedido. Revisa el resumen y completa el pago seguro cuando quieras 👇";
+              reply = `${intro}\n\n<!--ORDER:${JSON.stringify(orderPayload)}-->`;
             } else {
               console.error("sora-checkout error", co);
               reply = (reply || "") + "\n\nNo pude generar el link de pago en este momento. Te conecto con un agente para finalizar.";

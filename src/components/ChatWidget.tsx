@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
-import { X, Send, MessageCircle } from "lucide-react";
+import { X, Send, MessageCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,12 +10,36 @@ import {
   useScrollMetrics,
 } from "@/lib/perfMonitor";
 
+interface OrderSummary {
+  order_number: string;
+  total: number;
+  url: string;
+  items: Array<{ name: string; quantity: number; unit_amount_mxn: number }>;
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   isTyping?: boolean;
+  order?: OrderSummary;
 }
+
+const ORDER_MARKER_RE = /<!--ORDER:(\{[\s\S]*?\})-->/;
+
+function extractOrder(text: string): { clean: string; order: OrderSummary | null } {
+  const m = text.match(ORDER_MARKER_RE);
+  if (!m) return { clean: text, order: null };
+  try {
+    const order = JSON.parse(m[1]) as OrderSummary;
+    return { clean: text.replace(ORDER_MARKER_RE, "").trim(), order };
+  } catch {
+    return { clean: text.replace(ORDER_MARKER_RE, "").trim(), order: null };
+  }
+}
+
+const fmtMXN = (n: number) =>
+  n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const INITIAL_MESSAGES: Message[] = [
   {
@@ -73,6 +97,51 @@ function renderMarkdown(text: string) {
   return out;
 }
 
+function OrderCard({ order }: { order: OrderSummary }) {
+  return (
+    <div className="mt-3 rounded-2xl border border-white/15 bg-black/30 backdrop-blur-md overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-white/5 border-b border-white/10">
+        <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
+          Resumen de tu pedido
+        </span>
+        <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#ea580c]/20 text-[#ffb380] border border-[#ea580c]/40">
+          {order.order_number}
+        </span>
+      </div>
+      <div className="px-4 py-3 space-y-1.5">
+        {order.items.map((it, idx) => (
+          <div key={idx} className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="text-white/90">
+              <span className="font-semibold text-white">{it.quantity}×</span> {it.name}
+            </span>
+            <span className="text-white/80 tabular-nums whitespace-nowrap">
+              ${fmtMXN(it.unit_amount_mxn * it.quantity)}
+            </span>
+          </div>
+        ))}
+        <div className="border-t border-white/10 mt-2 pt-2 flex items-baseline justify-between">
+          <span className="text-sm text-white/70">Total (IVA incluido)</span>
+          <span className="text-lg font-bold text-white tabular-nums">
+            ${fmtMXN(order.total)} <span className="text-xs text-white/60">MXN</span>
+          </span>
+        </div>
+      </div>
+      <a
+        href={order.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-[#ea580c] hover:bg-[#c2410c] active:bg-[#9a3412] text-white font-bold text-sm transition-colors no-underline"
+      >
+        <Lock className="w-4 h-4" />
+        Pagar ahora con tarjeta — ${fmtMXN(order.total)} MXN
+      </a>
+      <div className="px-4 py-1.5 text-[10px] text-center text-white/50 bg-white/5">
+        Pago seguro procesado por Stripe
+      </div>
+    </div>
+  );
+}
+
 const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   const content = useMemo(() => renderMarkdown(msg.content), [msg.content]);
   return (
@@ -91,6 +160,7 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
         {msg.isTyping && (
           <span className="inline-block w-1.5 h-4 bg-primary/60 animate-pulse ml-1 align-text-bottom rounded-full" />
         )}
+        {msg.order && !msg.isTyping && <OrderCard order={msg.order} />}
       </div>
     </div>
   );
@@ -210,7 +280,7 @@ export function ChatWidget() {
       const historyForApi = updatedMessages
         .filter(m => m.id !== "welcome")
         .slice(-10)
-        .map(m => ({ role: m.role, content: m.content }));
+        .map(m => ({ role: m.role, content: m.content.replace(ORDER_MARKER_RE, "").trim() }));
 
       const { data, error } = await supabase.functions.invoke("sora-chat", {
         body: { messages: historyForApi },
@@ -218,14 +288,15 @@ export function ChatWidget() {
 
       if (error) throw error;
 
-      const reply = data?.reply || "Disculpa, no pude procesar tu solicitud. ¿Podrías intentar de nuevo?";
+      const rawReply = data?.reply || "Disculpa, no pude procesar tu solicitud. ¿Podrías intentar de nuevo?";
+      const { clean, order } = extractOrder(rawReply);
       const msgId = (Date.now() + 1).toString();
       setMessages(prev => [
         ...prev,
-        { id: msgId, role: "assistant", content: "", isTyping: true },
+        { id: msgId, role: "assistant", content: "", isTyping: true, order: order ?? undefined },
       ]);
       setIsLoading(false);
-      typeMessage(reply, msgId);
+      typeMessage(clean, msgId);
     } catch (err) {
       console.error("Sora chat error:", err);
       const msgId = (Date.now() + 1).toString();
