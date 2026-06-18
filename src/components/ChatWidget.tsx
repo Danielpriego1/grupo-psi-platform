@@ -288,14 +288,15 @@ export function ChatWidget() {
 
       if (error) throw error;
 
-      const reply = data?.reply || "Disculpa, no pude procesar tu solicitud. ¿Podrías intentar de nuevo?";
+      const rawReply = data?.reply || "Disculpa, no pude procesar tu solicitud. ¿Podrías intentar de nuevo?";
+      const { clean, order } = extractOrder(rawReply);
       const msgId = (Date.now() + 1).toString();
       setMessages(prev => [
         ...prev,
-        { id: msgId, role: "assistant", content: "", isTyping: true },
+        { id: msgId, role: "assistant", content: "", isTyping: true, order: order ?? undefined },
       ]);
       setIsLoading(false);
-      typeMessage(reply, msgId);
+      typeMessage(clean, msgId);
     } catch (err) {
       console.error("Sora chat error:", err);
       const msgId = (Date.now() + 1).toString();
