@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  rolesLoading: boolean;
   roles: AppRole[];
   hasRole: (role: AppRole) => boolean;
   isAdmin: boolean;
@@ -29,25 +30,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
 
   const fetchRoles = async (userId: string) => {
+    setRolesLoading(true);
     const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     setRoles((data?.map((r) => r.role) ?? []) as AppRole[]);
+    setRolesLoading(false);
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) setTimeout(() => fetchRoles(s.user.id), 0);
-      else setRoles([]);
+      if (s?.user) {
+        setRolesLoading(true);
+        setTimeout(() => fetchRoles(s.user.id), 0);
+      } else {
+        setRoles([]);
+        setRolesLoading(false);
+      }
       setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) fetchRoles(s.user.id);
+      if (s?.user) {
+        fetchRoles(s.user.id);
+      } else {
+        setRolesLoading(false);
+      }
       setLoading(false);
     });
 
@@ -101,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         loading,
+        rolesLoading,
         roles,
         hasRole,
         isAdmin: roles.includes("admin"),
