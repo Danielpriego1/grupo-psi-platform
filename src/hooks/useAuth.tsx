@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "admin" | "vendor" | "tecnico" | "client";
+type AppRole = "admin" | "superadmin" | "vendor" | "tecnico" | "client";
 
 interface AuthContextType {
   user: User | null;
