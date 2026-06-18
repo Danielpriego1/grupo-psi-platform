@@ -97,7 +97,7 @@ serve(async (req) => {
   ) => {
     const { error } = await supabase.from("crm_activities").insert({
       opportunity_id: opportunityId,
-      type: "sora_msg",
+      type: "pago",
       content,
       created_by_sora: true,
       metadata,
