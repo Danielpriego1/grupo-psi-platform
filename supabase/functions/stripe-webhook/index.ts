@@ -73,6 +73,38 @@ serve(async (req) => {
     if (error) console.error("updateAudit error:", error.message);
   };
 
+  // ---- CRM helpers ----------------------------------------------------------
+  const resolveOpportunityId = async (
+    metaOppId: string | null,
+    orderNumber: string | null,
+  ): Promise<string | null> => {
+    if (metaOppId) return metaOppId;
+    if (!orderNumber) return null;
+    const { data } = await supabase
+      .from("crm_opportunities")
+      .select("id")
+      .eq("source_ref", orderNumber)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data?.id ?? null;
+  };
+
+  const logCrmActivity = async (
+    opportunityId: string,
+    content: string,
+    metadata: Record<string, unknown> = {},
+  ) => {
+    const { error } = await supabase.from("crm_activities").insert({
+      opportunity_id: opportunityId,
+      type: "sora_msg",
+      content,
+      created_by_sora: true,
+      metadata,
+    });
+    if (error) console.error("crm activity insert error:", error.message);
+  };
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
