@@ -309,6 +309,21 @@ serve(async (req) => {
           order_number: orderNumber,
           error_message: updateError ?? errMsg,
         });
+        // CRM: registrar pago fallido (no cerrar como perdida automáticamente)
+        try {
+          const metaOpp = (paymentIntent.metadata as any)?.opportunity_id ?? null;
+          const oppId = await resolveOpportunityId(metaOpp, orderNumber);
+          if (oppId) {
+            await logCrmActivity(
+              oppId,
+              `❌ Pago rechazado — Orden ${orderNumber ?? paymentIntent.id}. Motivo: ${errMsg}`,
+              { order_number: orderNumber, payment_intent: paymentIntent.id, event: "payment_failed", reason: errMsg },
+            );
+          }
+        } catch (e) {
+          console.warn("crm sync (failed) failed", (e as Error).message);
+        }
+
         console.log(`Pago fallido: ${paymentIntent.id}`);
         break;
       }
