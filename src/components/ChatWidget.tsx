@@ -10,12 +10,36 @@ import {
   useScrollMetrics,
 } from "@/lib/perfMonitor";
 
+interface OrderSummary {
+  order_number: string;
+  total: number;
+  url: string;
+  items: Array<{ name: string; quantity: number; unit_amount_mxn: number }>;
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   isTyping?: boolean;
+  order?: OrderSummary;
 }
+
+const ORDER_MARKER_RE = /<!--ORDER:(\{[\s\S]*?\})-->/;
+
+function extractOrder(text: string): { clean: string; order: OrderSummary | null } {
+  const m = text.match(ORDER_MARKER_RE);
+  if (!m) return { clean: text, order: null };
+  try {
+    const order = JSON.parse(m[1]) as OrderSummary;
+    return { clean: text.replace(ORDER_MARKER_RE, "").trim(), order };
+  } catch {
+    return { clean: text.replace(ORDER_MARKER_RE, "").trim(), order: null };
+  }
+}
+
+const fmtMXN = (n: number) =>
+  n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const INITIAL_MESSAGES: Message[] = [
   {
