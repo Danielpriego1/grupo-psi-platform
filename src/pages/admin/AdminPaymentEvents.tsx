@@ -347,12 +347,33 @@ export default function AdminPaymentEvents() {
           <Label className="text-xs text-muted-foreground">Hasta</Label>
           <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
         </div>
-        <Button onClick={handleExport} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> CSV
-        </Button>
+        {isPaymentsAdmin ? (
+          <>
+            <Button onClick={handleExport} variant="outline" className="gap-2">
+              <Download className="w-4 h-4" /> CSV
+            </Button>
+            <Button
+              onClick={sendDailyReportNow}
+              disabled={sendingReport || rolesLoading}
+              variant="outline"
+              className="gap-2"
+            >
+              <Mail className="w-4 h-4" /> {sendingReport ? "Enviando…" : "Enviar reporte"}
+            </Button>
+          </>
+        ) : (
+          !rolesLoading && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground border border-dashed border-border rounded-md px-3 py-2">
+              <Lock className="w-3 h-3" />
+              Solo admin/superadmin pueden exportar o enviar reportes.
+            </div>
+          )
+        )}
       </div>
 
-      <Collapsible className="rounded-lg border border-border bg-muted/10">
+      {isPaymentsAdmin && (
+        <Collapsible className="rounded-lg border border-border bg-muted/10">
+
         <CollapsibleTrigger className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition">
           <div className="flex items-center gap-2">
             <RefreshCw className="w-4 h-4 text-primary" />
