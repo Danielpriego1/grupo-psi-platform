@@ -59,20 +59,26 @@ export interface CrmTask {
   created_at: string;
 }
 
+export type CrmActivityType =
+  | "nota"
+  | "llamada"
+  | "email"
+  | "whatsapp"
+  | "visita"
+  | "sora_msg"
+  | "escalamiento"
+  | "cambio_etapa"
+  | "tarea"
+  | "pago";
+
+export type PaymentEventKind = "paid" | "failed" | "expired" | "refunded";
+
 export interface CrmActivity {
   id: string;
   opportunity_id: string;
-  type:
-    | "nota"
-    | "llamada"
-    | "email"
-    | "whatsapp"
-    | "visita"
-    | "sora_msg"
-    | "escalamiento"
-    | "cambio_etapa"
-    | "tarea";
+  type: CrmActivityType;
   content: string;
+  metadata: Record<string, unknown> | null;
   created_by: string | null;
   created_by_sora: boolean;
   created_at: string;
