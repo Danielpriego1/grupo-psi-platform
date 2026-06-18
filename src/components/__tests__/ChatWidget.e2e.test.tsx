@@ -75,9 +75,10 @@ beforeEach(() => {
   invokeMock.mockResolvedValue({ data: { reply: "ok" }, error: null });
   installScrollHeightMock();
   // jsdom doesn't implement Element.scrollTo
-  if (!Element.prototype.scrollTo) {
-    // @ts-expect-error: stub for jsdom
-    Element.prototype.scrollTo = function () {};
+  if (!("scrollTo" in Element.prototype)) {
+    (Element.prototype as unknown as { scrollTo: () => void }).scrollTo = () => {};
+  } else {
+    vi.spyOn(Element.prototype, "scrollTo").mockImplementation(() => {});
   }
 });
 
