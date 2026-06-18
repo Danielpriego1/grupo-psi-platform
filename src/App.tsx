@@ -37,6 +37,7 @@ import AdminQrPrint from "./pages/admin/AdminQrPrint";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminStripeAudit from "./pages/admin/AdminStripeAudit";
 import AdminCRM from "./pages/admin/AdminCRM";
+import AdminPaymentEvents from "./pages/admin/AdminPaymentEvents";
 import CategoryPage from "./pages/CategoryPage";
 import ServiceDetail from "./pages/ServiceDetail";
 import RastreoMantenimiento from "./pages/RastreoMantenimiento";
