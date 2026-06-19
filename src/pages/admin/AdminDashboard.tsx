@@ -238,7 +238,7 @@ export default function AdminDashboard() {
 
   return (
     <div
-      className="-m-4 md:-m-6 p-4 md:p-8 bg-slate-50 min-h-screen"
+      className="-m-5 lg:-m-8 p-5 lg:p-8 bg-slate-50 min-h-[calc(100vh-3.5rem)]"
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
       {/* Header */}
