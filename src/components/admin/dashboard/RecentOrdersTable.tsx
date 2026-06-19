@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
+import { BentoCard } from "./BentoCard";
 
 export interface OrderRow {
   id: string;
@@ -25,19 +25,19 @@ export interface OrderRow {
   clients?: { company_name?: string } | null;
 }
 
-const statusColors: Record<string, string> = {
-  pending: "bg-yellow-500/10 text-yellow-500",
-  confirmed: "bg-blue-500/10 text-blue-500",
-  in_progress: "bg-primary/10 text-primary",
-  ready: "bg-green-500/10 text-green-500",
-  delivered: "bg-green-600/10 text-green-600",
-  cancelled: "bg-destructive/10 text-destructive",
+const statusStyles: Record<string, string> = {
+  pending: "bg-amber-50 text-amber-700 border-amber-200",
+  confirmed: "bg-sky-50 text-sky-700 border-sky-200",
+  in_progress: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  ready: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  delivered: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",
   confirmed: "Confirmado",
-  in_progress: "En Proceso",
+  in_progress: "En proceso",
   ready: "Listo",
   delivered: "Entregado",
   cancelled: "Cancelado",
@@ -63,45 +63,51 @@ export function RecentOrdersTable({ orders, onChanged }: { orders: OrderRow[]; o
 
   return (
     <>
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground text-base">Pedidos recientes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {orders.length === 0 ? (
-            <p className="text-muted-foreground text-sm text-center py-8">No hay pedidos activos</p>
-          ) : (
-            <div className="space-y-3">
-              {orders.map((o) => (
-                <div key={o.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 gap-3">
-                  <div className="min-w-0">
-                    <p className="font-medium text-foreground text-sm truncate">{o.order_number}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {o.clients?.company_name ?? "Sin cliente"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-sm font-semibold text-foreground">{fmtMoney(Number(o.total))}</span>
-                    <Badge className={statusColors[o.status] ?? ""} variant="secondary">
-                      {statusLabels[o.status] ?? o.status}
-                    </Badge>
-                    {o.status !== "cancelled" && o.status !== "delivered" && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => setPending(o)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
+      <BentoCard>
+        <h4
+          className="font-bold text-slate-900 text-base mb-4"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          Pedidos recientes
+        </h4>
+        {orders.length === 0 ? (
+          <p className="text-slate-400 text-sm text-center py-8">No hay pedidos activos</p>
+        ) : (
+          <div className="space-y-2">
+            {orders.map((o) => (
+              <div
+                key={o.id}
+                className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition gap-3"
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-800 text-sm truncate">{o.order_number}</p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {o.clients?.company_name ?? "Sin cliente"}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-sm font-bold text-slate-900 tabular-nums">
+                    {fmtMoney(Number(o.total))}
+                  </span>
+                  <Badge variant="outline" className={statusStyles[o.status] ?? ""}>
+                    {statusLabels[o.status] ?? o.status}
+                  </Badge>
+                  {o.status !== "cancelled" && o.status !== "delivered" && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                      onClick={() => setPending(o)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </BentoCard>
 
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <AlertDialogContent>

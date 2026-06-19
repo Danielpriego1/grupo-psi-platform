@@ -1,68 +1,68 @@
-## Objetivo
+## Rediseño del Dashboard /admin — "Luminous Bento Admin"
 
-Extender `/admin/payment-events` con exportación CSV filtrada y tabla paginada/ordenable, y crear una reconciliación Stripe ↔ CRM.
+Convertir el dashboard de un layout vertical oscuro a un **bento grid claro y luminoso** con sensación de tiempo real: contadores animados, pulsos al recibir datos nuevos, feed live lateral y micro-interacciones en cada widget. El sidebar no cambia.
 
----
+### Decisiones de diseño (fijas)
 
-## 1. Exportación CSV (frontend)
+- **Paleta clara**: fondo `#f8fafc`, superficies blancas con bordes `slate-200/60` y sombras suaves; acento principal **indigo** (`#4f46e5`); acentos secundarios ámbar/rosa/esmeralda.
+- **Tipografía**: Space Grotesk (headings) + DM Sans (body) vía `@fontsource`.
+- **Layout**: bento grid de 4 columnas con celdas asimétricas (KPI hero 2x1, mapa 2x2, feed 1x2, calendario 2x1, etc.) y esquinas grandes (rounded-3xl/40px).
+- **Modo claro forzado solo en /admin** — el resto del sitio mantiene el dark mode actual.
 
-Editar `src/pages/admin/AdminPaymentEvents.tsx`:
+### Estructura visual (bento)
 
-- Añadir dos inputs `type="date"` (Desde / Hasta) al bloque de filtros, junto al buscador y al `Select` de tipo.
-- Aplicar el rango de fechas tanto al `useQuery` (con `.gte`/`.lte` sobre `created_at`) como al filtro en memoria.
-- Botón "Exportar CSV" (icono `Download`) que toma `filtered` (respeta tipo + rango + búsqueda) y descarga un archivo `payment-events-YYYYMMDD.csv` con columnas: `fecha, tipo, orden, oportunidad, contacto, monto, moneda, payment_intent, stage_oportunidad`. Escapado simple con comillas dobles, BOM UTF-8 para Excel.
-- Si no hay rango → se exportan todos los filtrados visibles.
+```text
+┌─────────────────────┬──────────┬──────────┐
+│ HERO Ingresos Mes   │ Pedidos  │          │
+│ + sparkline +delta  │ Hoy      │          │
+├──────────┬──────────┤──────────┤  ACTIV.  │
+│          │          │ Pendient │  LIVE    │
+│   MAPA   │   MAPA   │          │  FEED    │
+│ Tabasco  │  Tabasco ├──────────┤  (1x2)   │
+│          │          │ Completd │          │
+├──────────┴──────────┼──────────┼──────────┤
+│ Agenda mes (2x1)    │ Donut    │ Barras   │
+│                     │ Estados  │ Mtto     │
+└─────────────────────┴──────────┴──────────┘
+```
 
-## 2. Paginación + ordenamiento
+Todos los widgets actuales se conservan: 4 KPIs, chart ingresos (embebido como sparkline del hero), donut pedidos por estado, barras mantenimientos, mapa Leaflet, calendario y tabla de pedidos recientes (movida abajo).
 
-Misma página:
+### Interactividad / tiempo real
 
-- Subir el `limit` del query a 1000 y dejar la paginación/ordenamiento del lado cliente (suficiente para el volumen previsto; evita un round-trip por página).
-- Estado `sortBy: "created_at" | "amount" | "event_kind"` y `sortDir: "asc" | "desc"` (default `created_at desc`). Headers `<th>` clickeables con indicador (`ArrowUp`/`ArrowDown`).
-- Estado `page` y `pageSize` (10 / 25 / 50 / 100, default 25). Controles inferiores: "Mostrando X–Y de Z", botones Anterior/Siguiente y selector de pageSize.
-- Reset de `page` cuando cambien filtros, búsqueda, orden o pageSize.
-- `amount` y `event_kind` se leen desde `metadata`; el comparador trata `amount` nulo como `-Infinity` en `asc`.
+- **Live indicator**: badge "EN VIVO" con dot pulsante en el header, conectado al estado del canal Supabase Realtime.
+- **Count-up** en KPIs cuando cambia el valor (tween 600ms).
+- **Pulse glow** (ring indigo 600ms) en la celda que recibió update.
+- **Feed Realtime lateral**: nueva celda que suscribe a `orders`, `payments`, `maintenance_requests` y `crm_activities`; cada evento entra con `animate-slide-in-right + fade-in`, timestamp relativo auto-actualizado cada 30s ("hace 2s", "hace 4m").
+- Hover en bento cells: ligero `border-indigo-200` + sombra más marcada.
 
-## 3. Reconciliación Stripe ↔ CRM
+### Cambios técnicos
 
-### Edge function nueva `supabase/functions/stripe-reconcile/index.ts`
+**Nuevos archivos:**
+- `src/components/admin/dashboard/BentoCard.tsx` — wrapper genérico con variantes de tamaño y prop `pulse` para el glow.
+- `src/components/admin/dashboard/HeroRevenueCard.tsx` — KPI grande con sparkline (Recharts AreaChart) y delta.
+- `src/components/admin/dashboard/KpiTile.tsx` — KPI compacto con icono, count-up y sub-label.
+- `src/components/admin/dashboard/LiveActivityFeed.tsx` — feed realtime; consume `orders`, `payments`, `maintenance_requests`, `crm_activities` vía `useRealtimeTable`; renderiza últimos 20 eventos con timestamps relativos.
+- `src/components/admin/dashboard/DonutStatus.tsx` y `BarMaintenance.tsx` — variantes claras compactas de los charts (Recharts) con colores indigo/ámbar/esmeralda.
+- `src/components/admin/dashboard/CompactCalendar.tsx` — vista de mes minimal con dots por día; al click, expande a la vista actual `react-big-calendar` en modal.
+- `src/hooks/useCountUp.ts` — tween numérico.
+- `src/hooks/useRelativeTime.ts` — formatter "hace Xs" con tick cada 30s.
 
-- POST con body opcional `{ since?: ISOString, until?: ISOString, dry_run?: boolean }`. Default: últimas 24 h.
-- Requiere usuario admin: valida JWT con `SUPABASE_ANON_KEY` + chequea `has_role(uid, 'admin')` vía `service_role`.
-- Recorre `stripe.checkout.sessions.list` y `stripe.charges.list` filtrados por `created` en el rango (paginado, `limit: 100`).
-- Para cada sesión/charge:
-  1. Resuelve la orden por `metadata.order_id` o `client_reference_id` o `metadata.order_number`.
-  2. Compara con `orders.payment_status` y con la existencia de un registro en `stripe_webhook_events` (por `event_id` o `stripe_session_id`).
-  3. Detecta discrepancias: `paid` en Stripe pero orden ≠ `paid`; `expired`/`failed` sin reflejarse; `charge.refunded` sin marca de reembolso; orden CRM en stage ≠ `ganado`/`perdido` cuando corresponda.
-  4. Si `dry_run` → solo arma el reporte. Si no → aplica las mismas mutaciones que el webhook (`orders.payment_status`, `crm_opportunities.stage/won_amount/closed_at/lost_reason`) y registra una `crm_activities` `type: 'pago'` con `metadata.event_kind` + `metadata.reconciled: true` + `metadata.source: 'reconcile'`.
-- Respuesta JSON: `{ scanned, mismatches: [...], fixed: n, dry_run }`. Idempotente: antes de insertar la activity verifica que no exista una con el mismo `event_id` para esa oportunidad.
-- Sin entrada nueva en `config.toml` (default `verify_jwt = false`, validación en código).
+**Editados:**
+- `src/pages/admin/AdminDashboard.tsx` — recompone con bento grid; envuelve en `<div className="admin-light bg-slate-50 ...">` para forzar la paleta clara solo aquí. Agrega query para feed inicial (últimos 20 eventos combinados) y pasa `pulse` flags cuando entran nuevos datos.
+- `src/components/admin/dashboard/DashboardCharts.tsx` — refactor a 3 componentes individuales (donut, barras, hero sparkline) reutilizando datos existentes.
+- `src/components/admin/dashboard/PendingOrdersMap.tsx` — tile estilo claro: leyenda flotante glass blanca, sin marco oscuro.
+- `src/components/admin/dashboard/RecentOrdersTable.tsx` — adapta a fondo blanco/slate.
+- `tailwind.config.ts` — añade `fontFamily.display: ['Space Grotesk', ...]` y `fontFamily.sans: ['DM Sans', ...]` solo dentro de un selector scope `.admin-light` (vía plugin) o se aplica con clases directas en los componentes.
+- `src/main.tsx` — importa `@fontsource/space-grotesk/{400,500,700}.css` y `@fontsource/dm-sans/{400,500,700}.css`.
+- `package.json` — `bun add @fontsource/space-grotesk @fontsource/dm-sans`.
 
-### Cron opcional
+**Sin cambios de backend / migraciones / RLS.** Todo se construye sobre las tablas y suscripciones realtime ya existentes.
 
-Comentar en la respuesta final cómo programarlo con `pg_cron` + `pg_net` cada 6 h llamando a la función con `dry_run: false` (no se ejecuta automáticamente; se documenta y queda a decisión del usuario).
+### Fuera de alcance
 
-### UI admin para disparar reconciliación
+- Sidebar admin (queda igual).
+- Otras páginas /admin/* (mantienen su estilo actual).
+- Lógica de negocio, edge functions, autenticación o permisos.
 
-Nueva sección colapsable en `AdminPaymentEvents.tsx` ("Reconciliación Stripe"):
-
-- Inputs `since`/`until` (default últimas 24 h), switch "Dry run" (default on), botón "Ejecutar".
-- Llama `supabase.functions.invoke("stripe-reconcile", { body })` y muestra:
-  - Contadores: escaneados, discrepancias, corregidos.
-  - Lista de discrepancias con `order_number`, tipo detectado, acción aplicada/pendiente.
-- Tras un run con `dry_run: false`, invalida la query `["admin-payment-events"]`.
-
----
-
-## Detalles técnicos
-
-- Sin migraciones de BD; el enum `pago` y `stripe_webhook_events` ya existen.
-- Reutilizar `PaymentEventKind` de `useCrm.ts`.
-- Stripe SDK: `npm:stripe@^17` (igual que `stripe-webhook`).
-- CSV: construir como string en cliente, `new Blob([csv], { type: "text/csv;charset=utf-8;" })`, `URL.createObjectURL` + `<a download>` programático.
-- Mantener `refetchInterval: 30_000` actual.
-
-## Archivos
-
-- editar `src/pages/admin/AdminPaymentEvents.tsx`
-- crear `supabase/functions/stripe-reconcile/index.ts`
+Used the Redesign skill.
