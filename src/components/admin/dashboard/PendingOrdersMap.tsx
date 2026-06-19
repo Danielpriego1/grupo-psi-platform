@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { BentoCard } from "./BentoCard";
 
 export interface MapPin {
   id: string;
@@ -21,69 +21,72 @@ export function PendingOrdersMap({ pins }: { pins: MapPin[] }) {
     pins.length > 0 ? [pins[0].lat, pins[0].lng] : [17.9869, -92.9303];
 
   return (
-    <Card className="border-border">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-foreground text-base">
-          Mapa de pedidos y mantenimientos pendientes
-        </CardTitle>
-        <p className="text-xs text-muted-foreground mt-1">
-          Región de operaciones: Tabasco, México
-        </p>
-      </CardHeader>
-      <CardContent>
-        <div className="relative h-[420px] rounded-lg overflow-hidden border border-border">
-          <MapContainer
-            center={center}
-            zoom={9}
-            scrollWheelZoom={false}
-            style={{ height: "100%", width: "100%", background: "#0b0d12" }}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              subdomains="abcd"
-            />
-            {pins.map((p) => (
-              <CircleMarker
-                key={`${p.type}-${p.id}`}
-                center={[p.lat, p.lng]}
-                radius={9}
-                pathOptions={{
-                  color: p.type === "order" ? "#3b82f6" : "#f97316",
-                  fillColor: p.type === "order" ? "#3b82f6" : "#f97316",
-                  fillOpacity: 0.7,
-                  weight: 2,
-                }}
-              >
-                <Popup>
-                  <div className="text-sm">
-                    <p className="font-semibold">{p.label}</p>
-                    {p.sublabel && <p className="text-xs text-muted-foreground">{p.sublabel}</p>}
-                    <p className="text-[10px] mt-1 uppercase">
-                      {p.type === "order" ? "Pedido" : "Mantenimiento"}
-                    </p>
-                  </div>
-                </Popup>
-              </CircleMarker>
-            ))}
-          </MapContainer>
-          {pins.length === 0 && (
-            <div className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-[400]">
-              <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-background/80 backdrop-blur border border-border text-muted-foreground">
-                Sin eventos activos
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-blue-500" /> Pedidos
+    <BentoCard padding={false} className="overflow-hidden flex flex-col min-h-[420px]">
+      <div className="absolute top-5 left-5 z-[450] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl border border-white shadow-lg shadow-slate-200/60">
+        <h4
+          className="font-bold text-slate-900 text-sm"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          Mapa de operaciones
+        </h4>
+        <p className="text-[11px] text-slate-500 mt-0.5">Tabasco, México</p>
+        <div className="flex gap-3 mt-2.5 text-[10px] font-medium text-slate-600">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-indigo-500" /> Pedidos
           </span>
-          <span className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-orange-500" /> Mantenimientos
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-amber-500" /> Mtto.
           </span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="absolute top-5 right-5 z-[450] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-white shadow-md flex items-center gap-2">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+          {pins.length} activos
+        </span>
+      </div>
+
+      <div className="flex-1 rounded-[28px] overflow-hidden">
+        <MapContainer
+          center={center}
+          zoom={9}
+          scrollWheelZoom={false}
+          style={{ height: "100%", width: "100%", minHeight: 420, background: "#f1f5f9" }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            subdomains="abcd"
+          />
+          {pins.map((p) => (
+            <CircleMarker
+              key={`${p.type}-${p.id}`}
+              center={[p.lat, p.lng]}
+              radius={9}
+              pathOptions={{
+                color: p.type === "order" ? "#4f46e5" : "#f59e0b",
+                fillColor: p.type === "order" ? "#4f46e5" : "#f59e0b",
+                fillOpacity: 0.75,
+                weight: 2,
+              }}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <p className="font-semibold">{p.label}</p>
+                  {p.sublabel && <p className="text-xs text-slate-500">{p.sublabel}</p>}
+                  <p className="text-[10px] mt-1 uppercase">
+                    {p.type === "order" ? "Pedido" : "Mantenimiento"}
+                  </p>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
+        </MapContainer>
+      </div>
+    </BentoCard>
   );
 }

@@ -1,15 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay, startOfMonth, subMonths, endOfDay, addHours } from "date-fns";
 import { es } from "date-fns/locale";
-import { KpiCards, type KpiData } from "@/components/admin/dashboard/KpiCards";
-import { DashboardCharts, type MonthlyPoint, type StatusSlice } from "@/components/admin/dashboard/DashboardCharts";
+import { Package, Clock, CheckCircle2 } from "lucide-react";
+import { HeroRevenueCard } from "@/components/admin/dashboard/HeroRevenueCard";
+import { KpiTile } from "@/components/admin/dashboard/KpiTile";
+import { DonutStatus } from "@/components/admin/dashboard/DonutStatus";
+import { BarMaintenance } from "@/components/admin/dashboard/BarMaintenance";
+import { LiveActivityFeed } from "@/components/admin/dashboard/LiveActivityFeed";
+import { CompactCalendar } from "@/components/admin/dashboard/CompactCalendar";
 import { PendingOrdersMap, type MapPin } from "@/components/admin/dashboard/PendingOrdersMap";
+import { RecentOrdersTable, type OrderRow } from "@/components/admin/dashboard/RecentOrdersTable";
+import type { MonthlyPoint, StatusSlice } from "@/components/admin/dashboard/DashboardCharts";
+import type { CalendarEvent } from "@/components/admin/dashboard/AppointmentsCalendar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { checkLeafletCompatibility } from "@/lib/leafletCompat";
 import { LeafletCompatAlert } from "@/components/admin/LeafletCompatAlert";
-import { AppointmentsCalendar, type CalendarEvent } from "@/components/admin/dashboard/AppointmentsCalendar";
-import { RecentOrdersTable, type OrderRow } from "@/components/admin/dashboard/RecentOrdersTable";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 const COMPLETED_STATUSES = ["ready", "delivered"] as const;
@@ -32,8 +38,17 @@ const MAINT_STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
+interface Kpi {
+  ordersToday: number;
+  pendingOrders: number;
+  completedThisMonth: number;
+  monthRevenue: number;
+  revenueChange?: number;
+  completedChange?: number;
+}
+
 export default function AdminDashboard() {
-  const [kpi, setKpi] = useState<KpiData>({
+  const [kpi, setKpi] = useState<Kpi>({
     ordersToday: 0,
     pendingOrders: 0,
     completedThisMonth: 0,
@@ -45,6 +60,9 @@ export default function AdminDashboard() {
   const [pins, setPins] = useState<MapPin[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [recent, setRecent] = useState<OrderRow[]>([]);
+  const [pulseTick, setPulseTick] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const mountedRef = useRef(false);
 
   const fetchAll = useCallback(async () => {
     const now = new Date();
@@ -92,12 +110,11 @@ export default function AdminDashboard() {
         .select("id, order_number, total, status, created_at, clients(company_name)")
         .neq("status", "cancelled")
         .order("created_at", { ascending: false })
-        .limit(8),
+        .limit(6),
     ]);
 
     const allOrders = ordersAllRes.data ?? [];
 
-    // Monthly revenue (current month)
     const monthRevenue = allOrders
       .filter((o) => REVENUE_STATUSES.includes(o.status) && new Date(o.created_at) >= monthStart)
       .reduce((s, o) => s + Number(o.total), 0);
@@ -130,7 +147,6 @@ export default function AdminDashboard() {
       completedChange: pct(completedMonthRes.count ?? 0, prevMonthCompleted),
     });
 
-    // Last 6 months revenue
     const buckets: { key: string; label: string; total: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = subMonths(now, i);
@@ -144,7 +160,6 @@ export default function AdminDashboard() {
     });
     setMonthly(buckets.map((b) => ({ month: b.label, ventas: Math.round(b.total) })));
 
-    // Orders by status
     const orderCounts: Record<string, number> = {};
     allOrders.forEach((o) => {
       orderCounts[o.status] = (orderCounts[o.status] ?? 0) + 1;
@@ -153,7 +168,6 @@ export default function AdminDashboard() {
       Object.entries(orderCounts).map(([k, v]) => ({ name: ORDER_STATUS_LABEL[k] ?? k, value: v })),
     );
 
-    // Maintenance by status
     const maintCounts: Record<string, number> = {};
     (maintAllRes.data ?? []).forEach((m: any) => {
       maintCounts[m.status] = (maintCounts[m.status] ?? 0) + 1;
@@ -162,7 +176,6 @@ export default function AdminDashboard() {
       Object.entries(maintCounts).map(([k, v]) => ({ name: MAINT_STATUS_LABEL[k] ?? k, value: v })),
     );
 
-    // Map pins
     const orderPins: MapPin[] = (pendingOrdersGeoRes.data ?? []).map((o: any) => ({
       id: o.id,
       lat: Number(o.latitude),
@@ -181,7 +194,6 @@ export default function AdminDashboard() {
     }));
     setPins([...orderPins, ...maintPins]);
 
-    // Calendar events
     const maintEvents: CalendarEvent[] = (maintScheduledRes.data ?? []).map((m: any) => {
       const start = new Date(`${m.scheduled_date}T09:00:00`);
       return {
@@ -203,6 +215,13 @@ export default function AdminDashboard() {
     setEvents([...maintEvents, ...deliveryEvents]);
 
     setRecent((recentRes.data ?? []) as OrderRow[]);
+    setLastUpdated(new Date());
+
+    if (mountedRef.current) {
+      setPulseTick((x) => x + 1);
+    } else {
+      mountedRef.current = true;
+    }
   }, []);
 
   useEffect(() => {
@@ -214,23 +233,105 @@ export default function AdminDashboard() {
   useRealtimeTable({ table: "deliveries", onChange: fetchAll });
   useRealtimeTable({ table: "appointments", onChange: fetchAll });
 
+  const compat = checkLeafletCompatibility();
+  const lastUpdatedLabel = format(lastUpdated, "HH:mm:ss");
+
   return (
-    <div className="space-y-6">
-      <KpiCards data={kpi} />
-      <DashboardCharts monthly={monthly} ordersByStatus={ordersByStatus} maintByStatus={maintByStatus} />
-      {(() => {
-        const compat = checkLeafletCompatibility();
-        if (!compat.compatible) {
-          return <LeafletCompatAlert compat={compat} />;
-        }
-        return (
-          <ErrorBoundary label="el mapa de pedidos y mantenimientos">
-            <PendingOrdersMap pins={pins} />
-          </ErrorBoundary>
-        );
-      })()}
-      <AppointmentsCalendar events={events} />
-      <RecentOrdersTable orders={recent} onChanged={fetchAll} />
+    <div
+      className="-m-4 md:-m-6 p-4 md:p-8 bg-slate-50 min-h-screen"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1
+              className="text-3xl font-bold tracking-tight text-slate-900"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Panel de control
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-bold uppercase tracking-widest">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+              </span>
+              En vivo
+            </span>
+          </div>
+          <p className="text-slate-500 text-sm mt-1.5">
+            Sincronizado a las <span className="tabular-nums font-medium text-slate-700">{lastUpdatedLabel}</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Top row: Hero + 3 KPIs + Feed (1x2) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
+        <div className="lg:col-span-2 lg:row-span-1">
+          <HeroRevenueCard
+            amount={kpi.monthRevenue}
+            change={kpi.revenueChange}
+            monthly={monthly}
+            pulseKey={pulseTick}
+          />
+        </div>
+        <KpiTile
+          label="Pedidos hoy"
+          value={kpi.ordersToday}
+          icon={Package}
+          tone="amber"
+          sublabel="Últimas 24h"
+          pulseKey={pulseTick}
+        />
+        <div className="md:col-span-1 lg:row-span-2">
+          <LiveActivityFeed />
+        </div>
+      </div>
+
+      {/* Second row: Map (2x2) + 2 KPIs stacked + (feed continues from above) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
+        <div className="lg:col-span-2 lg:row-span-2">
+          {compat.compatible ? (
+            <ErrorBoundary label="el mapa de pedidos y mantenimientos">
+              <PendingOrdersMap pins={pins} />
+            </ErrorBoundary>
+          ) : (
+            <LeafletCompatAlert compat={compat} />
+          )}
+        </div>
+        <KpiTile
+          label="Pendientes"
+          value={kpi.pendingOrders}
+          icon={Clock}
+          tone="rose"
+          sublabel="Requieren acción"
+          pulseKey={pulseTick}
+        />
+        <KpiTile
+          label="Completados mes"
+          value={kpi.completedThisMonth}
+          icon={CheckCircle2}
+          tone="emerald"
+          sublabel={
+            kpi.completedChange !== undefined && !Number.isNaN(kpi.completedChange)
+              ? `${kpi.completedChange >= 0 ? "+" : ""}${kpi.completedChange.toFixed(1)}% vs mes ant.`
+              : undefined
+          }
+          pulseKey={pulseTick}
+        />
+        <DonutStatus title="Pedidos por estado" data={ordersByStatus} pulseKey={pulseTick} />
+        <BarMaintenance title="Mantenimientos" data={maintByStatus} pulseKey={pulseTick} />
+      </div>
+
+      {/* Third row: Calendar + Recent orders */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-1">
+          <CompactCalendar events={events} />
+        </div>
+        <div className="lg:col-span-2">
+          <RecentOrdersTable orders={recent} onChanged={fetchAll} />
+        </div>
+      </div>
     </div>
   );
 }
