@@ -412,7 +412,23 @@ export function ChatWidget() {
           if (error) throw error;
           const transcript = (data?.text || "").trim();
           setIsTranscribing(false);
-          if (transcript) await sendText(transcript);
+          if (transcript) {
+            // Populate the input so the user can review/edit before sending.
+            setInput((prev) => {
+              const merged = prev.trim() ? `${prev.trim()} ${transcript}` : transcript;
+              return merged;
+            });
+            // Defer to next tick so the textarea has the new value before resizing/focusing.
+            requestAnimationFrame(() => {
+              adjustHeight();
+              const el = inputRef.current;
+              if (el) {
+                el.focus();
+                const end = el.value.length;
+                try { el.setSelectionRange(end, end); } catch { /* noop */ }
+              }
+            });
+          }
         } catch (err) {
           console.error("transcribe error", err);
           setIsTranscribing(false);
