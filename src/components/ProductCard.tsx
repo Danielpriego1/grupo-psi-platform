@@ -47,13 +47,10 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           </div>
 
           {/* Text content */}
-          <div className="flex-grow space-y-3">
-            <h3 className="line-clamp-2 min-h-[3.5rem] text-lg font-black text-card-foreground leading-tight group-hover:text-primary transition-colors duration-300">
+          <div className="flex-grow">
+            <h3 className="line-clamp-3 min-h-[4.5rem] text-lg font-black text-card-foreground leading-tight group-hover:text-primary transition-colors duration-300">
               {product.name}
             </h3>
-            <p className="line-clamp-2 text-sm text-muted-foreground/80 leading-relaxed">
-              {product.description}
-            </p>
           </div>
 
           {/* Price and Action */}
