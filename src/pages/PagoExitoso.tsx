@@ -210,9 +210,9 @@ export default function PagoExitoso() {
             )}
 
             {ticketToken ? (
-              <Link to={`/ticket/${ticketToken}`}>
-                <Button className="w-full" variant="default">
-                  <TicketIcon className="h-4 w-4 mr-2" />
+              <Link to={`/ticket/${ticketToken}`} className="block">
+                <Button size="storeCta" variant="default">
+                  <TicketIcon className="mr-2" />
                   Ver mi ticket con QR
                 </Button>
               </Link>
@@ -223,9 +223,14 @@ export default function PagoExitoso() {
               </div>
             ) : null}
 
-            <a href={`https://wa.me/5219931684717?text=${whatsappMsg}`} target="_blank" rel="noopener noreferrer">
-              <Button className="w-full" variant="outline">
-                <MessageCircle className="h-4 w-4 mr-2" />
+            <a
+              href={`https://wa.me/5219931684717?text=${whatsappMsg}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <Button size="storeCta" variant="outline">
+                <MessageCircle className="mr-2" />
                 Confirmar por WhatsApp
               </Button>
             </a>
