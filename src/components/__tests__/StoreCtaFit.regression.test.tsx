@@ -39,12 +39,51 @@ const VIEWPORTS: Viewport[] = [
   { name: "Desktop (1280)",   width: 1280, containerWidth: 1024 - 160,    fontSizePx: 18 },
 ];
 
+/**
+ * Etiquetas reales en producción — cubren CTAs de catálogo, checkout,
+ * mantenimiento y casos límite (precios muy largos, símbolos, acentos,
+ * guiones largos, paréntesis, abreviaturas y SKUs).
+ */
 const LABELS = [
+  // CTAs principales de catálogo
   "Solicitar cotización",
-  "Servicios de mantenimiento",
-  "Agregar al carrito — $24,500.00",
-  "Pagar $1,234,567.89 MXN",
   "Cotizar por WhatsApp",
+  "Agregar al carrito",
+  "Comprar ahora",
+  "Ver ficha técnica",
+
+  // Carrito / checkout
+  "Finalizar compra",
+  "Continuar al pago",
+  "Ver mi ticket con QR",
+  "Confirmar por WhatsApp",
+
+  // Servicios y mantenimiento
+  "Servicios de mantenimiento",
+  "Agendar visita a instalaciones",
+  "Solicitar recolección de equipo",
+  "Programar mantenimiento preventivo",
+
+  // Productos reales con precio (formato MXN con IVA incluido)
+  "Agregar al carrito — $1,250.00 MXN",
+  "Agregar al carrito — $24,500.00 MXN",
+  "Agregar al carrito — $124,999.99 MXN",
+  "Pagar $1,234,567.89 MXN",
+  "Pagar $12,345,678.90 MXN (IVA incluido)",
+
+  // Overoles con rango de tallas
+  "Overol industrial (talla 50-52) — $2,890.00",
+  "Botas dieléctricas talla 28½ — $3,450.00",
+
+  // SKUs y nombres técnicos largos (peor caso para break-words)
+  "PSI-EQ-MTTO-2026-XL · $48,750.00 MXN",
+  "Extintor PQS ABC 4.5kg con manómetro — $1,890.00",
+  "Detector de humo fotoeléctrico 110V/220V — $2,150.00 MXN",
+
+  // Caracteres especiales / acentos / símbolos
+  "Añadir a cotización — €1.234,56",
+  "Pagar US$9,999.00 (≈ $170,000 MXN)",
+  "Reservar — 50% anticipo & saldo contra entrega",
 ];
 
 /**
