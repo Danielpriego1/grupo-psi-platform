@@ -54,6 +54,10 @@ export default function AdminInventory() {
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [touchDragging, setTouchDragging] = useState(false);
+  const touchPressTimer = useRef<number | null>(null);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
@@ -190,6 +194,64 @@ export default function AdminInventory() {
       return next;
     });
   };
+
+  // ----- Touch drag-and-drop (mobile) -----
+  const clearPressTimer = () => {
+    if (touchPressTimer.current !== null) {
+      window.clearTimeout(touchPressTimer.current);
+      touchPressTimer.current = null;
+    }
+  };
+  const findIndexAtPoint = (x: number, y: number): number | null => {
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    const target = el?.closest<HTMLElement>("[data-img-index]");
+    if (!target) return null;
+    const v = target.getAttribute("data-img-index");
+    return v ? Number(v) : null;
+  };
+  const handleThumbTouchStart = (i: number) => (e: React.TouchEvent) => {
+    if (uploading) return;
+    const t = e.touches[0];
+    touchStartPos.current = { x: t.clientX, y: t.clientY };
+    clearPressTimer();
+    touchPressTimer.current = window.setTimeout(() => {
+      setDragIndex(i);
+      setDragOverIndex(i);
+      setTouchDragging(true);
+      if ("vibrate" in navigator) try { navigator.vibrate?.(15); } catch { /* noop */ }
+    }, 280);
+  };
+  const handleThumbTouchMove = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!touchDragging) {
+      // cancel long-press if finger moved before activation
+      if (touchStartPos.current) {
+        const dx = t.clientX - touchStartPos.current.x;
+        const dy = t.clientY - touchStartPos.current.y;
+        if (Math.hypot(dx, dy) > 10) clearPressTimer();
+      }
+      return;
+    }
+    const idx = findIndexAtPoint(t.clientX, t.clientY);
+    if (idx !== null && idx !== dragOverIndex) setDragOverIndex(idx);
+  };
+  const handleThumbTouchEnd = () => {
+    clearPressTimer();
+    if (touchDragging && dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+      moveImageTo(dragIndex, dragOverIndex);
+    }
+    setTouchDragging(false);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    touchStartPos.current = null;
+  };
+  // Block page scroll while actively dragging on mobile
+  useEffect(() => {
+    if (!touchDragging) return;
+    const prevent = (e: TouchEvent) => e.preventDefault();
+    document.addEventListener("touchmove", prevent, { passive: false });
+    return () => document.removeEventListener("touchmove", prevent);
+  }, [touchDragging]);
   const removeImageAt = (i: number) => setImages((prev) => {
     const target = prev[i];
     if (target) revokeLocal(target);
@@ -410,19 +472,25 @@ export default function AdminInventory() {
                   <p className="text-xs text-muted-foreground">Aún no hay fotos. Sube al menos una para mostrar en el carrusel.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                <div ref={gridRef} className={cn("grid grid-cols-3 sm:grid-cols-4 gap-3", touchDragging && "touch-none")}>
                   {images.map((img, i) => (
                     <div
                       key={`${img.url}-${i}`}
+                      data-img-index={i}
                       draggable={!uploading}
                       onDragStart={(e) => { setDragIndex(i); e.dataTransfer.effectAllowed = "move"; }}
                       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (dragOverIndex !== i) setDragOverIndex(i); }}
                       onDragLeave={() => { if (dragOverIndex === i) setDragOverIndex(null); }}
                       onDrop={(e) => { e.preventDefault(); if (dragIndex !== null) moveImageTo(dragIndex, i); setDragIndex(null); setDragOverIndex(null); }}
                       onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                      onTouchStart={handleThumbTouchStart(i)}
+                      onTouchMove={handleThumbTouchMove}
+                      onTouchEnd={handleThumbTouchEnd}
+                      onTouchCancel={handleThumbTouchEnd}
                       className={cn(
                         "relative group rounded-lg overflow-hidden border border-border bg-white aspect-square transition-all",
                         !uploading && "cursor-grab active:cursor-grabbing",
+                        touchDragging && "select-none",
                         dragIndex === i && "opacity-40 scale-95",
                         dragOverIndex === i && dragIndex !== i && "ring-2 ring-primary scale-[1.03]"
                       )}
