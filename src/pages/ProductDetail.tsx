@@ -36,6 +36,7 @@ const ProductDetail = () => {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    setCurrentImage(0); // reset al cambiar de producto
     (async () => {
       try {
         const { data } = await supabase
