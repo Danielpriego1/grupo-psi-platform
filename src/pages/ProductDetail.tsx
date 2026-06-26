@@ -444,12 +444,12 @@ const ProductDetail = () => {
 
               {/* Add to cart */}
               <Button
-                size="lg"
-                className="w-full h-auto min-h-14 py-4 px-4 text-sm sm:text-base md:text-lg font-black uppercase tracking-wider sm:tracking-[0.15em] shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] whitespace-normal break-words text-center leading-tight"
+                size="storeCta"
+                className="shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
               >
-                <ShoppingCart className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <ShoppingCart className="mr-2 sm:mr-3" />
                 <span className="inline-block">
                   {basePrice > 0 ? `Agregar al carrito — $${(finalPrice * quantity).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Agregar al carrito"}
                 </span>
@@ -457,7 +457,7 @@ const ProductDetail = () => {
 
               {product.purchaseUrl && (
                 <a href={product.purchaseUrl} target="_blank" rel="noopener noreferrer" className="block">
-                  <Button variant="outline" size="lg" className="w-full text-base">Comprar ahora</Button>
+                  <Button variant="outline" size="storeCta">Comprar ahora</Button>
                 </a>
               )}
             </div>
