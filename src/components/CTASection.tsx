@@ -25,25 +25,25 @@ export function CTASection() {
             Cotizamos en menos de 24 horas.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 max-w-2xl mx-auto">
             <Button
-              size="lg"
-              className="text-lg px-10 py-8 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all duration-300"
+              size="storeCta"
+              className="bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all duration-300"
               asChild
             >
               <a href="https://wa.me/5219931684717" target="_blank" rel="noopener noreferrer">
-                <Phone className="h-6 w-6 mr-3" />
-                Solicitar cotización
+                <Phone />
+                <span>Solicitar cotización</span>
               </a>
             </Button>
             <Button
-              size="lg"
+              size="storeCta"
               variant="outline"
-              className="text-base px-8 py-6 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
+              className="border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
               asChild
             >
               <a href="/mantenimiento">
-                Servicios de mantenimiento
+                <span>Servicios de mantenimiento</span>
               </a>
             </Button>
           </div>
