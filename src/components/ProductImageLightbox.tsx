@@ -16,26 +16,64 @@ export function ProductImageLightbox({ images, index, open, alt, onClose, onInde
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const thumbsRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
   const touchStart = useRef<{ x: number; y: number; t: number } | null>(null);
   const dragStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
 
   // Reset zoom on image change / close
   useEffect(() => { setZoom(1); setOffset({ x: 0, y: 0 }); }, [index, open]);
 
-  // Keyboard nav
+  // Mover foco al abrir y restaurarlo al cerrar
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocused.current = (document.activeElement as HTMLElement) ?? null;
+    // Esperar al render para enfocar
+    const id = requestAnimationFrame(() => closeBtnRef.current?.focus());
+    return () => {
+      cancelAnimationFrame(id);
+      previouslyFocused.current?.focus?.();
+    };
+  }, [open]);
+
+  // Scroll miniatura activa a la vista
+  useEffect(() => {
+    if (!open) return;
+    const el = thumbsRef.current?.querySelector<HTMLElement>(`[data-thumb-index="${index}"]`);
+    el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [index, open]);
+
+  // Keyboard nav + trap de foco
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      else if (e.key === "ArrowRight") next();
+      if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
+      if (e.key === "ArrowRight") next();
       else if (e.key === "ArrowLeft") prev();
+      else if (e.key === "Home") onIndexChange(0);
+      else if (e.key === "End") onIndexChange(images.length - 1);
       else if (e.key === "+" || e.key === "=") setZoom((z) => Math.min(4, z + 0.5));
       else if (e.key === "-") setZoom((z) => Math.max(1, z - 0.5));
+      else if (e.key === "0") { setZoom(1); setOffset({ x: 0, y: 0 }); }
+      else if (e.key === "Tab") {
+        // Trap focus dentro del contenedor
+        const root = containerRef.current;
+        if (!root) return;
+        const focusables = root.querySelectorAll<HTMLElement>(
+          'button, [href], [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, index]);
+  }, [open, index, images.length]);
 
   // Lock body scroll
   useEffect(() => {
