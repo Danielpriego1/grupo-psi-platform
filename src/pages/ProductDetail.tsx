@@ -15,6 +15,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useInventoryImages } from "@/hooks/useInventoryImages";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
+import { ProductImageLightbox } from "@/components/ProductImageLightbox";
 
 const ProductDetail = () => {
   const { id } = useParams();
