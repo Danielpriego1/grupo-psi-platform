@@ -21,6 +21,13 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        /**
+         * `storeCta` — Tipografía consistente para botones de tienda
+         * (Agregar al carrito, Pagar, Cotizar, etc.). Permite envolver
+         * texto largo (precios dinámicos) sin desalinear el ícono.
+         */
+        storeCta:
+          "w-full h-auto min-h-14 py-4 px-4 text-sm sm:text-base md:text-lg font-black uppercase tracking-wider sm:tracking-[0.15em] leading-tight text-center whitespace-normal break-words [&_svg]:shrink-0 [&_svg]:h-5 [&_svg]:w-5 sm:[&_svg]:h-6 sm:[&_svg]:w-6",
       },
     },
     defaultVariants: {
