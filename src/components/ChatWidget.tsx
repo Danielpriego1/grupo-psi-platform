@@ -309,15 +309,15 @@ export function ChatWidget() {
     setInputHeight(target);
   }, []);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-    const userMsg: Message = { id: Date.now().toString(), role: "user", content: input.trim() };
+  const sendText = useCallback(async (rawText: string) => {
+    const text = rawText.trim();
+    if (!text || isLoading) return;
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
     stickToBottomRef.current = true;
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
-    // reset textarea height
     setInputHeight(56);
     if (inputRef.current) inputRef.current.style.height = "56px";
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -356,7 +356,77 @@ export function ChatWidget() {
     } finally {
       requestAnimationFrame(() => inputRef.current?.focus());
     }
-  };
+  }, [messages, isLoading, typeMessage]);
+
+  const handleSend = () => { sendText(input); };
+
+  const stopRecording = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") mr.stop();
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    if (isRecording || isTranscribing || isLoading) return;
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      alert("Tu navegador no soporta grabación de audio.");
+      return;
+    }
+    // Auto-enable voice replies the first time the mic is used
+    if (!voiceEnabled) setVoiceEnabled(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recStreamRef.current = stream;
+      const preferred = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+      ].find(t => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(t));
+      const mr = preferred ? new MediaRecorder(stream, { mimeType: preferred }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = mr;
+      audioChunksRef.current = [];
+      recStartRef.current = Date.now();
+      mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        setIsRecording(false);
+        recStreamRef.current?.getTracks().forEach(t => t.stop());
+        recStreamRef.current = null;
+        const duration = Date.now() - recStartRef.current;
+        const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || "audio/webm" });
+        audioChunksRef.current = [];
+        if (duration < 500 || blob.size < 2048) return;
+        setIsTranscribing(true);
+        try {
+          const b64: string = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result.split(",")[1] || "");
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+          const { data, error } = await supabase.functions.invoke("sora-transcribe", {
+            body: { audio: b64, mime: mr.mimeType || "audio/webm" },
+          });
+          if (error) throw error;
+          const transcript = (data?.text || "").trim();
+          setIsTranscribing(false);
+          if (transcript) await sendText(transcript);
+        } catch (err) {
+          console.error("transcribe error", err);
+          setIsTranscribing(false);
+        }
+      };
+      mr.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("mic permission error", err);
+      alert("No pudimos acceder al micrófono. Revisa los permisos.");
+    }
+  }, [isRecording, isTranscribing, isLoading, voiceEnabled, sendText]);
+
+
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
