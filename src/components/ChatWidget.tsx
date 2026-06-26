@@ -597,21 +597,38 @@ export function ChatWidget() {
               value={input}
               onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe tu mensaje..."
+              placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Escribe o toca el micrófono…"}
               rows={1}
               wrap="soft"
-              className="block w-full flex-1 min-w-0 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 sm:pl-6 pr-14 sm:pr-16 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
-              disabled={isLoading}
+              className="block w-full flex-1 min-w-0 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 sm:pl-6 pr-24 sm:pr-28 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+              disabled={isLoading || isRecording || isTranscribing}
               autoFocus
             />
-            <Button
-              type="submit"
-              size="icon"
-              className="absolute right-2 bottom-2 h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-              disabled={isLoading || anyTyping || !input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            <div className="absolute right-2 bottom-2 flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isLoading || isTranscribing}
+                title={isRecording ? "Detener grabación" : "Hablar con Sora"}
+                aria-label={isRecording ? "Detener grabación" : "Grabar mensaje de voz"}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
+                  isRecording
+                    ? "bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                )}
+              >
+                {isRecording ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
+              </button>
+              <Button
+                type="submit"
+                size="icon"
+                className="h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                disabled={isLoading || anyTyping || !input.trim() || isRecording || isTranscribing}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </form>
           <div className="mt-3 text-center">
             <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">Powered by Grupo PSI Intelligence</span>
