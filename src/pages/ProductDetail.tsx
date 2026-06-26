@@ -49,7 +49,8 @@ const ProductDetail = () => {
     })();
   }, [id]);
 
-  // Build product from inventory if no static product
+  const invImages: string[] = Array.isArray((inventoryItem as any)?.image_urls) ? (inventoryItem as any).image_urls.filter(Boolean) : [];
+  const primaryInvImg = invImages[0] || (inventoryItem as any)?.image_url || undefined;
   const product: import("@/data/products").Product | null = staticProduct || (inventoryItem ? {
     id: inventoryItem.product_id,
     name: inventoryItem.product_name,
@@ -60,7 +61,8 @@ const ProductDetail = () => {
     purchaseUrl: null,
     purchaseStatus: "Available",
     inStock: inventoryItem.stock > 0,
-    image: inventoryItem.image_url || undefined,
+    image: primaryInvImg,
+    images: invImages.length > 1 ? invImages : undefined,
   } : null);
 
   // Earliest delivery date: today + 2 business days (skip weekends).
