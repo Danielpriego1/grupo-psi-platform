@@ -183,13 +183,32 @@ export default function AdminInventory() {
   };
 
   const saveItem = async () => {
+    if (!form.product_id || !form.product_name) {
+      toast({ title: "Faltan datos", description: "ID y Nombre son obligatorios", variant: "destructive" });
+      return;
+    }
     setUploading(true);
 
+    const pending = images.filter((i) => i.file).length + (pdfFile ? 1 : 0);
+    setUploadProgress({ current: 0, total: pending });
+
     const finalUrls: string[] = [];
-    for (const img of images) {
+    let failed = 0;
+    let done = 0;
+    for (let idx = 0; idx < images.length; idx++) {
+      const img = images[idx];
       if (img.file) {
+        setImages((prev) => prev.map((it, k) => (k === idx ? { ...it, uploading: true, error: undefined } : it)));
         const url = await uploadFile(img.file, "img");
-        if (url) finalUrls.push(url);
+        done++;
+        setUploadProgress({ current: done, total: pending });
+        if (url) {
+          finalUrls.push(url);
+          setImages((prev) => prev.map((it, k) => (k === idx ? { url, uploading: false } : it)));
+        } else {
+          failed++;
+          setImages((prev) => prev.map((it, k) => (k === idx ? { ...it, uploading: false, error: "Error al subir" } : it)));
+        }
       } else if (img.url) {
         finalUrls.push(img.url);
       }
@@ -198,10 +217,17 @@ export default function AdminInventory() {
     let specPdfUrl = form.spec_pdf_url || null;
     if (pdfFile) {
       const url = await uploadFile(pdfFile, "spec");
+      done++;
+      setUploadProgress({ current: done, total: pending });
       if (url) specPdfUrl = url;
+      else failed++;
     }
 
-    setUploading(false);
+    if (failed > 0) {
+      setUploading(false);
+      toast({ title: "Subida incompleta", description: `${failed} archivo(s) fallaron. Revisa antes de guardar.`, variant: "destructive" });
+      return;
+    }
 
     const payload: any = {
       product_id: form.product_id,
@@ -218,15 +244,16 @@ export default function AdminInventory() {
       spec_pdf_url: specPdfUrl,
     };
 
-
     if (editItem) {
       const { error } = await supabase.from("inventory").update(payload).eq("id", editItem.id);
+      setUploading(false);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-      toast({ title: "Producto actualizado" });
+      toast({ title: "Producto actualizado", description: `${finalUrls.length} foto(s) en el carrusel.` });
     } else {
       const { error } = await supabase.from("inventory").insert(payload);
+      setUploading(false);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-      toast({ title: "Producto agregado" });
+      toast({ title: "Producto agregado", description: `${finalUrls.length} foto(s) en el carrusel.` });
     }
     setDialogOpen(false);
     fetchItems();
