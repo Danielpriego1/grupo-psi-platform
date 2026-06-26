@@ -186,29 +186,51 @@ const ProductDetail = () => {
         <div className="flex flex-col gap-12 lg:flex-row items-start">
           {/* ─── LEFT: Images, Description, Spec PDF, Map ─── */}
           <div className="flex-1 space-y-12 w-full">
-            <div
-              className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/30 cursor-zoom-in"
-              onMouseEnter={() => setImageZoomed(true)}
-              onMouseLeave={() => setImageZoomed(false)}
-              onClick={() => setLightboxOpen(true)}
-            >
-              <img
-                src={allImages[currentImage]}
-                alt={product.name}
-                className={cn(
-                  "h-full w-full object-contain p-8 transition-transform duration-300 ease-out",
-                  imageZoomed && "scale-150"
+            <div className="space-y-4">
+              <div
+                className="group relative aspect-square sm:aspect-[4/3] overflow-hidden rounded-2xl bg-white cursor-zoom-in"
+                onMouseEnter={() => setImageZoomed(true)}
+                onMouseLeave={() => setImageZoomed(false)}
+                onClick={() => setLightboxOpen(true)}
+              >
+                <img
+                  src={allImages[currentImage]}
+                  alt={product.name}
+                  className={cn(
+                    "h-full w-full object-contain p-4 sm:p-8 transition-transform duration-300 ease-out",
+                    imageZoomed && "scale-150"
+                  )}
+                />
+                {allImages.length > 1 && (
+                  <>
+                    <button onClick={(e) => { e.stopPropagation(); prevImg(); }} className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); nextImg(); }} className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-background/80 backdrop-blur-sm border border-border px-3 py-1 text-xs font-bold text-foreground">
+                      {currentImage + 1} / {allImages.length}
+                    </div>
+                  </>
                 )}
-              />
+              </div>
+
               {allImages.length > 1 && (
-                <>
-                  <button onClick={(e) => { e.stopPropagation(); prevImg(); }} className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); nextImg(); }} className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background transition-colors">
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {allImages.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentImage(i)}
+                      className={cn(
+                        "h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-xl overflow-hidden border-2 bg-white transition-all duration-200",
+                        i === currentImage ? "border-primary shadow-lg shadow-primary/30" : "border-border hover:border-primary/40"
+                      )}
+                    >
+                      <img src={img} alt="" className="h-full w-full object-contain p-1" />
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -221,26 +243,10 @@ const ProductDetail = () => {
                 >
                   <X className="h-4 w-4" />
                 </button>
-                <img src={allImages[currentImage]} alt={product.name} className="max-h-[85vh] w-full object-contain" />
+                <img src={allImages[currentImage]} alt={product.name} className="max-h-[85vh] w-full object-contain bg-white" />
               </DialogContent>
             </Dialog>
 
-            {allImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {allImages.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentImage(i)}
-                    className={cn(
-                      "h-16 w-16 shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200",
-                      i === currentImage ? "border-primary" : "border-border hover:border-primary/40"
-                    )}
-                  >
-                    <img src={img} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
 
             <div className="space-y-6 bg-white/5 rounded-3xl p-8 border border-white/5">
               <h2 className="text-2xl font-black tracking-tight uppercase text-primary">Descripción del Producto</h2>
