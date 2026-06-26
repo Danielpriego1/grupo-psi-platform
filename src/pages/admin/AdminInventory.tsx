@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const SUBCATEGORY_OPTIONS = [
   "EPP-Guantes",
@@ -51,6 +52,8 @@ export default function AdminInventory() {
   const [pdfName, setPdfName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
@@ -123,16 +126,50 @@ export default function AdminInventory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOpen]);
 
-  const handleImagesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Normaliza una imagen: la encaja (contain) en un lienzo cuadrado 1600x1600 sobre fondo blanco,
+  // así todas las fichas del carrusel salen completas, centradas y al mismo tamaño (sin recortes).
+  const normalizeImage = (file: File): Promise<File> => new Promise((resolve) => {
+    if (!file.type.startsWith("image/")) return resolve(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const SIZE = 1600;
+        const canvas = document.createElement("canvas");
+        canvas.width = SIZE; canvas.height = SIZE;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(file);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, SIZE, SIZE);
+        const ratio = Math.min(SIZE / img.width, SIZE / img.height);
+        const w = img.width * ratio;
+        const h = img.height * ratio;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, (SIZE - w) / 2, (SIZE - h) / 2, w, h);
+        canvas.toBlob((blob) => {
+          if (!blob) return resolve(file);
+          const newFile = new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+          resolve(newFile);
+        }, "image/jpeg", 0.9);
+      };
+      img.onerror = () => resolve(file);
+      img.src = String(reader.result);
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+
+  const handleImagesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (!files.length) return;
     const tooLarge = files.filter((f) => f.size > 8 * 1024 * 1024);
     if (tooLarge.length) {
       toast({ title: "Imagen muy grande", description: `${tooLarge.length} archivo(s) > 8MB fueron omitidos.`, variant: "destructive" });
     }
     const valid = files.filter((f) => f.size <= 8 * 1024 * 1024);
-    setImages((prev) => [...prev, ...valid.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    const normalized = await Promise.all(valid.map(normalizeImage));
+    setImages((prev) => [...prev, ...normalized.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
   };
 
   const moveImage = (i: number, dir: -1 | 1) => {
@@ -141,6 +178,15 @@ export default function AdminInventory() {
       const j = i + dir;
       if (j < 0 || j >= next.length) return prev;
       [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+  const moveImageTo = (from: number, to: number) => {
+    setImages((prev) => {
+      if (from === to || from < 0 || from >= prev.length || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [pick] = next.splice(from, 1);
+      next.splice(to, 0, pick);
       return next;
     });
   };
@@ -356,7 +402,7 @@ export default function AdminInventory() {
             {/* Image upload + ordering */}
             <div className="space-y-2">
               <Label>Fotos del producto ({images.length})</Label>
-              <p className="text-xs text-muted-foreground">La primera imagen es la principal. Usa las flechas para reordenar.</p>
+              <p className="text-xs text-muted-foreground">La primera imagen es la principal. <strong>Arrastra</strong> para reordenar o usa las flechas. Las fotos se ajustan automáticamente al cuadrado de la ficha sin recortes.</p>
               <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleImagesSelect} className="hidden" />
               {images.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 py-8">
@@ -366,8 +412,22 @@ export default function AdminInventory() {
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {images.map((img, i) => (
-                    <div key={`${img.url}-${i}`} className="relative group rounded-lg overflow-hidden border border-border bg-white aspect-square">
-                      <img src={img.url} alt={`Imagen ${i + 1}`} className="w-full h-full object-contain p-2" />
+                    <div
+                      key={`${img.url}-${i}`}
+                      draggable={!uploading}
+                      onDragStart={(e) => { setDragIndex(i); e.dataTransfer.effectAllowed = "move"; }}
+                      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (dragOverIndex !== i) setDragOverIndex(i); }}
+                      onDragLeave={() => { if (dragOverIndex === i) setDragOverIndex(null); }}
+                      onDrop={(e) => { e.preventDefault(); if (dragIndex !== null) moveImageTo(dragIndex, i); setDragIndex(null); setDragOverIndex(null); }}
+                      onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                      className={cn(
+                        "relative group rounded-lg overflow-hidden border border-border bg-white aspect-square transition-all",
+                        !uploading && "cursor-grab active:cursor-grabbing",
+                        dragIndex === i && "opacity-40 scale-95",
+                        dragOverIndex === i && dragIndex !== i && "ring-2 ring-primary scale-[1.03]"
+                      )}
+                    >
+                      <img src={img.url} alt={`Imagen ${i + 1}`} className="w-full h-full object-contain p-2 pointer-events-none" />
                       {i === 0 && (
                         <div className="absolute top-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-black uppercase text-white flex items-center gap-1">
                           <Star className="w-2.5 h-2.5" /> Principal
@@ -386,24 +446,25 @@ export default function AdminInventory() {
                         </div>
                       )}
                       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/70 backdrop-blur-sm px-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, -1)} disabled={i === 0 || uploading}>
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, -1)} disabled={i === 0 || uploading} aria-label="Mover a la izquierda">
                           <ArrowLeft className="w-3 h-3" />
                         </Button>
                         {i !== 0 && (
-                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => makePrimary(i)} disabled={uploading} title="Hacer principal">
+                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => makePrimary(i)} disabled={uploading} aria-label="Marcar como principal" title="Hacer principal">
                             <Star className="w-3 h-3" />
                           </Button>
                         )}
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1 || uploading}>
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1 || uploading} aria-label="Mover a la derecha">
                           <ArrowRight className="w-3 h-3" />
                         </Button>
                       </div>
-                      <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100" onClick={() => removeImageAt(i)} disabled={uploading}>
+                      <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100" onClick={() => removeImageAt(i)} disabled={uploading} aria-label="Eliminar imagen">
                         <X className="w-3 h-3" />
                       </Button>
                     </div>
                   ))}
                 </div>
+
               )}
               {uploading && uploadProgress.total > 0 && (
                 <div className="space-y-1 pt-1">
