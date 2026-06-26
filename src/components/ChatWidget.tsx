@@ -292,10 +292,11 @@ export function ChatWidget() {
         typingTimeoutRef.current = setTimeout(tick, 18 + Math.random() * 12);
       } else {
         typingTimeoutRef.current = null;
+        speak(fullText);
       }
     };
     typingTimeoutRef.current = setTimeout(tick, 18);
-  }, []);
+  }, [speak]);
 
   // Auto-resize textarea
   const adjustHeight = useCallback(() => {
