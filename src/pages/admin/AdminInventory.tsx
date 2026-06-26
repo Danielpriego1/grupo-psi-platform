@@ -411,8 +411,22 @@ export default function AdminInventory() {
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {images.map((img, i) => (
-                    <div key={`${img.url}-${i}`} className="relative group rounded-lg overflow-hidden border border-border bg-white aspect-square">
-                      <img src={img.url} alt={`Imagen ${i + 1}`} className="w-full h-full object-contain p-2" />
+                    <div
+                      key={`${img.url}-${i}`}
+                      draggable={!uploading}
+                      onDragStart={(e) => { setDragIndex(i); e.dataTransfer.effectAllowed = "move"; }}
+                      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (dragOverIndex !== i) setDragOverIndex(i); }}
+                      onDragLeave={() => { if (dragOverIndex === i) setDragOverIndex(null); }}
+                      onDrop={(e) => { e.preventDefault(); if (dragIndex !== null) moveImageTo(dragIndex, i); setDragIndex(null); setDragOverIndex(null); }}
+                      onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                      className={cn(
+                        "relative group rounded-lg overflow-hidden border border-border bg-white aspect-square transition-all",
+                        !uploading && "cursor-grab active:cursor-grabbing",
+                        dragIndex === i && "opacity-40 scale-95",
+                        dragOverIndex === i && dragIndex !== i && "ring-2 ring-primary scale-[1.03]"
+                      )}
+                    >
+                      <img src={img.url} alt={`Imagen ${i + 1}`} className="w-full h-full object-contain p-2 pointer-events-none" />
                       {i === 0 && (
                         <div className="absolute top-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-black uppercase text-white flex items-center gap-1">
                           <Star className="w-2.5 h-2.5" /> Principal
@@ -431,24 +445,25 @@ export default function AdminInventory() {
                         </div>
                       )}
                       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/70 backdrop-blur-sm px-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, -1)} disabled={i === 0 || uploading}>
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, -1)} disabled={i === 0 || uploading} aria-label="Mover a la izquierda">
                           <ArrowLeft className="w-3 h-3" />
                         </Button>
                         {i !== 0 && (
-                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => makePrimary(i)} disabled={uploading} title="Hacer principal">
+                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => makePrimary(i)} disabled={uploading} aria-label="Marcar como principal" title="Hacer principal">
                             <Star className="w-3 h-3" />
                           </Button>
                         )}
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1 || uploading}>
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1 || uploading} aria-label="Mover a la derecha">
                           <ArrowRight className="w-3 h-3" />
                         </Button>
                       </div>
-                      <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100" onClick={() => removeImageAt(i)} disabled={uploading}>
+                      <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100" onClick={() => removeImageAt(i)} disabled={uploading} aria-label="Eliminar imagen">
                         <X className="w-3 h-3" />
                       </Button>
                     </div>
                   ))}
                 </div>
+
               )}
               {uploading && uploadProgress.total > 0 && (
                 <div className="space-y-1 pt-1">
