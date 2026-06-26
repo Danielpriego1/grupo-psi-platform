@@ -488,9 +488,8 @@ export default function AdminInventory() {
                       onTouchEnd={handleThumbTouchEnd}
                       onTouchCancel={handleThumbTouchEnd}
                       className={cn(
-                        "relative group rounded-lg overflow-hidden border border-border bg-white aspect-square transition-all",
+                        "relative group rounded-lg overflow-hidden border border-border bg-white aspect-square transition-all touch-none select-none [-webkit-touch-callout:none] [-webkit-user-select:none]",
                         !uploading && "cursor-grab active:cursor-grabbing",
-                        touchDragging && "select-none",
                         dragIndex === i && "opacity-40 scale-95",
                         dragOverIndex === i && dragIndex !== i && "ring-2 ring-primary scale-[1.03]"
                       )}
