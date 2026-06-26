@@ -180,6 +180,51 @@ export function ChatWidget() {
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessageCountRef = useRef(messages.length);
 
+  // Voice I/O
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("soraVoice") === "1";
+  });
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recStreamRef = useRef<MediaStream | null>(null);
+  const recStartRef = useRef<number>(0);
+  const lastSpokenRef = useRef<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("soraVoice", voiceEnabled ? "1" : "0");
+    }
+    if (!voiceEnabled && typeof window !== "undefined") {
+      window.speechSynthesis?.cancel();
+    }
+  }, [voiceEnabled]);
+
+  const speak = useCallback((text: string) => {
+    if (!voiceEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const clean = text
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[•·]/g, "")
+      .trim();
+    if (!clean || clean === lastSpokenRef.current) return;
+    lastSpokenRef.current = clean;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = "es-MX";
+    const voices = window.speechSynthesis.getVoices();
+    const v = voices.find(v => /es[-_]MX/i.test(v.lang)) || voices.find(v => /^es/i.test(v.lang));
+    if (v) u.voice = v;
+    u.rate = 1.05;
+    u.pitch = 1.05;
+    window.speechSynthesis.speak(u);
+  }, [voiceEnabled]);
+
+
   // Performance instrumentation (dev or localStorage.chatPerf="1")
   useRenderMetrics("ChatWidget", { messageCount: messages.length });
   useScrollMetrics(scrollRef, "transcript");
