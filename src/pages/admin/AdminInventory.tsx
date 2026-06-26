@@ -194,6 +194,64 @@ export default function AdminInventory() {
       return next;
     });
   };
+
+  // ----- Touch drag-and-drop (mobile) -----
+  const clearPressTimer = () => {
+    if (touchPressTimer.current !== null) {
+      window.clearTimeout(touchPressTimer.current);
+      touchPressTimer.current = null;
+    }
+  };
+  const findIndexAtPoint = (x: number, y: number): number | null => {
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    const target = el?.closest<HTMLElement>("[data-img-index]");
+    if (!target) return null;
+    const v = target.getAttribute("data-img-index");
+    return v ? Number(v) : null;
+  };
+  const handleThumbTouchStart = (i: number) => (e: React.TouchEvent) => {
+    if (uploading) return;
+    const t = e.touches[0];
+    touchStartPos.current = { x: t.clientX, y: t.clientY };
+    clearPressTimer();
+    touchPressTimer.current = window.setTimeout(() => {
+      setDragIndex(i);
+      setDragOverIndex(i);
+      setTouchDragging(true);
+      if ("vibrate" in navigator) try { navigator.vibrate?.(15); } catch { /* noop */ }
+    }, 280);
+  };
+  const handleThumbTouchMove = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!touchDragging) {
+      // cancel long-press if finger moved before activation
+      if (touchStartPos.current) {
+        const dx = t.clientX - touchStartPos.current.x;
+        const dy = t.clientY - touchStartPos.current.y;
+        if (Math.hypot(dx, dy) > 10) clearPressTimer();
+      }
+      return;
+    }
+    const idx = findIndexAtPoint(t.clientX, t.clientY);
+    if (idx !== null && idx !== dragOverIndex) setDragOverIndex(idx);
+  };
+  const handleThumbTouchEnd = () => {
+    clearPressTimer();
+    if (touchDragging && dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+      moveImageTo(dragIndex, dragOverIndex);
+    }
+    setTouchDragging(false);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    touchStartPos.current = null;
+  };
+  // Block page scroll while actively dragging on mobile
+  useEffect(() => {
+    if (!touchDragging) return;
+    const prevent = (e: TouchEvent) => e.preventDefault();
+    document.addEventListener("touchmove", prevent, { passive: false });
+    return () => document.removeEventListener("touchmove", prevent);
+  }, [touchDragging]);
   const removeImageAt = (i: number) => setImages((prev) => {
     const target = prev[i];
     if (target) revokeLocal(target);
