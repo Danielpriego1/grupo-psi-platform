@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2, Loader2, ArrowLeft, ArrowRight, Star } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,8 +44,8 @@ export default function AdminInventory() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  type GalleryImg = { url: string; file?: File };
+  const [images, setImages] = useState<GalleryImg[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfName, setPdfName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -61,7 +61,6 @@ export default function AdminInventory() {
     min_stock: "5",
     unit_price: "",
     location: "",
-    image_url: "",
     spec_pdf_url: "",
   });
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
@@ -77,9 +76,8 @@ export default function AdminInventory() {
 
   const openNew = () => {
     setEditItem(null);
-    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", image_url: "", spec_pdf_url: "" });
-    setImageFile(null);
-    setImagePreview(null);
+    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", spec_pdf_url: "" });
+    setImages([]);
     setPdfFile(null);
     setPdfName(null);
     setDialogOpen(true);
@@ -97,35 +95,46 @@ export default function AdminInventory() {
       min_stock: String(item.min_stock),
       unit_price: String(item.unit_price),
       location: item.location ?? "",
-      image_url: item.image_url ?? "",
       spec_pdf_url: item.spec_pdf_url ?? "",
     });
-    setImageFile(null);
-    setImagePreview(item.image_url ?? null);
+    const list: string[] = Array.isArray(item.image_urls) && item.image_urls.length
+      ? item.image_urls
+      : (item.image_url ? [item.image_url] : []);
+    setImages(list.map((url) => ({ url })));
     setPdfFile(null);
     setPdfName(item.spec_pdf_url ? "Ficha técnica cargada" : null);
     setDialogOpen(true);
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+  const handleImagesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setImages((prev) => [...prev, ...files.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const moveImage = (i: number, dir: -1 | 1) => {
+    setImages((prev) => {
+      const next = [...prev];
+      const j = i + dir;
+      if (j < 0 || j >= next.length) return prev;
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+  const removeImageAt = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
+  const makePrimary = (i: number) => setImages((prev) => {
+    if (i === 0) return prev;
+    const next = [...prev];
+    const [pick] = next.splice(i, 1);
+    return [pick, ...next];
+  });
 
   const handlePdfSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPdfFile(file);
     setPdfName(file.name);
-  };
-
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    setForm({ ...form, image_url: "" });
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removePdf = () => {
@@ -150,10 +159,14 @@ export default function AdminInventory() {
   const saveItem = async () => {
     setUploading(true);
 
-    let imageUrl = form.image_url || null;
-    if (imageFile) {
-      const url = await uploadFile(imageFile, "img");
-      if (url) imageUrl = url;
+    const finalUrls: string[] = [];
+    for (const img of images) {
+      if (img.file) {
+        const url = await uploadFile(img.file, "img");
+        if (url) finalUrls.push(url);
+      } else if (img.url) {
+        finalUrls.push(img.url);
+      }
     }
 
     let specPdfUrl = form.spec_pdf_url || null;
@@ -174,9 +187,11 @@ export default function AdminInventory() {
       min_stock: parseInt(form.min_stock) || 5,
       unit_price: parseFloat(form.unit_price) || 0,
       location: form.location || null,
-      image_url: imageUrl,
+      image_url: finalUrls[0] || null,
+      image_urls: finalUrls,
       spec_pdf_url: specPdfUrl,
     };
+
 
     if (editItem) {
       const { error } = await supabase.from("inventory").update(payload).eq("id", editItem.id);
@@ -285,24 +300,47 @@ export default function AdminInventory() {
               <Label>Ubicación</Label>
               <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Almacén A" />
             </div>
-            {/* Image upload */}
+            {/* Image upload + ordering */}
             <div className="space-y-2">
-              <Label>Foto del producto</Label>
-              <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} className="hidden" />
-              {imagePreview ? (
-                <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border bg-muted">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
-                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-7 h-7" onClick={removeImage}>
-                    <X className="w-3 h-3" />
-                  </Button>
+              <Label>Fotos del producto ({images.length})</Label>
+              <p className="text-xs text-muted-foreground">La primera imagen es la principal. Usa las flechas para reordenar.</p>
+              <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleImagesSelect} className="hidden" />
+              {images.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {images.map((img, i) => (
+                    <div key={i} className="relative group rounded-lg overflow-hidden border border-border bg-white aspect-square">
+                      <img src={img.url} alt={`Imagen ${i + 1}`} className="w-full h-full object-contain p-2" />
+                      {i === 0 && (
+                        <div className="absolute top-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-black uppercase text-white flex items-center gap-1">
+                          <Star className="w-2.5 h-2.5" /> Principal
+                        </div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/70 backdrop-blur-sm px-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, -1)} disabled={i === 0}>
+                          <ArrowLeft className="w-3 h-3" />
+                        </Button>
+                        {i !== 0 && (
+                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => makePrimary(i)} title="Hacer principal">
+                            <Star className="w-3 h-3" />
+                          </Button>
+                        )}
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1}>
+                          <ArrowRight className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100" onClick={() => removeImageAt(i)}>
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <Button type="button" variant="outline" className="w-full h-20 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()}>
-                  <Upload className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Seleccionar imagen</span>
-                </Button>
               )}
+              <Button type="button" variant="outline" className="w-full h-16 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">{images.length ? "Agregar más fotos" : "Seleccionar imágenes (puedes elegir varias)"}</span>
+              </Button>
             </div>
+
             {/* PDF upload */}
             <div className="space-y-2">
               <Label>Ficha Técnica (PDF)</Label>

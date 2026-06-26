@@ -651,8 +651,10 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
+          description: string | null
           id: string
           image_url: string | null
+          image_urls: string[]
           location: string | null
           min_stock: number
           product_id: string
@@ -666,8 +668,10 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
+          image_urls?: string[]
           location?: string | null
           min_stock?: number
           product_id: string
@@ -681,8 +685,10 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           image_url?: string | null
+          image_urls?: string[]
           location?: string | null
           min_stock?: number
           product_id?: string
