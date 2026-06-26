@@ -148,29 +148,37 @@ export function ProductImageLightbox({ images, index, open, alt, onClose, onInde
   return (
     <div
       ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Galería de imágenes: ${alt}`}
       className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center select-none"
       onWheel={onWheel}
     >
+      {/* Live region para anunciar la imagen actual */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        Imagen {index + 1} de {images.length}
+      </div>
+
       {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent">
-        <div className="text-white text-sm font-bold tracking-wider">
+        <div className="text-white text-sm font-bold tracking-wider" aria-hidden="true">
           {index + 1} / {images.length}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setZoom((z) => Math.max(1, z - 0.5))} className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" aria-label="Reducir zoom"><ZoomOut className="h-4 w-4" /></button>
-          <button onClick={() => setZoom((z) => Math.min(4, z + 0.5))} className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" aria-label="Acercar zoom"><ZoomIn className="h-4 w-4" /></button>
-          <button onClick={toggleFullscreen} className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" aria-label="Pantalla completa">
+          <button onClick={() => setZoom((z) => Math.max(1, z - 0.5))} className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white text-white flex items-center justify-center" aria-label="Reducir zoom"><ZoomOut className="h-4 w-4" /></button>
+          <button onClick={() => setZoom((z) => Math.min(4, z + 0.5))} className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white text-white flex items-center justify-center" aria-label="Acercar zoom"><ZoomIn className="h-4 w-4" /></button>
+          <button onClick={toggleFullscreen} className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white text-white flex items-center justify-center" aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}>
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
-          <button onClick={onClose} className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" aria-label="Cerrar"><X className="h-5 w-5" /></button>
+          <button ref={closeBtnRef} onClick={onClose} className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white text-white flex items-center justify-center" aria-label="Cerrar galería (Esc)"><X className="h-5 w-5" /></button>
         </div>
       </div>
 
       {/* Prev / next */}
       {images.length > 1 && (
         <>
-          <button onClick={prev} className="absolute left-2 sm:left-6 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" aria-label="Anterior"><ChevronLeft className="h-6 w-6" /></button>
-          <button onClick={next} className="absolute right-2 sm:right-6 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" aria-label="Siguiente"><ChevronRight className="h-6 w-6" /></button>
+          <button onClick={prev} className="absolute left-2 sm:left-6 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white text-white flex items-center justify-center" aria-label="Imagen anterior"><ChevronLeft className="h-6 w-6" /></button>
+          <button onClick={next} className="absolute right-2 sm:right-6 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white text-white flex items-center justify-center" aria-label="Imagen siguiente"><ChevronRight className="h-6 w-6" /></button>
         </>
       )}
 
@@ -187,7 +195,7 @@ export function ProductImageLightbox({ images, index, open, alt, onClose, onInde
       >
         <img
           src={images[index]}
-          alt={alt}
+          alt={`${alt} — imagen ${index + 1} de ${images.length}`}
           draggable={false}
           onDoubleClick={toggleZoom}
           onClick={(e) => { if (zoom === 1) e.stopPropagation(); }}
@@ -200,19 +208,36 @@ export function ProductImageLightbox({ images, index, open, alt, onClose, onInde
         />
       </div>
 
-      {/* Thumbnail strip */}
+      {/* Thumbnail strip — navegable con teclado */}
       {images.length > 1 && (
-        <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-2 px-4 py-4 overflow-x-auto bg-gradient-to-t from-black/80 to-transparent">
+        <div
+          ref={thumbsRef}
+          role="tablist"
+          aria-label="Miniaturas"
+          className="absolute bottom-0 left-0 right-0 flex justify-start sm:justify-center gap-2 px-4 py-4 overflow-x-auto bg-gradient-to-t from-black/80 to-transparent"
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight") { e.preventDefault(); onIndexChange((index + 1) % images.length); }
+            else if (e.key === "ArrowLeft") { e.preventDefault(); onIndexChange((index - 1 + images.length) % images.length); }
+            else if (e.key === "Home") { e.preventDefault(); onIndexChange(0); }
+            else if (e.key === "End") { e.preventDefault(); onIndexChange(images.length - 1); }
+          }}
+        >
           {images.map((img, i) => (
             <button
               key={i}
+              data-thumb-index={i}
+              role="tab"
+              aria-selected={i === index}
+              aria-current={i === index ? "true" : undefined}
+              aria-label={`Ver imagen ${i + 1} de ${images.length}`}
+              tabIndex={i === index ? 0 : -1}
               onClick={() => onIndexChange(i)}
               className={cn(
-                "h-14 w-14 shrink-0 rounded-lg overflow-hidden border-2 bg-white transition-all",
+                "h-14 w-14 shrink-0 rounded-lg overflow-hidden border-2 bg-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
                 i === index ? "border-primary scale-110" : "border-white/30 opacity-60 hover:opacity-100"
               )}
             >
-              <img src={img} alt="" className="h-full w-full object-contain p-0.5" />
+              <img src={img} alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
             </button>
           ))}
         </div>
