@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2, Loader2, ArrowLeft, ArrowRight, Star } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
