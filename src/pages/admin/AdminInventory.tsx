@@ -108,10 +108,30 @@ export default function AdminInventory() {
     setDialogOpen(true);
   };
 
+  // Revoca object URLs creados localmente (no toca URLs remotas https://)
+  const revokeLocal = (img: GalleryImg) => {
+    if (img.file && img.url.startsWith("blob:")) {
+      try { URL.revokeObjectURL(img.url); } catch { /* noop */ }
+    }
+  };
+
+  // Limpieza al cerrar diálogo
+  useEffect(() => {
+    if (!dialogOpen) {
+      images.forEach(revokeLocal);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogOpen]);
+
   const handleImagesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    setImages((prev) => [...prev, ...files.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
+    const tooLarge = files.filter((f) => f.size > 8 * 1024 * 1024);
+    if (tooLarge.length) {
+      toast({ title: "Imagen muy grande", description: `${tooLarge.length} archivo(s) > 8MB fueron omitidos.`, variant: "destructive" });
+    }
+    const valid = files.filter((f) => f.size <= 8 * 1024 * 1024);
+    setImages((prev) => [...prev, ...valid.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -124,9 +144,13 @@ export default function AdminInventory() {
       return next;
     });
   };
-  const removeImageAt = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
+  const removeImageAt = (i: number) => setImages((prev) => {
+    const target = prev[i];
+    if (target) revokeLocal(target);
+    return prev.filter((_, idx) => idx !== i);
+  });
   const makePrimary = (i: number) => setImages((prev) => {
-    if (i === 0) return prev;
+    if (i === 0 || i >= prev.length) return prev;
     const next = [...prev];
     const [pick] = next.splice(i, 1);
     return [pick, ...next];
