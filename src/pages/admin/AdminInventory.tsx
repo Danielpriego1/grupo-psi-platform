@@ -45,11 +45,12 @@ export default function AdminInventory() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
-  type GalleryImg = { url: string; file?: File };
+  type GalleryImg = { url: string; file?: File; uploading?: boolean; error?: string };
   const [images, setImages] = useState<GalleryImg[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfName, setPdfName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
