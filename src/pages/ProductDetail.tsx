@@ -191,10 +191,19 @@ const ProductDetail = () => {
           <div className="flex-1 space-y-12 w-full">
             <div className="space-y-4">
               <div
-                className="group relative aspect-square sm:aspect-[4/3] overflow-hidden rounded-2xl bg-white cursor-zoom-in"
+                className="group relative aspect-square sm:aspect-[4/3] overflow-hidden rounded-2xl bg-white cursor-zoom-in touch-pan-y"
                 onMouseEnter={() => setImageZoomed(true)}
                 onMouseLeave={() => setImageZoomed(false)}
                 onClick={() => setLightboxOpen(true)}
+                onTouchStart={(e) => { (e.currentTarget as any)._tsX = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                  const sx = (e.currentTarget as any)._tsX;
+                  if (sx == null) return;
+                  const dx = e.changedTouches[0].clientX - sx;
+                  if (Math.abs(dx) > 50 && allImages.length > 1) {
+                    if (dx < 0) nextImg(); else prevImg();
+                  }
+                }}
               >
                 <img
                   src={allImages[currentImage]}
@@ -220,13 +229,13 @@ const ProductDetail = () => {
               </div>
 
               {allImages.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-2">
+                <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
                   {allImages.map((img, i) => (
                     <button
                       key={i}
                       onClick={() => setCurrentImage(i)}
                       className={cn(
-                        "h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-xl overflow-hidden border-2 bg-white transition-all duration-200",
+                        "h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-xl overflow-hidden border-2 bg-white transition-all duration-200 snap-start",
                         i === currentImage ? "border-primary shadow-lg shadow-primary/30" : "border-border hover:border-primary/40"
                       )}
                     >
@@ -237,18 +246,15 @@ const ProductDetail = () => {
               )}
             </div>
 
-            <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-              <DialogContent className="max-w-5xl bg-background/95 p-2">
-                <button
-                  onClick={() => setLightboxOpen(false)}
-                  className="absolute right-3 top-3 z-10 h-9 w-9 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background"
-                  aria-label="Cerrar"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                <img src={allImages[currentImage]} alt={product.name} className="max-h-[85vh] w-full object-contain bg-white" />
-              </DialogContent>
-            </Dialog>
+            <ProductImageLightbox
+              images={allImages}
+              index={currentImage}
+              open={lightboxOpen}
+              alt={product.name}
+              onClose={() => setLightboxOpen(false)}
+              onIndexChange={setCurrentImage}
+            />
+
 
 
             <div className="space-y-6 bg-white/5 rounded-3xl p-8 border border-white/5">
