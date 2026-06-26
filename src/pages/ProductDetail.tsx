@@ -108,9 +108,14 @@ const ProductDetail = () => {
     );
   }
 
+  // Orden de prioridad: image_urls del inventario (orden que definió el admin) → image_url legacy → product.images estático.
+  // Si el inventario define image_urls, esa lista es autoritativa para respetar el orden de admin.
   const invImage = inventoryImages[product.id] || primaryInvImg;
   const baseImages = product.images?.length ? product.images : [product.image || "/placeholder.svg"];
-  const allImages = Array.from(new Set([...(invImage ? [invImage] : []), ...baseImages])).filter(Boolean) as string[];
+  const allImages = (invImages.length > 0
+    ? invImages
+    : Array.from(new Set([...(invImage ? [invImage] : []), ...baseImages]))
+  ).filter(Boolean) as string[];
   const allSizes = product.sizes ? Object.values(product.sizes).flat() : [];
 
   const basePrice = getProductPrice(product, selectedSize || undefined);
