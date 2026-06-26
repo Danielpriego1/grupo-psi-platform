@@ -300,24 +300,47 @@ export default function AdminInventory() {
               <Label>Ubicación</Label>
               <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Almacén A" />
             </div>
-            {/* Image upload */}
+            {/* Image upload + ordering */}
             <div className="space-y-2">
-              <Label>Foto del producto</Label>
-              <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} className="hidden" />
-              {imagePreview ? (
-                <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border bg-muted">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
-                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-7 h-7" onClick={removeImage}>
-                    <X className="w-3 h-3" />
-                  </Button>
+              <Label>Fotos del producto ({images.length})</Label>
+              <p className="text-xs text-muted-foreground">La primera imagen es la principal. Usa las flechas para reordenar.</p>
+              <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleImagesSelect} className="hidden" />
+              {images.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {images.map((img, i) => (
+                    <div key={i} className="relative group rounded-lg overflow-hidden border border-border bg-white aspect-square">
+                      <img src={img.url} alt={`Imagen ${i + 1}`} className="w-full h-full object-contain p-2" />
+                      {i === 0 && (
+                        <div className="absolute top-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-black uppercase text-white flex items-center gap-1">
+                          <Star className="w-2.5 h-2.5" /> Principal
+                        </div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/70 backdrop-blur-sm px-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, -1)} disabled={i === 0}>
+                          <ArrowLeft className="w-3 h-3" />
+                        </Button>
+                        {i !== 0 && (
+                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => makePrimary(i)} title="Hacer principal">
+                            <Star className="w-3 h-3" />
+                          </Button>
+                        )}
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1}>
+                          <ArrowRight className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100" onClick={() => removeImageAt(i)}>
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <Button type="button" variant="outline" className="w-full h-20 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()}>
-                  <Upload className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Seleccionar imagen</span>
-                </Button>
               )}
+              <Button type="button" variant="outline" className="w-full h-16 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">{images.length ? "Agregar más fotos" : "Seleccionar imágenes (puedes elegir varias)"}</span>
+              </Button>
             </div>
+
             {/* PDF upload */}
             <div className="space-y-2">
               <Label>Ficha Técnica (PDF)</Label>
