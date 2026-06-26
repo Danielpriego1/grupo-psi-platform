@@ -220,36 +220,40 @@ export function CartDrawer() {
               {/* Stripe Payment Button — shown for non-bulk orders */}
               {!isBulkOrder && (
                 <Button
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-semibold"
+                  size="storeCta"
                   onClick={handleStripeCheckout}
                   disabled={isCheckingOut || isSubmitting}
                 >
                   {isCheckingOut ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 animate-spin" />
                   ) : (
-                    <CreditCard className="h-4 w-4 mr-2" />
+                    <CreditCard className="mr-2" />
                   )}
-                  {isCheckingOut ? "Procesando..." : `Pagar $${totalPrice.toFixed(2)} MXN`}
+                  <span className="inline-block">
+                    {isCheckingOut ? "Procesando..." : `Pagar $${totalPrice.toFixed(2)} MXN`}
+                  </span>
                 </Button>
               )}
 
               {/* WhatsApp quote */}
               <Button
                 variant={isBulkOrder ? "default" : "outline"}
-                className="w-full"
+                size="storeCta"
                 onClick={handleQuoteRequest}
                 disabled={isSubmitting || isCheckingOut || (isBulkOrder && !clientName.trim())}
               >
                 {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 animate-spin" />
                 ) : (
-                  "💬"
+                  <span className="mr-2" aria-hidden>💬</span>
                 )}
-                {isSubmitting
-                  ? "Guardando..."
-                  : isBulkOrder
-                  ? "Solicitar cotización por volumen"
-                  : "Cotizar por WhatsApp"}
+                <span className="inline-block">
+                  {isSubmitting
+                    ? "Guardando..."
+                    : isBulkOrder
+                    ? "Solicitar cotización por volumen"
+                    : "Cotizar por WhatsApp"}
+                </span>
               </Button>
 
               <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={clearCart}>
