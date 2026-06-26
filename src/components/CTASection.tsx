@@ -15,7 +15,7 @@ export function CTASection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="rounded-[3rem] bg-card/40 backdrop-blur-2xl p-10 sm:p-16 lg:p-20 text-center max-w-5xl mx-auto border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)]"
+          className="rounded-[2rem] sm:rounded-[3rem] bg-card/40 backdrop-blur-2xl p-6 sm:p-12 lg:p-20 text-center max-w-5xl mx-auto border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)]"
         >
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight mb-6 leading-tight">
             ¿Listo para <span className="text-primary glow-text">proteger</span><br />a tu equipo?
@@ -25,10 +25,10 @@ export function CTASection() {
             Cotizamos en menos de 24 horas.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 max-w-2xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch mb-12 max-w-2xl mx-auto w-full">
             <Button
               size="storeCta"
-              className="bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all duration-300"
+              className="flex-1 min-w-0 bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all duration-300 [word-break:break-word]"
               asChild
             >
               <a href="https://wa.me/5219931684717" target="_blank" rel="noopener noreferrer">
@@ -39,7 +39,7 @@ export function CTASection() {
             <Button
               size="storeCta"
               variant="outline"
-              className="border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
+              className="flex-1 min-w-0 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all [word-break:break-word]"
               asChild
             >
               <a href="/mantenimiento">
