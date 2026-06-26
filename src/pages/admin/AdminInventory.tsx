@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2, Loader2, ArrowLeft, ArrowRight, Star } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Plus, Search, Package, AlertTriangle, Upload, ImageIcon, X, FileText, Trash2, Loader2, ArrowLeft, ArrowRight, Star, AlertCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,11 +45,12 @@ export default function AdminInventory() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
-  type GalleryImg = { url: string; file?: File };
+  type GalleryImg = { url: string; file?: File; uploading?: boolean; error?: string };
   const [images, setImages] = useState<GalleryImg[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfName, setPdfName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
@@ -106,10 +108,30 @@ export default function AdminInventory() {
     setDialogOpen(true);
   };
 
+  // Revoca object URLs creados localmente (no toca URLs remotas https://)
+  const revokeLocal = (img: GalleryImg) => {
+    if (img.file && img.url.startsWith("blob:")) {
+      try { URL.revokeObjectURL(img.url); } catch { /* noop */ }
+    }
+  };
+
+  // Limpieza al cerrar diálogo
+  useEffect(() => {
+    if (!dialogOpen) {
+      images.forEach(revokeLocal);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogOpen]);
+
   const handleImagesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    setImages((prev) => [...prev, ...files.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
+    const tooLarge = files.filter((f) => f.size > 8 * 1024 * 1024);
+    if (tooLarge.length) {
+      toast({ title: "Imagen muy grande", description: `${tooLarge.length} archivo(s) > 8MB fueron omitidos.`, variant: "destructive" });
+    }
+    const valid = files.filter((f) => f.size <= 8 * 1024 * 1024);
+    setImages((prev) => [...prev, ...valid.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -122,9 +144,13 @@ export default function AdminInventory() {
       return next;
     });
   };
-  const removeImageAt = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
+  const removeImageAt = (i: number) => setImages((prev) => {
+    const target = prev[i];
+    if (target) revokeLocal(target);
+    return prev.filter((_, idx) => idx !== i);
+  });
   const makePrimary = (i: number) => setImages((prev) => {
-    if (i === 0) return prev;
+    if (i === 0 || i >= prev.length) return prev;
     const next = [...prev];
     const [pick] = next.splice(i, 1);
     return [pick, ...next];
@@ -157,13 +183,32 @@ export default function AdminInventory() {
   };
 
   const saveItem = async () => {
+    if (!form.product_id || !form.product_name) {
+      toast({ title: "Faltan datos", description: "ID y Nombre son obligatorios", variant: "destructive" });
+      return;
+    }
     setUploading(true);
 
+    const pending = images.filter((i) => i.file).length + (pdfFile ? 1 : 0);
+    setUploadProgress({ current: 0, total: pending });
+
     const finalUrls: string[] = [];
-    for (const img of images) {
+    let failed = 0;
+    let done = 0;
+    for (let idx = 0; idx < images.length; idx++) {
+      const img = images[idx];
       if (img.file) {
+        setImages((prev) => prev.map((it, k) => (k === idx ? { ...it, uploading: true, error: undefined } : it)));
         const url = await uploadFile(img.file, "img");
-        if (url) finalUrls.push(url);
+        done++;
+        setUploadProgress({ current: done, total: pending });
+        if (url) {
+          finalUrls.push(url);
+          setImages((prev) => prev.map((it, k) => (k === idx ? { url, uploading: false } : it)));
+        } else {
+          failed++;
+          setImages((prev) => prev.map((it, k) => (k === idx ? { ...it, uploading: false, error: "Error al subir" } : it)));
+        }
       } else if (img.url) {
         finalUrls.push(img.url);
       }
@@ -172,10 +217,17 @@ export default function AdminInventory() {
     let specPdfUrl = form.spec_pdf_url || null;
     if (pdfFile) {
       const url = await uploadFile(pdfFile, "spec");
+      done++;
+      setUploadProgress({ current: done, total: pending });
       if (url) specPdfUrl = url;
+      else failed++;
     }
 
-    setUploading(false);
+    if (failed > 0) {
+      setUploading(false);
+      toast({ title: "Subida incompleta", description: `${failed} archivo(s) fallaron. Revisa antes de guardar.`, variant: "destructive" });
+      return;
+    }
 
     const payload: any = {
       product_id: form.product_id,
@@ -192,15 +244,16 @@ export default function AdminInventory() {
       spec_pdf_url: specPdfUrl,
     };
 
-
     if (editItem) {
       const { error } = await supabase.from("inventory").update(payload).eq("id", editItem.id);
+      setUploading(false);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-      toast({ title: "Producto actualizado" });
+      toast({ title: "Producto actualizado", description: `${finalUrls.length} foto(s) en el carrusel.` });
     } else {
       const { error } = await supabase.from("inventory").insert(payload);
+      setUploading(false);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-      toast({ title: "Producto agregado" });
+      toast({ title: "Producto agregado", description: `${finalUrls.length} foto(s) en el carrusel.` });
     }
     setDialogOpen(false);
     fetchItems();
@@ -305,41 +358,68 @@ export default function AdminInventory() {
               <Label>Fotos del producto ({images.length})</Label>
               <p className="text-xs text-muted-foreground">La primera imagen es la principal. Usa las flechas para reordenar.</p>
               <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleImagesSelect} className="hidden" />
-              {images.length > 0 && (
+              {images.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 py-8">
+                  <ImageIcon className="w-8 h-8 text-muted-foreground/60" />
+                  <p className="text-xs text-muted-foreground">Aún no hay fotos. Sube al menos una para mostrar en el carrusel.</p>
+                </div>
+              ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {images.map((img, i) => (
-                    <div key={i} className="relative group rounded-lg overflow-hidden border border-border bg-white aspect-square">
+                    <div key={`${img.url}-${i}`} className="relative group rounded-lg overflow-hidden border border-border bg-white aspect-square">
                       <img src={img.url} alt={`Imagen ${i + 1}`} className="w-full h-full object-contain p-2" />
                       {i === 0 && (
                         <div className="absolute top-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-black uppercase text-white flex items-center gap-1">
                           <Star className="w-2.5 h-2.5" /> Principal
                         </div>
                       )}
+                      {img.uploading && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-1 text-white">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span className="text-[10px] font-bold uppercase">Subiendo</span>
+                        </div>
+                      )}
+                      {img.error && (
+                        <div className="absolute inset-0 bg-destructive/80 flex flex-col items-center justify-center gap-1 text-white px-2 text-center">
+                          <AlertCircle className="w-5 h-5" />
+                          <span className="text-[10px] font-bold uppercase">{img.error}</span>
+                        </div>
+                      )}
                       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/70 backdrop-blur-sm px-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, -1)} disabled={i === 0}>
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, -1)} disabled={i === 0 || uploading}>
                           <ArrowLeft className="w-3 h-3" />
                         </Button>
                         {i !== 0 && (
-                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => makePrimary(i)} title="Hacer principal">
+                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => makePrimary(i)} disabled={uploading} title="Hacer principal">
                             <Star className="w-3 h-3" />
                           </Button>
                         )}
-                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1}>
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1 || uploading}>
                           <ArrowRight className="w-3 h-3" />
                         </Button>
                       </div>
-                      <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100" onClick={() => removeImageAt(i)}>
+                      <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100" onClick={() => removeImageAt(i)} disabled={uploading}>
                         <X className="w-3 h-3" />
                       </Button>
                     </div>
                   ))}
                 </div>
               )}
-              <Button type="button" variant="outline" className="w-full h-16 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()}>
+              {uploading && uploadProgress.total > 0 && (
+                <div className="space-y-1 pt-1">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase text-muted-foreground">
+                    <span>Subiendo archivos…</span>
+                    <span>{uploadProgress.current} / {uploadProgress.total}</span>
+                  </div>
+                  <Progress value={uploadProgress.total ? (uploadProgress.current / uploadProgress.total) * 100 : 0} className="h-1.5" />
+                </div>
+              )}
+              <Button type="button" variant="outline" className="w-full h-16 border-dashed flex flex-col gap-1" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                 <Upload className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">{images.length ? "Agregar más fotos" : "Seleccionar imágenes (puedes elegir varias)"}</span>
+                <span className="text-xs text-muted-foreground">{images.length ? "Agregar más fotos" : "Seleccionar imágenes (puedes elegir varias, máx 8MB c/u)"}</span>
               </Button>
             </div>
+
 
             {/* PDF upload */}
             <div className="space-y-2">
