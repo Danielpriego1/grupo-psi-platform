@@ -123,16 +123,50 @@ export default function AdminInventory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOpen]);
 
-  const handleImagesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Normaliza una imagen: la encaja (contain) en un lienzo cuadrado 1600x1600 sobre fondo blanco,
+  // así todas las fichas del carrusel salen completas, centradas y al mismo tamaño (sin recortes).
+  const normalizeImage = (file: File): Promise<File> => new Promise((resolve) => {
+    if (!file.type.startsWith("image/")) return resolve(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const SIZE = 1600;
+        const canvas = document.createElement("canvas");
+        canvas.width = SIZE; canvas.height = SIZE;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(file);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, SIZE, SIZE);
+        const ratio = Math.min(SIZE / img.width, SIZE / img.height);
+        const w = img.width * ratio;
+        const h = img.height * ratio;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, (SIZE - w) / 2, (SIZE - h) / 2, w, h);
+        canvas.toBlob((blob) => {
+          if (!blob) return resolve(file);
+          const newFile = new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+          resolve(newFile);
+        }, "image/jpeg", 0.9);
+      };
+      img.onerror = () => resolve(file);
+      img.src = String(reader.result);
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+
+  const handleImagesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (!files.length) return;
     const tooLarge = files.filter((f) => f.size > 8 * 1024 * 1024);
     if (tooLarge.length) {
       toast({ title: "Imagen muy grande", description: `${tooLarge.length} archivo(s) > 8MB fueron omitidos.`, variant: "destructive" });
     }
     const valid = files.filter((f) => f.size <= 8 * 1024 * 1024);
-    setImages((prev) => [...prev, ...valid.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    const normalized = await Promise.all(valid.map(normalizeImage));
+    setImages((prev) => [...prev, ...normalized.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
   };
 
   const moveImage = (i: number, dir: -1 | 1) => {
@@ -141,6 +175,15 @@ export default function AdminInventory() {
       const j = i + dir;
       if (j < 0 || j >= next.length) return prev;
       [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+  const moveImageTo = (from: number, to: number) => {
+    setImages((prev) => {
+      if (from === to || from < 0 || from >= prev.length || to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [pick] = next.splice(from, 1);
+      next.splice(to, 0, pick);
       return next;
     });
   };
