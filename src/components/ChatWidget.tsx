@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
-import { X, Send, MessageCircle, Lock } from "lucide-react";
+import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -180,6 +180,51 @@ export function ChatWidget() {
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessageCountRef = useRef(messages.length);
 
+  // Voice I/O
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("soraVoice") === "1";
+  });
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recStreamRef = useRef<MediaStream | null>(null);
+  const recStartRef = useRef<number>(0);
+  const lastSpokenRef = useRef<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("soraVoice", voiceEnabled ? "1" : "0");
+    }
+    if (!voiceEnabled && typeof window !== "undefined") {
+      window.speechSynthesis?.cancel();
+    }
+  }, [voiceEnabled]);
+
+  const speak = useCallback((text: string) => {
+    if (!voiceEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const clean = text
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[•·]/g, "")
+      .trim();
+    if (!clean || clean === lastSpokenRef.current) return;
+    lastSpokenRef.current = clean;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = "es-MX";
+    const voices = window.speechSynthesis.getVoices();
+    const v = voices.find(v => /es[-_]MX/i.test(v.lang)) || voices.find(v => /^es/i.test(v.lang));
+    if (v) u.voice = v;
+    u.rate = 1.05;
+    u.pitch = 1.05;
+    window.speechSynthesis.speak(u);
+  }, [voiceEnabled]);
+
+
   // Performance instrumentation (dev or localStorage.chatPerf="1")
   useRenderMetrics("ChatWidget", { messageCount: messages.length });
   useScrollMetrics(scrollRef, "transcript");
@@ -247,10 +292,11 @@ export function ChatWidget() {
         typingTimeoutRef.current = setTimeout(tick, 18 + Math.random() * 12);
       } else {
         typingTimeoutRef.current = null;
+        speak(fullText);
       }
     };
     typingTimeoutRef.current = setTimeout(tick, 18);
-  }, []);
+  }, [speak]);
 
   // Auto-resize textarea
   const adjustHeight = useCallback(() => {
@@ -263,15 +309,15 @@ export function ChatWidget() {
     setInputHeight(target);
   }, []);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-    const userMsg: Message = { id: Date.now().toString(), role: "user", content: input.trim() };
+  const sendText = useCallback(async (rawText: string) => {
+    const text = rawText.trim();
+    if (!text || isLoading) return;
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
     stickToBottomRef.current = true;
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
-    // reset textarea height
     setInputHeight(56);
     if (inputRef.current) inputRef.current.style.height = "56px";
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -310,7 +356,77 @@ export function ChatWidget() {
     } finally {
       requestAnimationFrame(() => inputRef.current?.focus());
     }
-  };
+  }, [messages, isLoading, typeMessage]);
+
+  const handleSend = () => { sendText(input); };
+
+  const stopRecording = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") mr.stop();
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    if (isRecording || isTranscribing || isLoading) return;
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      alert("Tu navegador no soporta grabación de audio.");
+      return;
+    }
+    // Auto-enable voice replies the first time the mic is used
+    if (!voiceEnabled) setVoiceEnabled(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recStreamRef.current = stream;
+      const preferred = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+      ].find(t => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(t));
+      const mr = preferred ? new MediaRecorder(stream, { mimeType: preferred }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = mr;
+      audioChunksRef.current = [];
+      recStartRef.current = Date.now();
+      mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        setIsRecording(false);
+        recStreamRef.current?.getTracks().forEach(t => t.stop());
+        recStreamRef.current = null;
+        const duration = Date.now() - recStartRef.current;
+        const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || "audio/webm" });
+        audioChunksRef.current = [];
+        if (duration < 500 || blob.size < 2048) return;
+        setIsTranscribing(true);
+        try {
+          const b64: string = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result.split(",")[1] || "");
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+          const { data, error } = await supabase.functions.invoke("sora-transcribe", {
+            body: { audio: b64, mime: mr.mimeType || "audio/webm" },
+          });
+          if (error) throw error;
+          const transcript = (data?.text || "").trim();
+          setIsTranscribing(false);
+          if (transcript) await sendText(transcript);
+        } catch (err) {
+          console.error("transcribe error", err);
+          setIsTranscribing(false);
+        }
+      };
+      mr.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("mic permission error", err);
+      alert("No pudimos acceder al micrófono. Revisa los permisos.");
+    }
+  }, [isRecording, isTranscribing, isLoading, voiceEnabled, sendText]);
+
+
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -390,6 +506,19 @@ export function ChatWidget() {
               <div className="text-[10px] font-bold text-primary uppercase tracking-widest">IA Ejecutiva · Grupo PSI</div>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setVoiceEnabled(v => !v)}
+                title={voiceEnabled ? "Silenciar voz de Sora" : "Activar voz de Sora"}
+                aria-label={voiceEnabled ? "Silenciar voz" : "Activar voz"}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  voiceEnabled
+                    ? "bg-primary/20 text-primary hover:bg-primary/30"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+              </button>
               <a
                 href={WHATSAPP_URL}
                 target="_blank"
@@ -468,21 +597,38 @@ export function ChatWidget() {
               value={input}
               onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe tu mensaje..."
+              placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Escribe o toca el micrófono…"}
               rows={1}
               wrap="soft"
-              className="block w-full flex-1 min-w-0 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 sm:pl-6 pr-14 sm:pr-16 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
-              disabled={isLoading}
+              className="block w-full flex-1 min-w-0 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 sm:pl-6 pr-24 sm:pr-28 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+              disabled={isLoading || isRecording || isTranscribing}
               autoFocus
             />
-            <Button
-              type="submit"
-              size="icon"
-              className="absolute right-2 bottom-2 h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-              disabled={isLoading || anyTyping || !input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            <div className="absolute right-2 bottom-2 flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isLoading || isTranscribing}
+                title={isRecording ? "Detener grabación" : "Hablar con Sora"}
+                aria-label={isRecording ? "Detener grabación" : "Grabar mensaje de voz"}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
+                  isRecording
+                    ? "bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                )}
+              >
+                {isRecording ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
+              </button>
+              <Button
+                type="submit"
+                size="icon"
+                className="h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                disabled={isLoading || anyTyping || !input.trim() || isRecording || isTranscribing}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </form>
           <div className="mt-3 text-center">
             <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">Powered by Grupo PSI Intelligence</span>
