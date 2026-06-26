@@ -44,8 +44,8 @@ export default function AdminInventory() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  type GalleryImg = { url: string; file?: File };
+  const [images, setImages] = useState<GalleryImg[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfName, setPdfName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -61,7 +61,6 @@ export default function AdminInventory() {
     min_stock: "5",
     unit_price: "",
     location: "",
-    image_url: "",
     spec_pdf_url: "",
   });
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
@@ -77,9 +76,8 @@ export default function AdminInventory() {
 
   const openNew = () => {
     setEditItem(null);
-    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", image_url: "", spec_pdf_url: "" });
-    setImageFile(null);
-    setImagePreview(null);
+    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", spec_pdf_url: "" });
+    setImages([]);
     setPdfFile(null);
     setPdfName(null);
     setDialogOpen(true);
@@ -97,35 +95,46 @@ export default function AdminInventory() {
       min_stock: String(item.min_stock),
       unit_price: String(item.unit_price),
       location: item.location ?? "",
-      image_url: item.image_url ?? "",
       spec_pdf_url: item.spec_pdf_url ?? "",
     });
-    setImageFile(null);
-    setImagePreview(item.image_url ?? null);
+    const list: string[] = Array.isArray(item.image_urls) && item.image_urls.length
+      ? item.image_urls
+      : (item.image_url ? [item.image_url] : []);
+    setImages(list.map((url) => ({ url })));
     setPdfFile(null);
     setPdfName(item.spec_pdf_url ? "Ficha técnica cargada" : null);
     setDialogOpen(true);
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+  const handleImagesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setImages((prev) => [...prev, ...files.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const moveImage = (i: number, dir: -1 | 1) => {
+    setImages((prev) => {
+      const next = [...prev];
+      const j = i + dir;
+      if (j < 0 || j >= next.length) return prev;
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+  const removeImageAt = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
+  const makePrimary = (i: number) => setImages((prev) => {
+    if (i === 0) return prev;
+    const next = [...prev];
+    const [pick] = next.splice(i, 1);
+    return [pick, ...next];
+  });
 
   const handlePdfSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPdfFile(file);
     setPdfName(file.name);
-  };
-
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    setForm({ ...form, image_url: "" });
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removePdf = () => {
@@ -150,10 +159,14 @@ export default function AdminInventory() {
   const saveItem = async () => {
     setUploading(true);
 
-    let imageUrl = form.image_url || null;
-    if (imageFile) {
-      const url = await uploadFile(imageFile, "img");
-      if (url) imageUrl = url;
+    const finalUrls: string[] = [];
+    for (const img of images) {
+      if (img.file) {
+        const url = await uploadFile(img.file, "img");
+        if (url) finalUrls.push(url);
+      } else if (img.url) {
+        finalUrls.push(img.url);
+      }
     }
 
     let specPdfUrl = form.spec_pdf_url || null;
@@ -174,9 +187,11 @@ export default function AdminInventory() {
       min_stock: parseInt(form.min_stock) || 5,
       unit_price: parseFloat(form.unit_price) || 0,
       location: form.location || null,
-      image_url: imageUrl,
+      image_url: finalUrls[0] || null,
+      image_urls: finalUrls,
       spec_pdf_url: specPdfUrl,
     };
+
 
     if (editItem) {
       const { error } = await supabase.from("inventory").update(payload).eq("id", editItem.id);
