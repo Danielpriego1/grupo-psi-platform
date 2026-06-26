@@ -472,19 +472,25 @@ export default function AdminInventory() {
                   <p className="text-xs text-muted-foreground">Aún no hay fotos. Sube al menos una para mostrar en el carrusel.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                <div ref={gridRef} className={cn("grid grid-cols-3 sm:grid-cols-4 gap-3", touchDragging && "touch-none")}>
                   {images.map((img, i) => (
                     <div
                       key={`${img.url}-${i}`}
+                      data-img-index={i}
                       draggable={!uploading}
                       onDragStart={(e) => { setDragIndex(i); e.dataTransfer.effectAllowed = "move"; }}
                       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (dragOverIndex !== i) setDragOverIndex(i); }}
                       onDragLeave={() => { if (dragOverIndex === i) setDragOverIndex(null); }}
                       onDrop={(e) => { e.preventDefault(); if (dragIndex !== null) moveImageTo(dragIndex, i); setDragIndex(null); setDragOverIndex(null); }}
                       onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                      onTouchStart={handleThumbTouchStart(i)}
+                      onTouchMove={handleThumbTouchMove}
+                      onTouchEnd={handleThumbTouchEnd}
+                      onTouchCancel={handleThumbTouchEnd}
                       className={cn(
                         "relative group rounded-lg overflow-hidden border border-border bg-white aspect-square transition-all",
                         !uploading && "cursor-grab active:cursor-grabbing",
+                        touchDragging && "select-none",
                         dragIndex === i && "opacity-40 scale-95",
                         dragOverIndex === i && dragIndex !== i && "ring-2 ring-primary scale-[1.03]"
                       )}
