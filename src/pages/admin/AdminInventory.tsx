@@ -402,7 +402,7 @@ export default function AdminInventory() {
             {/* Image upload + ordering */}
             <div className="space-y-2">
               <Label>Fotos del producto ({images.length})</Label>
-              <p className="text-xs text-muted-foreground">La primera imagen es la principal. Usa las flechas para reordenar.</p>
+              <p className="text-xs text-muted-foreground">La primera imagen es la principal. <strong>Arrastra</strong> para reordenar o usa las flechas. Las fotos se ajustan automáticamente al cuadrado de la ficha sin recortes.</p>
               <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleImagesSelect} className="hidden" />
               {images.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 py-8">
