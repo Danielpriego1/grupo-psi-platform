@@ -107,9 +107,9 @@ const ProductDetail = () => {
     );
   }
 
-  const invImage = inventoryImages[product.id] || inventoryItem?.image_url;
+  const invImage = inventoryImages[product.id] || primaryInvImg;
   const baseImages = product.images?.length ? product.images : [product.image || "/placeholder.svg"];
-  const allImages = invImage ? [invImage, ...baseImages.filter(img => img !== invImage)] : baseImages;
+  const allImages = Array.from(new Set([...(invImage ? [invImage] : []), ...baseImages])).filter(Boolean) as string[];
   const allSizes = product.sizes ? Object.values(product.sizes).flat() : [];
 
   const basePrice = getProductPrice(product, selectedSize || undefined);
