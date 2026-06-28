@@ -166,6 +166,8 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   );
 });
 
+type Corner = "br" | "bl" | "tr" | "tl";
+
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -179,6 +181,50 @@ export function ChatWidget() {
   const [atBottom, setAtBottom] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessageCountRef = useRef(messages.length);
+
+  // Positioning & dim-on-scroll so Sora no estorba
+  const [corner, setCorner] = useState<Corner>(() => {
+    if (typeof window === "undefined") return "br";
+    return (localStorage.getItem("soraCorner") as Corner) || "br";
+  });
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStateRef = useRef<{ id: number; moved: boolean; longPress: ReturnType<typeof setTimeout> | null }>({ id: -1, moved: false, longPress: null });
+  const [dim, setDim] = useState(false);
+  const dimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("soraCorner", corner);
+  }, [corner]);
+
+  // Auto-fade while user is scrolling the page (so it no estorba al leer/screenshot)
+  useEffect(() => {
+    const onScroll = () => {
+      if (open) return; // no atenuar panel cuando el usuario lo está usando
+      setDim(true);
+      if (dimTimerRef.current) clearTimeout(dimTimerRef.current);
+      dimTimerRef.current = setTimeout(() => setDim(false), 900);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (dimTimerRef.current) clearTimeout(dimTimerRef.current);
+    };
+  }, [open]);
+
+  const cornerClass = (c: Corner) => {
+    switch (c) {
+      case "br": return "bottom-6 right-6";
+      case "bl": return "bottom-6 left-6";
+      case "tr": return "top-6 right-6";
+      case "tl": return "top-6 left-6";
+    }
+  };
+  const panelCornerClass = (c: Corner) => {
+    const v = c.startsWith("b") ? "bottom-4 sm:bottom-6" : "top-4 sm:top-6";
+    const h = c.endsWith("r") ? "right-4 sm:right-6" : "left-4 sm:left-6";
+    return `${v} ${h}`;
+  };
 
   // Voice I/O
   const [isRecording, setIsRecording] = useState(false);
