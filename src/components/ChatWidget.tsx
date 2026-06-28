@@ -706,8 +706,22 @@ export function ChatWidget() {
             </div>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setGhostMode(g => !g)}
+                title={ghostMode ? "Modo fantasma activo — se oculta al leer (Ctrl/⌘+Shift+H)" : "Activar modo fantasma — auto-ocultar (Ctrl/⌘+Shift+H)"}
+                aria-label={ghostMode ? "Desactivar modo fantasma" : "Activar modo fantasma"}
+                aria-pressed={ghostMode}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  ghostMode
+                    ? "bg-primary/20 text-primary hover:bg-primary/30"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                {ghostMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+              <button
                 onClick={() => setVoiceEnabled(v => !v)}
-                title={voiceEnabled ? "Silenciar voz de Sora" : "Activar voz de Sora"}
+                title={voiceEnabled ? "Silenciar voz de Sora (Ctrl/⌘+Shift+V)" : "Activar voz de Sora (Ctrl/⌘+Shift+V)"}
                 aria-label={voiceEnabled ? "Silenciar voz" : "Activar voz"}
                 className={cn(
                   "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
