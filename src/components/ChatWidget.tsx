@@ -676,6 +676,7 @@ export function ChatWidget() {
           isDragging && "scale-110 ring-4 ring-primary/50 cursor-grabbing",
           !dragPos && cornerClass(corner),
           dim && !isDragging && "opacity-30 hover:opacity-100",
+          hidden && !isDragging && !open && "opacity-0 translate-y-2 pointer-events-none",
           open && "scale-0 opacity-0 pointer-events-none"
         )}
       >
