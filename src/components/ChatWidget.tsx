@@ -166,6 +166,8 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   );
 });
 
+type Corner = "br" | "bl" | "tr" | "tl";
+
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -179,6 +181,50 @@ export function ChatWidget() {
   const [atBottom, setAtBottom] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessageCountRef = useRef(messages.length);
+
+  // Positioning & dim-on-scroll so Sora no estorba
+  const [corner, setCorner] = useState<Corner>(() => {
+    if (typeof window === "undefined") return "br";
+    return (localStorage.getItem("soraCorner") as Corner) || "br";
+  });
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStateRef = useRef<{ id: number; moved: boolean; longPress: ReturnType<typeof setTimeout> | null }>({ id: -1, moved: false, longPress: null });
+  const [dim, setDim] = useState(false);
+  const dimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("soraCorner", corner);
+  }, [corner]);
+
+  // Auto-fade while user is scrolling the page (so it no estorba al leer/screenshot)
+  useEffect(() => {
+    const onScroll = () => {
+      if (open) return; // no atenuar panel cuando el usuario lo está usando
+      setDim(true);
+      if (dimTimerRef.current) clearTimeout(dimTimerRef.current);
+      dimTimerRef.current = setTimeout(() => setDim(false), 900);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (dimTimerRef.current) clearTimeout(dimTimerRef.current);
+    };
+  }, [open]);
+
+  const cornerClass = (c: Corner) => {
+    switch (c) {
+      case "br": return "bottom-6 right-6";
+      case "bl": return "bottom-6 left-6";
+      case "tr": return "top-6 right-6";
+      case "tl": return "top-6 left-6";
+    }
+  };
+  const panelCornerClass = (c: Corner) => {
+    const v = c.startsWith("b") ? "bottom-4 sm:bottom-6" : "top-4 sm:top-6";
+    const h = c.endsWith("r") ? "right-4 sm:right-6" : "left-4 sm:left-6";
+    return `${v} ${h}`;
+  };
 
   // Voice I/O
   const [isRecording, setIsRecording] = useState(false);
@@ -488,24 +534,84 @@ export function ChatWidget() {
     [messages]
   );
 
+  const launcherStyle: React.CSSProperties = dragPos
+    ? { left: dragPos.x, top: dragPos.y, right: "auto", bottom: "auto" }
+    : {};
+
+  const onLauncherPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const btn = e.currentTarget;
+    dragStateRef.current.id = e.pointerId;
+    dragStateRef.current.moved = false;
+    if (dragStateRef.current.longPress) clearTimeout(dragStateRef.current.longPress);
+    dragStateRef.current.longPress = setTimeout(() => {
+      setIsDragging(true);
+      try { btn.setPointerCapture(e.pointerId); } catch {}
+      if ("vibrate" in navigator) navigator.vibrate?.(15);
+      const rect = btn.getBoundingClientRect();
+      setDragPos({ x: rect.left, y: rect.top });
+    }, 320);
+  };
+  const onLauncherPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isDragging) return;
+    dragStateRef.current.moved = true;
+    const size = 72;
+    const x = Math.min(Math.max(8, e.clientX - size / 2), window.innerWidth - size - 8);
+    const y = Math.min(Math.max(8, e.clientY - size / 2), window.innerHeight - size - 8);
+    setDragPos({ x, y });
+  };
+  const onLauncherPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStateRef.current.longPress) {
+      clearTimeout(dragStateRef.current.longPress);
+      dragStateRef.current.longPress = null;
+    }
+    if (isDragging && dragPos) {
+      const cx = dragPos.x + 36;
+      const cy = dragPos.y + 36;
+      const right = cx > window.innerWidth / 2;
+      const bottom = cy > window.innerHeight / 2;
+      const next: Corner = `${bottom ? "b" : "t"}${right ? "r" : "l"}` as Corner;
+      setCorner(next);
+      setDragPos(null);
+      setIsDragging(false);
+      try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+      return;
+    }
+    if (!dragStateRef.current.moved) {
+      setOpen(o => !o);
+    }
+  };
+
   return (
     <>
       <button
-        onClick={() => setOpen(!open)}
+        onPointerDown={onLauncherPointerDown}
+        onPointerMove={onLauncherPointerMove}
+        onPointerUp={onLauncherPointerUp}
+        onPointerCancel={() => {
+          if (dragStateRef.current.longPress) clearTimeout(dragStateRef.current.longPress);
+          setIsDragging(false);
+          setDragPos(null);
+        }}
+        style={launcherStyle}
+        aria-label="Abrir chat con Sora (mantén presionado para mover)"
         className={cn(
-          "fixed bottom-6 right-6 z-50 h-[72px] w-[72px] rounded-full shadow-2xl transition-all duration-500 overflow-hidden",
-          "animate-glow-pulse hover:scale-110",
+          "fixed z-50 h-[72px] w-[72px] rounded-full shadow-2xl overflow-hidden touch-none select-none",
+          !isDragging && "transition-all duration-500 animate-glow-pulse hover:scale-110",
+          isDragging && "scale-110 ring-4 ring-primary/50 cursor-grabbing",
+          !dragPos && cornerClass(corner),
+          dim && !isDragging && "opacity-30 hover:opacity-100",
           open && "scale-0 opacity-0 pointer-events-none"
         )}
       >
-        <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
+        <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150 pointer-events-none" />
       </button>
 
       <div
         className={cn(
-          "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px] flex-col overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-[#09090b]/95 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]",
+          "fixed z-50 flex w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px] flex-col overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-[#09090b]/95 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]",
+          panelCornerClass(corner),
           "max-h-[min(600px,calc(100vh-2rem))] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
-          open ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-95 opacity-0 pointer-events-none"
+          open ? "translate-y-0 scale-100 opacity-100" : (corner.startsWith("b") ? "translate-y-10" : "-translate-y-10") + " scale-95 opacity-0 pointer-events-none"
         )}
       >
         <div className="relative flex items-center gap-4 overflow-hidden px-6 py-5 border-b border-white/5">
