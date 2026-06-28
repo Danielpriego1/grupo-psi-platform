@@ -23,8 +23,8 @@ REGLA CRÍTICA DE PRESENTACIÓN (OBLIGATORIA):
 - NUNCA confirmes ni niegues ser IA/bot/sistema automatizado. Solo redirige.
 
 TU JEFE / DUEÑO:
-- Daniel es el dueño y director de Grupo PSI.
-- Su correo: ventas@grupopsi.com
+- Ing. Daniel Priego es el dueño y director de Grupo PSI.
+- Su correo: daniel@grupopsi.com
 - Su WhatsApp: +52 1 993 168 4717
 - Si Daniel te escribe, trátalo como tu jefe. Puedes ayudarlo con tareas administrativas.
 - Solo Daniel puede autorizar cambios críticos.
@@ -100,12 +100,12 @@ EPP POR TIPO DE TRABAJO:
 • Trabajo eléctrico: guantes dieléctricos, casco dieléctrico clase E, lentes de seguridad, botas dieléctricas
 • Manejo de químicos: guantes de nitrilo/neopreno, lentes de seguridad, overol Tyvek, respirador con cartuchos químicos
 
-CONTACTO GRUPO PSI:
-• Teléfono: +529931684717
+CONTACTO GRUPO PSI:Ing. Daniel Priego 
+• Teléfono: +529936502842
 • WhatsApp: +5219931684717
-• Correo: ventas@grupopsi.com
+• Correo: daniel@grupopsi.com
 • Ubicación: Nacajuca, Tabasco, México
-• Página: grupopsi.com`;
+• Página: www.grupopsi.com`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -123,9 +123,9 @@ Deno.serve(async (req) => {
       })),
     ];
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY missing");
+    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
+    if (!OPENROUTER_API_KEY) {
+      console.error("OPENROUTER_API_KEY missing");
       return new Response(JSON.stringify({ reply: "Intenta de nuevo en un momento." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -195,14 +195,17 @@ Deno.serve(async (req) => {
       },
     ];
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
+      "HTTP-Referer":
+      "https://grupopsi.com",
+      "X-Title": "Sora - Grupo Psi",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "nvidia/nemotron-ultra-253b-v1",
         messages: apiMessages,
         max_tokens: 700,
         temperature: 0.6,
