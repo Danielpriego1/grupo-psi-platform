@@ -192,16 +192,30 @@ export function ChatWidget() {
   const dragStateRef = useRef<{ id: number; moved: boolean; longPress: ReturnType<typeof setTimeout> | null }>({ id: -1, moved: false, longPress: null });
   const [dim, setDim] = useState(false);
   const dimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ghost mode: hide launcher/panel automáticamente al leer o hacer scroll, reaparece al acercar el cursor
+  const [ghostMode, setGhostMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("soraGhost") === "1";
+  });
+  const [hidden, setHidden] = useState(false); // true cuando ghost mode lo oculta
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     localStorage.setItem("soraCorner", corner);
   }, [corner]);
 
-  // Auto-fade while user is scrolling the page (so it no estorba al leer/screenshot)
+  useEffect(() => {
+    localStorage.setItem("soraGhost", ghostMode ? "1" : "0");
+    if (!ghostMode) setHidden(false);
+  }, [ghostMode]);
+
+  // Auto-fade / auto-hide while user is scrolling the page
   useEffect(() => {
     const onScroll = () => {
-      if (open) return; // no atenuar panel cuando el usuario lo está usando
+      if (open && !ghostMode) return;
       setDim(true);
+      if (ghostMode && !isDragging) setHidden(true);
       if (dimTimerRef.current) clearTimeout(dimTimerRef.current);
       dimTimerRef.current = setTimeout(() => setDim(false), 900);
     };
@@ -210,7 +224,34 @@ export function ChatWidget() {
       window.removeEventListener("scroll", onScroll);
       if (dimTimerRef.current) clearTimeout(dimTimerRef.current);
     };
-  }, [open]);
+  }, [open, ghostMode, isDragging]);
+
+  // Ghost mode: wake when cursor approaches the corner where Sora lives
+  useEffect(() => {
+    if (!ghostMode) return;
+    const PROXIMITY = 140;
+    const onMove = (e: MouseEvent) => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const targetX = corner.endsWith("r") ? w - 48 : 48;
+      const targetY = corner.startsWith("b") ? h - 48 : 48;
+      const dx = e.clientX - targetX;
+      const dy = e.clientY - targetY;
+      const near = Math.hypot(dx, dy) < PROXIMITY;
+      if (near) {
+        setHidden(false);
+        if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
+      } else if (!open) {
+        if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
+        wakeTimerRef.current = setTimeout(() => setHidden(true), 1400);
+      }
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
+    };
+  }, [ghostMode, corner, open]);
 
   const cornerClass = (c: Corner) => {
     switch (c) {
