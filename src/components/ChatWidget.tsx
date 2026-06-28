@@ -538,6 +538,41 @@ export function ChatWidget() {
     }
   }, [input, isLoading]);
 
+  // Global keyboard shortcuts:
+  //   Ctrl/Cmd + J          → abrir/cerrar el chat
+  //   Ctrl/Cmd + Shift + V  → alternar respuesta hablada de Sora
+  //   Ctrl/Cmd + Shift + H  → alternar modo fantasma (auto-ocultar)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const target = e.target as HTMLElement | null;
+      const inField = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+      const key = e.key.toLowerCase();
+      if (key === "j" && !e.shiftKey) {
+        if (inField && target?.closest("form")) {
+          // permitir Ctrl+J en formularios ajenos
+        }
+        e.preventDefault();
+        setHidden(false);
+        setOpen(o => !o);
+        return;
+      }
+      if (e.shiftKey && key === "v") {
+        e.preventDefault();
+        setVoiceEnabled(v => !v);
+        return;
+      }
+      if (e.shiftKey && key === "h") {
+        e.preventDefault();
+        setGhostMode(g => !g);
+        return;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
