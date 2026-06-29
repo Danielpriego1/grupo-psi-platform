@@ -758,7 +758,8 @@ export function ChatWidget() {
           setDragPos(null);
         }}
         style={launcherStyle}
-        aria-label="Abrir chat con Sora (mantén presionado para mover)"
+        aria-label={`Abrir chat con Sora (${formatShortcut(shortcuts.toggleOpen)}; mantén presionado para mover)`}
+        title={`Sora — ${formatShortcut(shortcuts.toggleOpen)}${ghostMode ? " · Modo fantasma activo" : ""}`}
         className={cn(
           "fixed z-50 h-[72px] w-[72px] rounded-full shadow-2xl overflow-hidden touch-none select-none",
           !isDragging && "transition-all duration-500 animate-glow-pulse hover:scale-110",
@@ -770,7 +771,33 @@ export function ChatWidget() {
         )}
       >
         <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150 pointer-events-none" />
+        {ghostMode && !open && (
+          <span
+            className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#09090b]/85 ring-2 ring-primary/70 shadow-lg"
+            aria-hidden="true"
+            title="Modo fantasma activo"
+          >
+            <Ghost className="h-3 w-3 text-primary" />
+          </span>
+        )}
       </button>
+
+      {/* Indicador persistente cuando Sora está oculta por modo fantasma:
+          muestra dónde reaparecerá al acercar el cursor. */}
+      {ghostMode && hidden && !open && !isDragging && (
+        <div
+          className={cn(
+            "fixed z-40 pointer-events-none flex items-center gap-1.5 rounded-full border border-primary/40 bg-[#09090b]/80 backdrop-blur px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary shadow-lg transition-opacity duration-500",
+            cornerClass(corner),
+            proximityHint ? "opacity-100" : "opacity-50"
+          )}
+          aria-hidden="true"
+        >
+          <Ghost className="h-3 w-3" />
+          <span>Sora · acércate</span>
+        </div>
+      )}
+
 
       <div
         className={cn(
