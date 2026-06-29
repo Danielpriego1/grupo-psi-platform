@@ -613,32 +613,23 @@ export function ChatWidget() {
     }
   }, [input, isLoading]);
 
-  // Global keyboard shortcuts:
-  //   Ctrl/Cmd + J          → abrir/cerrar el chat
-  //   Ctrl/Cmd + Shift + V  → alternar respuesta hablada de Sora
-  //   Ctrl/Cmd + Shift + H  → alternar modo fantasma (auto-ocultar)
+  // Global keyboard shortcuts (personalizables desde Ajustes, persistidos en localStorage)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const mod = e.ctrlKey || e.metaKey;
-      if (!mod) return;
-      const target = e.target as HTMLElement | null;
-      const inField = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
-      const key = e.key.toLowerCase();
-      if (key === "j" && !e.shiftKey) {
-        if (inField && target?.closest("form")) {
-          // permitir Ctrl+J en formularios ajenos
-        }
+      // Si estamos capturando un nuevo atajo, no disparar acciones
+      if (capturingAction) return;
+      if (matchShortcut(e, shortcuts.toggleOpen)) {
         e.preventDefault();
         setHidden(false);
         setOpen(o => !o);
         return;
       }
-      if (e.shiftKey && key === "v") {
+      if (matchShortcut(e, shortcuts.toggleVoice)) {
         e.preventDefault();
         setVoiceEnabled(v => !v);
         return;
       }
-      if (e.shiftKey && key === "h") {
+      if (matchShortcut(e, shortcuts.toggleGhost)) {
         e.preventDefault();
         setGhostMode(g => !g);
         return;
@@ -646,7 +637,30 @@ export function ChatWidget() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [shortcuts, capturingAction]);
+
+  // Captura de un nuevo atajo
+  useEffect(() => {
+    if (!capturingAction) return;
+    const onKey = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === "Escape") { setCapturingAction(null); return; }
+      // Ignorar pulsaciones de solo modificadores
+      if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
+      const next: Shortcut = {
+        ctrl: e.ctrlKey || e.metaKey,
+        shift: e.shiftKey,
+        alt: e.altKey,
+        key: e.key.length === 1 ? e.key.toLowerCase() : e.key,
+      };
+      setShortcuts(prev => ({ ...prev, [capturingAction]: next }));
+      setCapturingAction(null);
+    };
+    window.addEventListener("keydown", onKey, { capture: true });
+    return () => window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+  }, [capturingAction]);
+
 
   // Cleanup on unmount
   useEffect(() => {
