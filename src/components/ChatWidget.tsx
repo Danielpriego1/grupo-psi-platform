@@ -256,6 +256,26 @@ export function ChatWidget() {
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Ajustes (atajos personalizables)
+  const [showSettings, setShowSettings] = useState(false);
+  const [shortcuts, setShortcuts] = useState<ShortcutMap>(() => loadShortcuts());
+  const [capturingAction, setCapturingAction] = useState<keyof ShortcutMap | null>(null);
+  const [proximityHint, setProximityHint] = useState(false); // flash al ocultarse en modo fantasma
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
+    }
+  }, [shortcuts]);
+
+  // Pequeño "flash" al entrar en estado oculto, para que sepas dónde reaparecerá
+  useEffect(() => {
+    if (!ghostMode || !hidden) return;
+    setProximityHint(true);
+    const t = setTimeout(() => setProximityHint(false), 2200);
+    return () => clearTimeout(t);
+  }, [ghostMode, hidden]);
+
   useEffect(() => {
     localStorage.setItem("soraCorner", corner);
   }, [corner]);
