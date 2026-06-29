@@ -890,7 +890,84 @@ export function ChatWidget() {
               </span>
             </button>
           )}
+
+          {showSettings && (
+            <div className="absolute inset-0 z-20 bg-[#09090b]/95 backdrop-blur-xl overflow-y-auto animate-fade-in">
+              <div className="p-5 space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <SettingsIcon className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-black uppercase tracking-widest text-white">Ajustes</h3>
+                  </div>
+                  <button
+                    onClick={() => { setShowSettings(false); setCapturingAction(null); }}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
+                    aria-label="Cerrar ajustes"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+                    <Keyboard className="h-3 w-3" /> Atajos de teclado
+                  </div>
+                  <p className="text-xs text-white/50">
+                    Haz clic en <span className="text-white/80 font-semibold">Cambiar</span> y luego presiona la combinación que quieras usar. Esc cancela.
+                  </p>
+
+                  {([
+                    { key: "toggleOpen" as const, label: "Abrir / cerrar el chat" },
+                    { key: "toggleVoice" as const, label: "Activar / silenciar voz de Sora" },
+                    { key: "toggleGhost" as const, label: "Activar / desactivar modo fantasma" },
+                  ]).map(({ key, label }) => {
+                    const capturing = capturingAction === key;
+                    return (
+                      <div key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+                        <div className="min-w-0">
+                          <div className="text-sm text-white truncate">{label}</div>
+                          <div className="mt-1">
+                            <kbd className={cn(
+                              "inline-block rounded-md border px-2 py-0.5 text-[11px] font-mono",
+                              capturing
+                                ? "border-primary/60 bg-primary/15 text-primary animate-pulse"
+                                : "border-white/15 bg-black/30 text-white/80"
+                            )}>
+                              {capturing ? "Presiona la combinación…" : formatShortcut(shortcuts[key])}
+                            </kbd>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setCapturingAction(capturing ? null : key)}
+                          className={cn(
+                            "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
+                            capturing
+                              ? "bg-white/10 text-white hover:bg-white/20"
+                              : "bg-primary/20 text-primary hover:bg-primary/30"
+                          )}
+                        >
+                          {capturing ? "Cancelar" : "Cambiar"}
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => { setShortcuts(DEFAULT_SHORTCUTS); setCapturingAction(null); }}
+                    className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Restablecer valores por defecto
+                  </button>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[11px] text-white/60 leading-relaxed">
+                  💡 Tus preferencias se guardan en este navegador y se aplican automáticamente la próxima vez que abras la página.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
 
         <div className="p-5 bg-white/5 border-t border-white/5">
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end gap-3">
