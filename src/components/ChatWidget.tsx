@@ -796,21 +796,24 @@ export function ChatWidget() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setGhostMode(g => !g)}
-                title={ghostMode ? "Modo fantasma activo — se oculta al leer (Ctrl/⌘+Shift+H)" : "Activar modo fantasma — auto-ocultar (Ctrl/⌘+Shift+H)"}
+                title={ghostMode ? `Modo fantasma activo — se oculta al leer (${formatShortcut(shortcuts.toggleGhost)})` : `Activar modo fantasma — auto-ocultar (${formatShortcut(shortcuts.toggleGhost)})`}
                 aria-label={ghostMode ? "Desactivar modo fantasma" : "Activar modo fantasma"}
                 aria-pressed={ghostMode}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  "relative flex h-10 w-10 items-center justify-center rounded-xl transition-all",
                   ghostMode
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
                 {ghostMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {ghostMode && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#09090b] animate-pulse" aria-hidden="true" />
+                )}
               </button>
               <button
                 onClick={() => setVoiceEnabled(v => !v)}
-                title={voiceEnabled ? "Silenciar voz de Sora (Ctrl/⌘+Shift+V)" : "Activar voz de Sora (Ctrl/⌘+Shift+V)"}
+                title={voiceEnabled ? `Silenciar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})` : `Activar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})`}
                 aria-label={voiceEnabled ? "Silenciar voz" : "Activar voz"}
                 className={cn(
                   "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
@@ -821,6 +824,21 @@ export function ChatWidget() {
               >
                 {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </button>
+              <button
+                onClick={() => setShowSettings(s => !s)}
+                title="Ajustes y atajos de teclado"
+                aria-label="Abrir ajustes"
+                aria-pressed={showSettings}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  showSettings
+                    ? "bg-primary/20 text-primary hover:bg-primary/30"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                <SettingsIcon className="h-5 w-5" />
+              </button>
+
               <a
                 href={WHATSAPP_URL}
                 target="_blank"
