@@ -168,6 +168,61 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
 
 type Corner = "br" | "bl" | "tr" | "tl";
 
+// ───── Atajos de teclado personalizables ─────
+type Shortcut = { ctrl: boolean; shift: boolean; alt: boolean; key: string };
+type ShortcutMap = {
+  toggleOpen: Shortcut;
+  toggleVoice: Shortcut;
+  toggleGhost: Shortcut;
+};
+const DEFAULT_SHORTCUTS: ShortcutMap = {
+  toggleOpen: { ctrl: true, shift: false, alt: false, key: "j" },
+  toggleVoice: { ctrl: true, shift: true, alt: false, key: "v" },
+  toggleGhost: { ctrl: true, shift: true, alt: false, key: "h" },
+};
+const SHORTCUTS_STORAGE_KEY = "soraShortcuts";
+
+function loadShortcuts(): ShortcutMap {
+  if (typeof window === "undefined") return DEFAULT_SHORTCUTS;
+  try {
+    const raw = localStorage.getItem(SHORTCUTS_STORAGE_KEY);
+    if (!raw) return DEFAULT_SHORTCUTS;
+    const parsed = JSON.parse(raw) as Partial<ShortcutMap>;
+    return {
+      toggleOpen: { ...DEFAULT_SHORTCUTS.toggleOpen, ...(parsed.toggleOpen ?? {}) },
+      toggleVoice: { ...DEFAULT_SHORTCUTS.toggleVoice, ...(parsed.toggleVoice ?? {}) },
+      toggleGhost: { ...DEFAULT_SHORTCUTS.toggleGhost, ...(parsed.toggleGhost ?? {}) },
+    };
+  } catch {
+    return DEFAULT_SHORTCUTS;
+  }
+}
+
+function isMac(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent);
+}
+
+function formatShortcut(s: Shortcut): string {
+  const parts: string[] = [];
+  if (s.ctrl) parts.push(isMac() ? "⌘" : "Ctrl");
+  if (s.alt) parts.push(isMac() ? "⌥" : "Alt");
+  if (s.shift) parts.push(isMac() ? "⇧" : "Shift");
+  parts.push(s.key.length === 1 ? s.key.toUpperCase() : s.key);
+  return parts.join(isMac() ? "" : "+");
+}
+
+function matchShortcut(e: KeyboardEvent, s: Shortcut): boolean {
+  const mod = e.ctrlKey || e.metaKey;
+  return (
+    mod === s.ctrl &&
+    e.shiftKey === s.shift &&
+    e.altKey === s.alt &&
+    e.key.toLowerCase() === s.key.toLowerCase()
+  );
+}
+
+
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
