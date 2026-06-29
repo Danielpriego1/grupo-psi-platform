@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
-import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff } from "lucide-react";
+import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -168,6 +168,61 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
 
 type Corner = "br" | "bl" | "tr" | "tl";
 
+// ───── Atajos de teclado personalizables ─────
+type Shortcut = { ctrl: boolean; shift: boolean; alt: boolean; key: string };
+type ShortcutMap = {
+  toggleOpen: Shortcut;
+  toggleVoice: Shortcut;
+  toggleGhost: Shortcut;
+};
+const DEFAULT_SHORTCUTS: ShortcutMap = {
+  toggleOpen: { ctrl: true, shift: false, alt: false, key: "j" },
+  toggleVoice: { ctrl: true, shift: true, alt: false, key: "v" },
+  toggleGhost: { ctrl: true, shift: true, alt: false, key: "h" },
+};
+const SHORTCUTS_STORAGE_KEY = "soraShortcuts";
+
+function loadShortcuts(): ShortcutMap {
+  if (typeof window === "undefined") return DEFAULT_SHORTCUTS;
+  try {
+    const raw = localStorage.getItem(SHORTCUTS_STORAGE_KEY);
+    if (!raw) return DEFAULT_SHORTCUTS;
+    const parsed = JSON.parse(raw) as Partial<ShortcutMap>;
+    return {
+      toggleOpen: { ...DEFAULT_SHORTCUTS.toggleOpen, ...(parsed.toggleOpen ?? {}) },
+      toggleVoice: { ...DEFAULT_SHORTCUTS.toggleVoice, ...(parsed.toggleVoice ?? {}) },
+      toggleGhost: { ...DEFAULT_SHORTCUTS.toggleGhost, ...(parsed.toggleGhost ?? {}) },
+    };
+  } catch {
+    return DEFAULT_SHORTCUTS;
+  }
+}
+
+function isMac(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent);
+}
+
+function formatShortcut(s: Shortcut): string {
+  const parts: string[] = [];
+  if (s.ctrl) parts.push(isMac() ? "⌘" : "Ctrl");
+  if (s.alt) parts.push(isMac() ? "⌥" : "Alt");
+  if (s.shift) parts.push(isMac() ? "⇧" : "Shift");
+  parts.push(s.key.length === 1 ? s.key.toUpperCase() : s.key);
+  return parts.join(isMac() ? "" : "+");
+}
+
+function matchShortcut(e: KeyboardEvent, s: Shortcut): boolean {
+  const mod = e.ctrlKey || e.metaKey;
+  return (
+    mod === s.ctrl &&
+    e.shiftKey === s.shift &&
+    e.altKey === s.alt &&
+    e.key.toLowerCase() === s.key.toLowerCase()
+  );
+}
+
+
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -200,6 +255,26 @@ export function ChatWidget() {
   const [hidden, setHidden] = useState(false); // true cuando ghost mode lo oculta
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Ajustes (atajos personalizables)
+  const [showSettings, setShowSettings] = useState(false);
+  const [shortcuts, setShortcuts] = useState<ShortcutMap>(() => loadShortcuts());
+  const [capturingAction, setCapturingAction] = useState<keyof ShortcutMap | null>(null);
+  const [proximityHint, setProximityHint] = useState(false); // flash al ocultarse en modo fantasma
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
+    }
+  }, [shortcuts]);
+
+  // Pequeño "flash" al entrar en estado oculto, para que sepas dónde reaparecerá
+  useEffect(() => {
+    if (!ghostMode || !hidden) return;
+    setProximityHint(true);
+    const t = setTimeout(() => setProximityHint(false), 2200);
+    return () => clearTimeout(t);
+  }, [ghostMode, hidden]);
 
   useEffect(() => {
     localStorage.setItem("soraCorner", corner);
@@ -538,32 +613,23 @@ export function ChatWidget() {
     }
   }, [input, isLoading]);
 
-  // Global keyboard shortcuts:
-  //   Ctrl/Cmd + J          → abrir/cerrar el chat
-  //   Ctrl/Cmd + Shift + V  → alternar respuesta hablada de Sora
-  //   Ctrl/Cmd + Shift + H  → alternar modo fantasma (auto-ocultar)
+  // Global keyboard shortcuts (personalizables desde Ajustes, persistidos en localStorage)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const mod = e.ctrlKey || e.metaKey;
-      if (!mod) return;
-      const target = e.target as HTMLElement | null;
-      const inField = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
-      const key = e.key.toLowerCase();
-      if (key === "j" && !e.shiftKey) {
-        if (inField && target?.closest("form")) {
-          // permitir Ctrl+J en formularios ajenos
-        }
+      // Si estamos capturando un nuevo atajo, no disparar acciones
+      if (capturingAction) return;
+      if (matchShortcut(e, shortcuts.toggleOpen)) {
         e.preventDefault();
         setHidden(false);
         setOpen(o => !o);
         return;
       }
-      if (e.shiftKey && key === "v") {
+      if (matchShortcut(e, shortcuts.toggleVoice)) {
         e.preventDefault();
         setVoiceEnabled(v => !v);
         return;
       }
-      if (e.shiftKey && key === "h") {
+      if (matchShortcut(e, shortcuts.toggleGhost)) {
         e.preventDefault();
         setGhostMode(g => !g);
         return;
@@ -571,7 +637,30 @@ export function ChatWidget() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [shortcuts, capturingAction]);
+
+  // Captura de un nuevo atajo
+  useEffect(() => {
+    if (!capturingAction) return;
+    const onKey = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === "Escape") { setCapturingAction(null); return; }
+      // Ignorar pulsaciones de solo modificadores
+      if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
+      const next: Shortcut = {
+        ctrl: e.ctrlKey || e.metaKey,
+        shift: e.shiftKey,
+        alt: e.altKey,
+        key: e.key.length === 1 ? e.key.toLowerCase() : e.key,
+      };
+      setShortcuts(prev => ({ ...prev, [capturingAction]: next }));
+      setCapturingAction(null);
+    };
+    window.addEventListener("keydown", onKey, { capture: true });
+    return () => window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
+  }, [capturingAction]);
+
 
   // Cleanup on unmount
   useEffect(() => {
@@ -669,7 +758,8 @@ export function ChatWidget() {
           setDragPos(null);
         }}
         style={launcherStyle}
-        aria-label="Abrir chat con Sora (mantén presionado para mover)"
+        aria-label={`Abrir chat con Sora (${formatShortcut(shortcuts.toggleOpen)}; mantén presionado para mover)`}
+        title={`Sora — ${formatShortcut(shortcuts.toggleOpen)}${ghostMode ? " · Modo fantasma activo" : ""}`}
         className={cn(
           "fixed z-50 h-[72px] w-[72px] rounded-full shadow-2xl overflow-hidden touch-none select-none",
           !isDragging && "transition-all duration-500 animate-glow-pulse hover:scale-110",
@@ -681,7 +771,33 @@ export function ChatWidget() {
         )}
       >
         <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150 pointer-events-none" />
+        {ghostMode && !open && (
+          <span
+            className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#09090b]/85 ring-2 ring-primary/70 shadow-lg"
+            aria-hidden="true"
+            title="Modo fantasma activo"
+          >
+            <Ghost className="h-3 w-3 text-primary" />
+          </span>
+        )}
       </button>
+
+      {/* Indicador persistente cuando Sora está oculta por modo fantasma:
+          muestra dónde reaparecerá al acercar el cursor. */}
+      {ghostMode && hidden && !open && !isDragging && (
+        <div
+          className={cn(
+            "fixed z-40 pointer-events-none flex items-center gap-1.5 rounded-full border border-primary/40 bg-[#09090b]/80 backdrop-blur px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary shadow-lg transition-opacity duration-500",
+            cornerClass(corner),
+            proximityHint ? "opacity-100" : "opacity-50"
+          )}
+          aria-hidden="true"
+        >
+          <Ghost className="h-3 w-3" />
+          <span>Sora · acércate</span>
+        </div>
+      )}
+
 
       <div
         className={cn(
@@ -707,21 +823,24 @@ export function ChatWidget() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setGhostMode(g => !g)}
-                title={ghostMode ? "Modo fantasma activo — se oculta al leer (Ctrl/⌘+Shift+H)" : "Activar modo fantasma — auto-ocultar (Ctrl/⌘+Shift+H)"}
+                title={ghostMode ? `Modo fantasma activo — se oculta al leer (${formatShortcut(shortcuts.toggleGhost)})` : `Activar modo fantasma — auto-ocultar (${formatShortcut(shortcuts.toggleGhost)})`}
                 aria-label={ghostMode ? "Desactivar modo fantasma" : "Activar modo fantasma"}
                 aria-pressed={ghostMode}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  "relative flex h-10 w-10 items-center justify-center rounded-xl transition-all",
                   ghostMode
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
                 {ghostMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {ghostMode && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#09090b] animate-pulse" aria-hidden="true" />
+                )}
               </button>
               <button
                 onClick={() => setVoiceEnabled(v => !v)}
-                title={voiceEnabled ? "Silenciar voz de Sora (Ctrl/⌘+Shift+V)" : "Activar voz de Sora (Ctrl/⌘+Shift+V)"}
+                title={voiceEnabled ? `Silenciar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})` : `Activar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})`}
                 aria-label={voiceEnabled ? "Silenciar voz" : "Activar voz"}
                 className={cn(
                   "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
@@ -732,6 +851,21 @@ export function ChatWidget() {
               >
                 {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </button>
+              <button
+                onClick={() => setShowSettings(s => !s)}
+                title="Ajustes y atajos de teclado"
+                aria-label="Abrir ajustes"
+                aria-pressed={showSettings}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  showSettings
+                    ? "bg-primary/20 text-primary hover:bg-primary/30"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                <SettingsIcon className="h-5 w-5" />
+              </button>
+
               <a
                 href={WHATSAPP_URL}
                 target="_blank"
@@ -801,7 +935,84 @@ export function ChatWidget() {
               </span>
             </button>
           )}
+
+          {showSettings && (
+            <div className="absolute inset-0 z-20 bg-[#09090b]/95 backdrop-blur-xl overflow-y-auto animate-fade-in">
+              <div className="p-5 space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <SettingsIcon className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-black uppercase tracking-widest text-white">Ajustes</h3>
+                  </div>
+                  <button
+                    onClick={() => { setShowSettings(false); setCapturingAction(null); }}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
+                    aria-label="Cerrar ajustes"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+                    <Keyboard className="h-3 w-3" /> Atajos de teclado
+                  </div>
+                  <p className="text-xs text-white/50">
+                    Haz clic en <span className="text-white/80 font-semibold">Cambiar</span> y luego presiona la combinación que quieras usar. Esc cancela.
+                  </p>
+
+                  {([
+                    { key: "toggleOpen" as const, label: "Abrir / cerrar el chat" },
+                    { key: "toggleVoice" as const, label: "Activar / silenciar voz de Sora" },
+                    { key: "toggleGhost" as const, label: "Activar / desactivar modo fantasma" },
+                  ]).map(({ key, label }) => {
+                    const capturing = capturingAction === key;
+                    return (
+                      <div key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+                        <div className="min-w-0">
+                          <div className="text-sm text-white truncate">{label}</div>
+                          <div className="mt-1">
+                            <kbd className={cn(
+                              "inline-block rounded-md border px-2 py-0.5 text-[11px] font-mono",
+                              capturing
+                                ? "border-primary/60 bg-primary/15 text-primary animate-pulse"
+                                : "border-white/15 bg-black/30 text-white/80"
+                            )}>
+                              {capturing ? "Presiona la combinación…" : formatShortcut(shortcuts[key])}
+                            </kbd>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setCapturingAction(capturing ? null : key)}
+                          className={cn(
+                            "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
+                            capturing
+                              ? "bg-white/10 text-white hover:bg-white/20"
+                              : "bg-primary/20 text-primary hover:bg-primary/30"
+                          )}
+                        >
+                          {capturing ? "Cancelar" : "Cambiar"}
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => { setShortcuts(DEFAULT_SHORTCUTS); setCapturingAction(null); }}
+                    className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Restablecer valores por defecto
+                  </button>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[11px] text-white/60 leading-relaxed">
+                  💡 Tus preferencias se guardan en este navegador y se aplican automáticamente la próxima vez que abras la página.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
 
         <div className="p-5 bg-white/5 border-t border-white/5">
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end gap-3">
