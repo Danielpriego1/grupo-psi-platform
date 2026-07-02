@@ -1097,35 +1097,51 @@ export function ChatWidget() {
                     { key: "toggleGhost" as const, label: "Activar / desactivar modo fantasma" },
                   ]).map(({ key, label }) => {
                     const capturing = capturingAction === key;
+                    const hasError = shortcutError?.action === key;
                     return (
-                      <div key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
-                        <div className="min-w-0">
-                          <div className="text-sm text-white truncate">{label}</div>
-                          <div className="mt-1">
-                            <kbd className={cn(
-                              "inline-block rounded-md border px-2 py-0.5 text-[11px] font-mono",
-                              capturing
-                                ? "border-primary/60 bg-primary/15 text-primary animate-pulse"
-                                : "border-white/15 bg-black/30 text-white/80"
-                            )}>
-                              {capturing ? "Presiona la combinación…" : formatShortcut(shortcuts[key])}
-                            </kbd>
+                      <div key={key} className={cn(
+                        "flex flex-col gap-2 rounded-xl border px-3 py-2.5 transition-colors",
+                        hasError ? "border-red-500/50 bg-red-500/5" : "border-white/10 bg-white/5"
+                      )}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm text-white truncate">{label}</div>
+                            <div className="mt-1">
+                              <kbd className={cn(
+                                "inline-block rounded-md border px-2 py-0.5 text-[11px] font-mono",
+                                capturing
+                                  ? "border-primary/60 bg-primary/15 text-primary animate-pulse"
+                                  : "border-white/15 bg-black/30 text-white/80"
+                              )}>
+                                {capturing ? "Presiona la combinación…" : formatShortcut(shortcuts[key])}
+                              </kbd>
+                            </div>
                           </div>
+                          <button
+                            onClick={() => {
+                              setShortcutError(null);
+                              setCapturingAction(capturing ? null : key);
+                            }}
+                            className={cn(
+                              "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
+                              capturing
+                                ? "bg-white/10 text-white hover:bg-white/20"
+                                : "bg-primary/20 text-primary hover:bg-primary/30"
+                            )}
+                          >
+                            {capturing ? "Cancelar" : "Cambiar"}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => setCapturingAction(capturing ? null : key)}
-                          className={cn(
-                            "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
-                            capturing
-                              ? "bg-white/10 text-white hover:bg-white/20"
-                              : "bg-primary/20 text-primary hover:bg-primary/30"
-                          )}
-                        >
-                          {capturing ? "Cancelar" : "Cambiar"}
-                        </button>
+                        {hasError && (
+                          <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-2 text-[11px] text-red-200" role="alert">
+                            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-300" />
+                            <span className="leading-relaxed">{shortcutError.message}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
+
 
                   <button
                     onClick={() => { setShortcuts(DEFAULT_SHORTCUTS); setCapturingAction(null); }}
