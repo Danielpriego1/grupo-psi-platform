@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
-import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost } from "lucide-react";
+import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost, HelpCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -222,6 +222,59 @@ function matchShortcut(e: KeyboardEvent, s: Shortcut): boolean {
   );
 }
 
+// ───── Validación de atajos (duplicados / reservados) ─────
+const RESERVED_SHORTCUTS: ReadonlyArray<Shortcut> = [
+  { ctrl: true, shift: false, alt: false, key: "c" },
+  { ctrl: true, shift: false, alt: false, key: "v" },
+  { ctrl: true, shift: false, alt: false, key: "x" },
+  { ctrl: true, shift: false, alt: false, key: "a" },
+  { ctrl: true, shift: false, alt: false, key: "z" },
+  { ctrl: true, shift: false, alt: false, key: "s" },
+  { ctrl: true, shift: false, alt: false, key: "p" },
+  { ctrl: true, shift: false, alt: false, key: "r" },
+  { ctrl: true, shift: false, alt: false, key: "t" },
+  { ctrl: true, shift: false, alt: false, key: "w" },
+  { ctrl: true, shift: false, alt: false, key: "n" },
+  { ctrl: true, shift: false, alt: false, key: "f" },
+  { ctrl: true, shift: false, alt: false, key: "l" },
+  { ctrl: true, shift: true, alt: false, key: "i" },
+  { ctrl: true, shift: true, alt: false, key: "j" },
+];
+const ACTION_LABELS: Record<keyof ShortcutMap, string> = {
+  toggleOpen: "abrir/cerrar el chat",
+  toggleVoice: "voz de Sora",
+  toggleGhost: "modo fantasma",
+};
+function sameShortcut(a: Shortcut, b: Shortcut): boolean {
+  return a.ctrl === b.ctrl && a.shift === b.shift && a.alt === b.alt && a.key.toLowerCase() === b.key.toLowerCase();
+}
+function validateShortcut(action: keyof ShortcutMap, s: Shortcut, current: ShortcutMap): string | null {
+  if (!s.ctrl && !s.alt) {
+    return "Incluye Ctrl/⌘ o Alt para evitar conflictos con la escritura normal.";
+  }
+  if (RESERVED_SHORTCUTS.some((r) => sameShortcut(r, s))) {
+    return `Combinación reservada por el navegador (${formatShortcut(s)}). Elige otra.`;
+  }
+  for (const k of Object.keys(current) as (keyof ShortcutMap)[]) {
+    if (k !== action && sameShortcut(current[k], s)) {
+      return `Esa combinación ya está asignada a "${ACTION_LABELS[k]}".`;
+    }
+  }
+  return null;
+}
+
+// ───── Cross-tab sync ─────
+const HELP_STORAGE_KEY = "soraHelpDismissed";
+type SyncMessage =
+  | { type: "open"; value: boolean }
+  | { type: "ghost"; value: boolean }
+  | { type: "voice"; value: boolean }
+  | { type: "corner"; value: Corner }
+  | { type: "shortcuts"; value: ShortcutMap }
+  | { type: "help"; value: boolean };
+
+
+
 
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -260,13 +313,78 @@ export function ChatWidget() {
   const [showSettings, setShowSettings] = useState(false);
   const [shortcuts, setShortcuts] = useState<ShortcutMap>(() => loadShortcuts());
   const [capturingAction, setCapturingAction] = useState<keyof ShortcutMap | null>(null);
+  const [shortcutError, setShortcutError] = useState<{ action: keyof ShortcutMap; message: string } | null>(null);
   const [proximityHint, setProximityHint] = useState(false); // flash al ocultarse en modo fantasma
+  const [helpDismissed, setHelpDismissed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(HELP_STORAGE_KEY) === "1";
+  });
+
+  // Cross-tab sync (BroadcastChannel with storage-event fallback)
+  const bcRef = useRef<BroadcastChannel | null>(null);
+  const suppressBroadcastRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") return;
+    const bc = new BroadcastChannel("sora-widget");
+    bcRef.current = bc;
+    bc.onmessage = (ev: MessageEvent<SyncMessage>) => {
+      const m = ev.data;
+      if (!m || typeof m !== "object") return;
+      suppressBroadcastRef.current = true;
+      try {
+        if (m.type === "open") setOpen(m.value);
+        else if (m.type === "ghost") setGhostMode(m.value);
+        else if (m.type === "voice") setVoiceEnabled(m.value);
+        else if (m.type === "corner") setCorner(m.value);
+        else if (m.type === "shortcuts") setShortcuts(m.value);
+        else if (m.type === "help") setHelpDismissed(m.value);
+      } finally {
+        // Release on next tick so state effects don't re-broadcast
+        setTimeout(() => { suppressBroadcastRef.current = false; }, 0);
+      }
+    };
+    return () => { bc.close(); bcRef.current = null; };
+  }, []);
+  const broadcast = useCallback((msg: SyncMessage) => {
+    if (suppressBroadcastRef.current) return;
+    bcRef.current?.postMessage(msg);
+  }, []);
+
+  // Storage-event fallback (other tabs writing to localStorage)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.newValue == null) return;
+      suppressBroadcastRef.current = true;
+      try {
+        if (e.key === SHORTCUTS_STORAGE_KEY) setShortcuts(loadShortcuts());
+        else if (e.key === "soraGhost") setGhostMode(e.newValue === "1");
+        else if (e.key === "soraVoice") setVoiceEnabled(e.newValue === "1");
+        else if (e.key === "soraCorner") setCorner(e.newValue as Corner);
+        else if (e.key === HELP_STORAGE_KEY) setHelpDismissed(e.newValue === "1");
+      } finally {
+        setTimeout(() => { suppressBroadcastRef.current = false; }, 0);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
     }
-  }, [shortcuts]);
+    broadcast({ type: "shortcuts", value: shortcuts });
+  }, [shortcuts, broadcast]);
+
+  useEffect(() => { broadcast({ type: "open", value: open }); }, [open, broadcast]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(HELP_STORAGE_KEY, helpDismissed ? "1" : "0");
+    }
+    broadcast({ type: "help", value: helpDismissed });
+  }, [helpDismissed, broadcast]);
+
 
   // Pequeño "flash" al entrar en estado oculto, para que sepas dónde reaparecerá
   useEffect(() => {
@@ -278,12 +396,15 @@ export function ChatWidget() {
 
   useEffect(() => {
     localStorage.setItem("soraCorner", corner);
-  }, [corner]);
+    broadcast({ type: "corner", value: corner });
+  }, [corner, broadcast]);
 
   useEffect(() => {
     localStorage.setItem("soraGhost", ghostMode ? "1" : "0");
     if (!ghostMode) setHidden(false);
-  }, [ghostMode]);
+    broadcast({ type: "ghost", value: ghostMode });
+  }, [ghostMode, broadcast]);
+
 
   // Auto-fade / auto-hide while user is scrolling the page
   useEffect(() => {
@@ -362,7 +483,9 @@ export function ChatWidget() {
     if (!voiceEnabled && typeof window !== "undefined") {
       window.speechSynthesis?.cancel();
     }
-  }, [voiceEnabled]);
+    broadcast({ type: "voice", value: voiceEnabled });
+  }, [voiceEnabled, broadcast]);
+
 
   const speak = useCallback((text: string) => {
     if (!voiceEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -639,13 +762,13 @@ export function ChatWidget() {
     return () => window.removeEventListener("keydown", onKey);
   }, [shortcuts, capturingAction]);
 
-  // Captura de un nuevo atajo
+  // Captura de un nuevo atajo (con validación de duplicados y reservados)
   useEffect(() => {
     if (!capturingAction) return;
     const onKey = (e: KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (e.key === "Escape") { setCapturingAction(null); return; }
+      if (e.key === "Escape") { setCapturingAction(null); setShortcutError(null); return; }
       // Ignorar pulsaciones de solo modificadores
       if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
       const next: Shortcut = {
@@ -654,12 +777,19 @@ export function ChatWidget() {
         alt: e.altKey,
         key: e.key.length === 1 ? e.key.toLowerCase() : e.key,
       };
+      const err = validateShortcut(capturingAction, next, shortcuts);
+      if (err) {
+        setShortcutError({ action: capturingAction, message: err });
+        return; // keep capturing so the user can try again
+      }
+      setShortcutError(null);
       setShortcuts(prev => ({ ...prev, [capturingAction]: next }));
       setCapturingAction(null);
     };
     window.addEventListener("keydown", onKey, { capture: true });
     return () => window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
-  }, [capturingAction]);
+  }, [capturingAction, shortcuts]);
+
 
 
   // Cleanup on unmount
@@ -897,9 +1027,50 @@ export function ChatWidget() {
             aria-label="Conversación con Sora"
             tabIndex={0}
           >
+            {!helpDismissed && (
+              <div className="mb-4 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 p-4 text-xs text-white/85 shadow-lg shadow-primary/10 animate-fade-in">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                    <HelpCircle className="h-3.5 w-3.5" /> Ayuda rápida
+                  </div>
+                  <button
+                    onClick={() => setHelpDismissed(true)}
+                    className="shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/60 hover:bg-white/10 hover:text-white transition"
+                    aria-label="Ocultar la ayuda rápida"
+                  >
+                    Entendido ✕
+                  </button>
+                </div>
+                <div className="mt-2.5 space-y-2 leading-relaxed">
+                  {ghostMode ? (
+                    <p>
+                      <span className="font-semibold text-white">Modo fantasma activo:</span> me oculto al leer o hacer scroll. Acerca el cursor <span className="font-semibold text-primary">a ~140 px</span> de la esquina <span className="font-mono uppercase text-primary">{corner}</span> para que reaparezca.
+                    </p>
+                  ) : (
+                    <p>Actívame el <span className="font-semibold text-primary">modo fantasma</span> (👁 arriba) y me esconderé al leer para no estorbar.</p>
+                  )}
+                  <div className="grid grid-cols-1 gap-1 pt-1">
+                    <div className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="text-white/60">Abrir / cerrar chat</span>
+                      <kbd className="rounded border border-white/15 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-white/90">{formatShortcut(shortcuts.toggleOpen)}</kbd>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="text-white/60">Alternar voz</span>
+                      <kbd className="rounded border border-white/15 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-white/90">{formatShortcut(shortcuts.toggleVoice)}</kbd>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="text-white/60">Modo fantasma</span>
+                      <kbd className="rounded border border-white/15 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-white/90">{formatShortcut(shortcuts.toggleGhost)}</kbd>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-white/50 pt-1">Puedes cambiar los atajos desde <SettingsIcon className="inline h-2.5 w-2.5 -mt-0.5" /> Ajustes.</p>
+                </div>
+              </div>
+            )}
             {visibleMessages.map(msg => (
               <MessageBubble key={msg.id} msg={msg} />
             ))}
+
             {isLoading && (
               <div className="flex justify-start animate-fade-in" role="status" aria-label="Sora está escribiendo">
                 <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
@@ -967,43 +1138,77 @@ export function ChatWidget() {
                     { key: "toggleGhost" as const, label: "Activar / desactivar modo fantasma" },
                   ]).map(({ key, label }) => {
                     const capturing = capturingAction === key;
+                    const hasError = shortcutError?.action === key;
                     return (
-                      <div key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
-                        <div className="min-w-0">
-                          <div className="text-sm text-white truncate">{label}</div>
-                          <div className="mt-1">
-                            <kbd className={cn(
-                              "inline-block rounded-md border px-2 py-0.5 text-[11px] font-mono",
-                              capturing
-                                ? "border-primary/60 bg-primary/15 text-primary animate-pulse"
-                                : "border-white/15 bg-black/30 text-white/80"
-                            )}>
-                              {capturing ? "Presiona la combinación…" : formatShortcut(shortcuts[key])}
-                            </kbd>
+                      <div key={key} className={cn(
+                        "flex flex-col gap-2 rounded-xl border px-3 py-2.5 transition-colors",
+                        hasError ? "border-red-500/50 bg-red-500/5" : "border-white/10 bg-white/5"
+                      )}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm text-white truncate">{label}</div>
+                            <div className="mt-1">
+                              <kbd className={cn(
+                                "inline-block rounded-md border px-2 py-0.5 text-[11px] font-mono",
+                                capturing
+                                  ? "border-primary/60 bg-primary/15 text-primary animate-pulse"
+                                  : "border-white/15 bg-black/30 text-white/80"
+                              )}>
+                                {capturing ? "Presiona la combinación…" : formatShortcut(shortcuts[key])}
+                              </kbd>
+                            </div>
                           </div>
+                          <button
+                            onClick={() => {
+                              setShortcutError(null);
+                              setCapturingAction(capturing ? null : key);
+                            }}
+                            className={cn(
+                              "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
+                              capturing
+                                ? "bg-white/10 text-white hover:bg-white/20"
+                                : "bg-primary/20 text-primary hover:bg-primary/30"
+                            )}
+                          >
+                            {capturing ? "Cancelar" : "Cambiar"}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => setCapturingAction(capturing ? null : key)}
-                          className={cn(
-                            "shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
-                            capturing
-                              ? "bg-white/10 text-white hover:bg-white/20"
-                              : "bg-primary/20 text-primary hover:bg-primary/30"
-                          )}
-                        >
-                          {capturing ? "Cancelar" : "Cambiar"}
-                        </button>
+                        {hasError && (
+                          <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-2 text-[11px] text-red-200" role="alert">
+                            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-red-300" />
+                            <span className="leading-relaxed">{shortcutError.message}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
 
+
                   <button
-                    onClick={() => { setShortcuts(DEFAULT_SHORTCUTS); setCapturingAction(null); }}
+                    onClick={() => { setShortcuts(DEFAULT_SHORTCUTS); setCapturingAction(null); setShortcutError(null); }}
                     className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition"
                   >
                     <RotateCcw className="h-3 w-3" /> Restablecer valores por defecto
                   </button>
                 </div>
+
+                {!helpDismissed && (
+                  <button
+                    onClick={() => setHelpDismissed(false)}
+                    className="w-full text-left rounded-xl border border-primary/30 bg-primary/10 p-3 text-[11px] text-white/70 hover:bg-primary/15 transition"
+                  >
+                    ✅ La tarjeta de <span className="font-semibold text-primary">Ayuda rápida</span> aparece dentro del chat.
+                  </button>
+                )}
+                {helpDismissed && (
+                  <button
+                    onClick={() => setHelpDismissed(false)}
+                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-2 text-[11px] font-semibold text-white/70 hover:bg-white/10 transition"
+                  >
+                    <HelpCircle className="h-3 w-3" /> Volver a mostrar la Ayuda rápida
+                  </button>
+                )}
+
 
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[11px] text-white/60 leading-relaxed">
                   💡 Tus preferencias se guardan en este navegador y se aplican automáticamente la próxima vez que abras la página.
