@@ -222,6 +222,59 @@ function matchShortcut(e: KeyboardEvent, s: Shortcut): boolean {
   );
 }
 
+// ───── Validación de atajos (duplicados / reservados) ─────
+const RESERVED_SHORTCUTS: ReadonlyArray<Shortcut> = [
+  { ctrl: true, shift: false, alt: false, key: "c" },
+  { ctrl: true, shift: false, alt: false, key: "v" },
+  { ctrl: true, shift: false, alt: false, key: "x" },
+  { ctrl: true, shift: false, alt: false, key: "a" },
+  { ctrl: true, shift: false, alt: false, key: "z" },
+  { ctrl: true, shift: false, alt: false, key: "s" },
+  { ctrl: true, shift: false, alt: false, key: "p" },
+  { ctrl: true, shift: false, alt: false, key: "r" },
+  { ctrl: true, shift: false, alt: false, key: "t" },
+  { ctrl: true, shift: false, alt: false, key: "w" },
+  { ctrl: true, shift: false, alt: false, key: "n" },
+  { ctrl: true, shift: false, alt: false, key: "f" },
+  { ctrl: true, shift: false, alt: false, key: "l" },
+  { ctrl: true, shift: true, alt: false, key: "i" },
+  { ctrl: true, shift: true, alt: false, key: "j" },
+];
+const ACTION_LABELS: Record<keyof ShortcutMap, string> = {
+  toggleOpen: "abrir/cerrar el chat",
+  toggleVoice: "voz de Sora",
+  toggleGhost: "modo fantasma",
+};
+function sameShortcut(a: Shortcut, b: Shortcut): boolean {
+  return a.ctrl === b.ctrl && a.shift === b.shift && a.alt === b.alt && a.key.toLowerCase() === b.key.toLowerCase();
+}
+function validateShortcut(action: keyof ShortcutMap, s: Shortcut, current: ShortcutMap): string | null {
+  if (!s.ctrl && !s.alt) {
+    return "Incluye Ctrl/⌘ o Alt para evitar conflictos con la escritura normal.";
+  }
+  if (RESERVED_SHORTCUTS.some((r) => sameShortcut(r, s))) {
+    return `Combinación reservada por el navegador (${formatShortcut(s)}). Elige otra.`;
+  }
+  for (const k of Object.keys(current) as (keyof ShortcutMap)[]) {
+    if (k !== action && sameShortcut(current[k], s)) {
+      return `Esa combinación ya está asignada a "${ACTION_LABELS[k]}".`;
+    }
+  }
+  return null;
+}
+
+// ───── Cross-tab sync ─────
+const HELP_STORAGE_KEY = "soraHelpDismissed";
+type SyncMessage =
+  | { type: "open"; value: boolean }
+  | { type: "ghost"; value: boolean }
+  | { type: "voice"; value: boolean }
+  | { type: "corner"; value: Corner }
+  | { type: "shortcuts"; value: ShortcutMap }
+  | { type: "help"; value: boolean };
+
+
+
 
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
