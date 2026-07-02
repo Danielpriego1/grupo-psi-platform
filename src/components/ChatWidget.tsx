@@ -483,7 +483,9 @@ export function ChatWidget() {
     if (!voiceEnabled && typeof window !== "undefined") {
       window.speechSynthesis?.cancel();
     }
-  }, [voiceEnabled]);
+    broadcast({ type: "voice", value: voiceEnabled });
+  }, [voiceEnabled, broadcast]);
+
 
   const speak = useCallback((text: string) => {
     if (!voiceEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return;
