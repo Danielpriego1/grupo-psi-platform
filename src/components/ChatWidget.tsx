@@ -396,12 +396,15 @@ export function ChatWidget() {
 
   useEffect(() => {
     localStorage.setItem("soraCorner", corner);
-  }, [corner]);
+    broadcast({ type: "corner", value: corner });
+  }, [corner, broadcast]);
 
   useEffect(() => {
     localStorage.setItem("soraGhost", ghostMode ? "1" : "0");
     if (!ghostMode) setHidden(false);
-  }, [ghostMode]);
+    broadcast({ type: "ghost", value: ghostMode });
+  }, [ghostMode, broadcast]);
+
 
   // Auto-fade / auto-hide while user is scrolling the page
   useEffect(() => {
