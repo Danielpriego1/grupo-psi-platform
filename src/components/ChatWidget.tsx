@@ -313,13 +313,78 @@ export function ChatWidget() {
   const [showSettings, setShowSettings] = useState(false);
   const [shortcuts, setShortcuts] = useState<ShortcutMap>(() => loadShortcuts());
   const [capturingAction, setCapturingAction] = useState<keyof ShortcutMap | null>(null);
+  const [shortcutError, setShortcutError] = useState<{ action: keyof ShortcutMap; message: string } | null>(null);
   const [proximityHint, setProximityHint] = useState(false); // flash al ocultarse en modo fantasma
+  const [helpDismissed, setHelpDismissed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(HELP_STORAGE_KEY) === "1";
+  });
+
+  // Cross-tab sync (BroadcastChannel with storage-event fallback)
+  const bcRef = useRef<BroadcastChannel | null>(null);
+  const suppressBroadcastRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") return;
+    const bc = new BroadcastChannel("sora-widget");
+    bcRef.current = bc;
+    bc.onmessage = (ev: MessageEvent<SyncMessage>) => {
+      const m = ev.data;
+      if (!m || typeof m !== "object") return;
+      suppressBroadcastRef.current = true;
+      try {
+        if (m.type === "open") setOpen(m.value);
+        else if (m.type === "ghost") setGhostMode(m.value);
+        else if (m.type === "voice") setVoiceEnabled(m.value);
+        else if (m.type === "corner") setCorner(m.value);
+        else if (m.type === "shortcuts") setShortcuts(m.value);
+        else if (m.type === "help") setHelpDismissed(m.value);
+      } finally {
+        // Release on next tick so state effects don't re-broadcast
+        setTimeout(() => { suppressBroadcastRef.current = false; }, 0);
+      }
+    };
+    return () => { bc.close(); bcRef.current = null; };
+  }, []);
+  const broadcast = useCallback((msg: SyncMessage) => {
+    if (suppressBroadcastRef.current) return;
+    bcRef.current?.postMessage(msg);
+  }, []);
+
+  // Storage-event fallback (other tabs writing to localStorage)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.newValue == null) return;
+      suppressBroadcastRef.current = true;
+      try {
+        if (e.key === SHORTCUTS_STORAGE_KEY) setShortcuts(loadShortcuts());
+        else if (e.key === "soraGhost") setGhostMode(e.newValue === "1");
+        else if (e.key === "soraVoice") setVoiceEnabled(e.newValue === "1");
+        else if (e.key === "soraCorner") setCorner(e.newValue as Corner);
+        else if (e.key === HELP_STORAGE_KEY) setHelpDismissed(e.newValue === "1");
+      } finally {
+        setTimeout(() => { suppressBroadcastRef.current = false; }, 0);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
     }
-  }, [shortcuts]);
+    broadcast({ type: "shortcuts", value: shortcuts });
+  }, [shortcuts, broadcast]);
+
+  useEffect(() => { broadcast({ type: "open", value: open }); }, [open, broadcast]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(HELP_STORAGE_KEY, helpDismissed ? "1" : "0");
+    }
+    broadcast({ type: "help", value: helpDismissed });
+  }, [helpDismissed, broadcast]);
+
 
   // Pequeño "flash" al entrar en estado oculto, para que sepas dónde reaparecerá
   useEffect(() => {
