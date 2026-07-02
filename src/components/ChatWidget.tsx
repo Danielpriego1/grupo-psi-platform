@@ -762,13 +762,13 @@ export function ChatWidget() {
     return () => window.removeEventListener("keydown", onKey);
   }, [shortcuts, capturingAction]);
 
-  // Captura de un nuevo atajo
+  // Captura de un nuevo atajo (con validación de duplicados y reservados)
   useEffect(() => {
     if (!capturingAction) return;
     const onKey = (e: KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (e.key === "Escape") { setCapturingAction(null); return; }
+      if (e.key === "Escape") { setCapturingAction(null); setShortcutError(null); return; }
       // Ignorar pulsaciones de solo modificadores
       if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
       const next: Shortcut = {
@@ -777,12 +777,19 @@ export function ChatWidget() {
         alt: e.altKey,
         key: e.key.length === 1 ? e.key.toLowerCase() : e.key,
       };
+      const err = validateShortcut(capturingAction, next, shortcuts);
+      if (err) {
+        setShortcutError({ action: capturingAction, message: err });
+        return; // keep capturing so the user can try again
+      }
+      setShortcutError(null);
       setShortcuts(prev => ({ ...prev, [capturingAction]: next }));
       setCapturingAction(null);
     };
     window.addEventListener("keydown", onKey, { capture: true });
     return () => window.removeEventListener("keydown", onKey, { capture: true } as EventListenerOptions);
-  }, [capturingAction]);
+  }, [capturingAction, shortcuts]);
+
 
 
   // Cleanup on unmount
