@@ -1144,12 +1144,30 @@ export function ChatWidget() {
 
 
                   <button
-                    onClick={() => { setShortcuts(DEFAULT_SHORTCUTS); setCapturingAction(null); }}
+                    onClick={() => { setShortcuts(DEFAULT_SHORTCUTS); setCapturingAction(null); setShortcutError(null); }}
                     className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition"
                   >
                     <RotateCcw className="h-3 w-3" /> Restablecer valores por defecto
                   </button>
                 </div>
+
+                {!helpDismissed && (
+                  <button
+                    onClick={() => setHelpDismissed(false)}
+                    className="w-full text-left rounded-xl border border-primary/30 bg-primary/10 p-3 text-[11px] text-white/70 hover:bg-primary/15 transition"
+                  >
+                    ✅ La tarjeta de <span className="font-semibold text-primary">Ayuda rápida</span> aparece dentro del chat.
+                  </button>
+                )}
+                {helpDismissed && (
+                  <button
+                    onClick={() => setHelpDismissed(false)}
+                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-2 text-[11px] font-semibold text-white/70 hover:bg-white/10 transition"
+                  >
+                    <HelpCircle className="h-3 w-3" /> Volver a mostrar la Ayuda rápida
+                  </button>
+                )}
+
 
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[11px] text-white/60 leading-relaxed">
                   💡 Tus preferencias se guardan en este navegador y se aplican automáticamente la próxima vez que abras la página.
