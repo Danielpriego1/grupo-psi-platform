@@ -265,13 +265,33 @@ function validateShortcut(action: keyof ShortcutMap, s: Shortcut, current: Short
 
 // ───── Cross-tab sync ─────
 const HELP_STORAGE_KEY = "soraHelpDismissed";
+const PROXIMITY_STORAGE_KEY = "soraProximityRadius";
+const PROXIMITY_MIN = 60;
+const PROXIMITY_MAX = 320;
+const PROXIMITY_DEFAULT = 140;
 type SyncMessage =
   | { type: "open"; value: boolean }
   | { type: "ghost"; value: boolean }
   | { type: "voice"; value: boolean }
   | { type: "corner"; value: Corner }
   | { type: "shortcuts"; value: ShortcutMap }
-  | { type: "help"; value: boolean };
+  | { type: "help"; value: boolean }
+  | { type: "radius"; value: number };
+
+// ───── Ghost mode: última acción / dev sync log ─────
+type GhostTrigger = "scroll" | "proximity-out" | "proximity-in" | "manual-on" | "manual-off" | "shortcut";
+const GHOST_TRIGGER_LABEL: Record<GhostTrigger, string> = {
+  scroll: "Se ocultó por scroll",
+  "proximity-out": "Se ocultó porque el cursor se alejó",
+  "proximity-in": "Reapareció por proximidad del cursor",
+  "manual-on": "Modo fantasma activado manualmente",
+  "manual-off": "Modo fantasma desactivado manualmente",
+  shortcut: "Alternado por atajo de teclado",
+};
+type SyncLogEntry = { id: number; source: "broadcast" | "storage"; type: string; at: number };
+const IS_DEV = typeof import.meta !== "undefined" && !!(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV;
+
+
 
 
 
