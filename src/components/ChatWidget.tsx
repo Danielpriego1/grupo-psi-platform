@@ -1385,6 +1385,66 @@ export function ChatWidget() {
           </div>
         </div>
       </div>
+
+      {IS_DEV && showSyncLog && (
+        <div
+          className="fixed bottom-3 left-3 z-[60] w-[260px] rounded-xl border border-primary/40 bg-black/85 backdrop-blur-md text-white/85 shadow-2xl font-mono text-[10px]"
+          role="log"
+          aria-label="Log de sincronización (dev)"
+        >
+          <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/10">
+            <div className="flex items-center gap-1.5 text-primary font-bold uppercase tracking-widest text-[9px]">
+              <Activity className="h-3 w-3" /> Sync log · dev
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setSyncLog([])}
+                className="rounded px-1.5 py-0.5 text-white/50 hover:bg-white/10 hover:text-white text-[9px]"
+                title="Limpiar log"
+              >
+                clear
+              </button>
+              <button
+                onClick={() => setShowSyncLog(false)}
+                className="rounded px-1.5 py-0.5 text-white/50 hover:bg-white/10 hover:text-white"
+                aria-label="Ocultar log"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <div className="max-h-[160px] overflow-y-auto p-2 space-y-0.5">
+            {syncLog.length === 0 ? (
+              <div className="text-white/40 italic">Sin eventos aún. Abre otra pestaña y cambia un ajuste.</div>
+            ) : (
+              syncLog.slice().reverse().map(e => (
+                <div key={e.id} className="flex items-center gap-2">
+                  <span className="text-white/40 tabular-nums">
+                    {new Date(e.at).toLocaleTimeString("es-MX", { hour12: false })}
+                  </span>
+                  <span className={cn(
+                    "px-1 rounded text-[9px] uppercase font-bold",
+                    e.source === "broadcast" ? "bg-primary/25 text-primary" : "bg-white/10 text-white/70"
+                  )}>
+                    {e.source === "broadcast" ? "BC" : "LS"}
+                  </span>
+                  <span className="text-white/90 truncate">{e.type}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+      {IS_DEV && !showSyncLog && (
+        <button
+          onClick={() => setShowSyncLog(true)}
+          className="fixed bottom-3 left-3 z-[60] rounded-full border border-primary/40 bg-black/80 backdrop-blur px-2.5 py-1 text-[9px] font-mono font-bold uppercase tracking-widest text-primary shadow-lg hover:bg-black/90"
+          title="Mostrar log de sincronización"
+        >
+          <Activity className="inline h-3 w-3 mr-1" /> sync log
+        </button>
+      )}
     </>
+
   );
 }
