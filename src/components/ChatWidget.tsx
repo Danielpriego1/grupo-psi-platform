@@ -378,13 +378,16 @@ export function ChatWidget() {
         else if (m.type === "corner") setCorner(m.value);
         else if (m.type === "shortcuts") setShortcuts(m.value);
         else if (m.type === "help") setHelpDismissed(m.value);
+        else if (m.type === "radius") setProximityRadius(m.value);
+        pushSyncLog("broadcast", m.type);
       } finally {
         // Release on next tick so state effects don't re-broadcast
         setTimeout(() => { suppressBroadcastRef.current = false; }, 0);
       }
     };
     return () => { bc.close(); bcRef.current = null; };
-  }, []);
+  }, [pushSyncLog]);
+
   const broadcast = useCallback((msg: SyncMessage) => {
     if (suppressBroadcastRef.current) return;
     bcRef.current?.postMessage(msg);
