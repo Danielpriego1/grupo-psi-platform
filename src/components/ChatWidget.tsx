@@ -454,13 +454,26 @@ export function ChatWidget() {
     broadcast({ type: "ghost", value: ghostMode });
   }, [ghostMode, broadcast]);
 
+  // Persist + broadcast proximity radius
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(PROXIMITY_STORAGE_KEY, String(proximityRadius));
+    }
+    broadcast({ type: "radius", value: proximityRadius });
+  }, [proximityRadius, broadcast]);
+
 
   // Auto-fade / auto-hide while user is scrolling the page
   useEffect(() => {
     const onScroll = () => {
       if (open && !ghostMode) return;
       setDim(true);
-      if (ghostMode && !isDragging) setHidden(true);
+      if (ghostMode && !isDragging) {
+        setHidden(prev => {
+          if (!prev) setLastGhostAction({ trigger: "scroll", at: Date.now() });
+          return true;
+        });
+      }
       if (dimTimerRef.current) clearTimeout(dimTimerRef.current);
       dimTimerRef.current = setTimeout(() => setDim(false), 900);
     };
@@ -474,7 +487,6 @@ export function ChatWidget() {
   // Ghost mode: wake when cursor approaches the corner where Sora lives
   useEffect(() => {
     if (!ghostMode) return;
-    const PROXIMITY = 140;
     const onMove = (e: MouseEvent) => {
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -482,13 +494,21 @@ export function ChatWidget() {
       const targetY = corner.startsWith("b") ? h - 48 : 48;
       const dx = e.clientX - targetX;
       const dy = e.clientY - targetY;
-      const near = Math.hypot(dx, dy) < PROXIMITY;
+      const near = Math.hypot(dx, dy) < proximityRadius;
       if (near) {
-        setHidden(false);
+        setHidden(prev => {
+          if (prev) setLastGhostAction({ trigger: "proximity-in", at: Date.now() });
+          return false;
+        });
         if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
       } else if (!open) {
         if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
-        wakeTimerRef.current = setTimeout(() => setHidden(true), 1400);
+        wakeTimerRef.current = setTimeout(() => {
+          setHidden(prev => {
+            if (!prev) setLastGhostAction({ trigger: "proximity-out", at: Date.now() });
+            return true;
+          });
+        }, 1400);
       }
     };
     window.addEventListener("mousemove", onMove, { passive: true });
@@ -496,7 +516,8 @@ export function ChatWidget() {
       window.removeEventListener("mousemove", onMove);
       if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
     };
-  }, [ghostMode, corner, open]);
+  }, [ghostMode, corner, open, proximityRadius]);
+
 
   const cornerClass = (c: Corner) => {
     switch (c) {
