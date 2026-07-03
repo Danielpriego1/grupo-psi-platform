@@ -341,6 +341,24 @@ export function ChatWidget() {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(HELP_STORAGE_KEY) === "1";
   });
+  const [proximityRadius, setProximityRadius] = useState<number>(() => {
+    if (typeof window === "undefined") return PROXIMITY_DEFAULT;
+    const raw = localStorage.getItem(PROXIMITY_STORAGE_KEY);
+    const n = raw ? parseInt(raw, 10) : PROXIMITY_DEFAULT;
+    if (Number.isNaN(n)) return PROXIMITY_DEFAULT;
+    return Math.min(PROXIMITY_MAX, Math.max(PROXIMITY_MIN, n));
+  });
+  const [lastGhostAction, setLastGhostAction] = useState<{ trigger: GhostTrigger; at: number } | null>(null);
+  const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
+  const [showSyncLog, setShowSyncLog] = useState(true);
+  const syncLogIdRef = useRef(0);
+  const pushSyncLog = useCallback((source: SyncLogEntry["source"], type: string) => {
+    if (!IS_DEV) return;
+    syncLogIdRef.current += 1;
+    const entry: SyncLogEntry = { id: syncLogIdRef.current, source, type, at: Date.now() };
+    setSyncLog(prev => [...prev.slice(-9), entry]);
+  }, []);
+
 
   // Cross-tab sync (BroadcastChannel with storage-event fallback)
   const bcRef = useRef<BroadcastChannel | null>(null);
