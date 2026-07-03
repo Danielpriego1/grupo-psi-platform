@@ -1116,10 +1116,22 @@ export function ChatWidget() {
                 <div className="mt-2.5 space-y-2 leading-relaxed">
                   {ghostMode ? (
                     <p>
-                      <span className="font-semibold text-white">Modo fantasma activo:</span> me oculto al leer o hacer scroll. Acerca el cursor <span className="font-semibold text-primary">a ~140 px</span> de la esquina <span className="font-mono uppercase text-primary">{corner}</span> para que reaparezca.
+                      <span className="font-semibold text-white">Modo fantasma activo:</span> me oculto al leer o hacer scroll. Acerca el cursor <span className="font-semibold text-primary">a ~{proximityRadius} px</span> de la esquina <span className="font-mono uppercase text-primary">{corner}</span> para que reaparezca.
                     </p>
                   ) : (
                     <p>Actívame el <span className="font-semibold text-primary">modo fantasma</span> (👁 arriba) y me esconderé al leer para no estorbar.</p>
+                  )}
+                  {lastGhostAction && (
+                    <div className="flex items-start gap-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5 text-[11px] text-white/80">
+                      <Activity className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <div className="text-[9px] font-bold uppercase tracking-wider text-white/40">Última acción</div>
+                        <div className="truncate">
+                          {GHOST_TRIGGER_LABEL[lastGhostAction.trigger]}
+                          <span className="text-white/40"> · {new Date(lastGhostAction.at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
                   <div className="grid grid-cols-1 gap-1 pt-1">
                     <div className="flex items-center justify-between gap-2 text-[11px]">
@@ -1135,8 +1147,9 @@ export function ChatWidget() {
                       <kbd className="rounded border border-white/15 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-white/90">{formatShortcut(shortcuts.toggleGhost)}</kbd>
                     </div>
                   </div>
-                  <p className="text-[10px] text-white/50 pt-1">Puedes cambiar los atajos desde <SettingsIcon className="inline h-2.5 w-2.5 -mt-0.5" /> Ajustes.</p>
+                  <p className="text-[10px] text-white/50 pt-1">Puedes cambiar los atajos y el radio de proximidad desde <SettingsIcon className="inline h-2.5 w-2.5 -mt-0.5" /> Ajustes.</p>
                 </div>
+
               </div>
             )}
             {visibleMessages.map(msg => (
