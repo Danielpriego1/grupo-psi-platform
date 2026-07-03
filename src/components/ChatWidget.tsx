@@ -1277,6 +1277,42 @@ export function ChatWidget() {
                   </button>
                 </div>
 
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+                    <Radar className="h-3 w-3" /> Radio de proximidad (modo fantasma)
+                  </div>
+                  <p className="text-xs text-white/50">
+                    Distancia (en píxeles) desde la esquina donde vive Sora a partir de la cual reaparece cuando tu cursor se acerca.
+                  </p>
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                    <div className="flex items-center justify-between text-[11px] text-white/70 mb-2">
+                      <span>Radio actual</span>
+                      <span className="font-mono font-bold text-primary tabular-nums">{proximityRadius} px</span>
+                    </div>
+                    <Slider
+                      value={[proximityRadius]}
+                      min={PROXIMITY_MIN}
+                      max={PROXIMITY_MAX}
+                      step={10}
+                      onValueChange={(vals) => setProximityRadius(vals[0] ?? PROXIMITY_DEFAULT)}
+                      aria-label="Radio de proximidad en píxeles"
+                    />
+                    <div className="mt-2 flex items-center justify-between text-[10px] text-white/40 font-mono">
+                      <span>{PROXIMITY_MIN}px · discreto</span>
+                      <span>{PROXIMITY_MAX}px · sensible</span>
+                    </div>
+                    {proximityRadius !== PROXIMITY_DEFAULT && (
+                      <button
+                        onClick={() => setProximityRadius(PROXIMITY_DEFAULT)}
+                        className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition"
+                      >
+                        <RotateCcw className="h-3 w-3" /> Volver a {PROXIMITY_DEFAULT} px
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+
                 {!helpDismissed && (
                   <button
                     onClick={() => setHelpDismissed(false)}
