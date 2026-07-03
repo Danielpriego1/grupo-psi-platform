@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
-import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost, HelpCircle, AlertTriangle } from "lucide-react";
+import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost, HelpCircle, AlertTriangle, Activity, Radar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   useFpsMonitor,
@@ -265,13 +267,33 @@ function validateShortcut(action: keyof ShortcutMap, s: Shortcut, current: Short
 
 // ───── Cross-tab sync ─────
 const HELP_STORAGE_KEY = "soraHelpDismissed";
+const PROXIMITY_STORAGE_KEY = "soraProximityRadius";
+const PROXIMITY_MIN = 60;
+const PROXIMITY_MAX = 320;
+const PROXIMITY_DEFAULT = 140;
 type SyncMessage =
   | { type: "open"; value: boolean }
   | { type: "ghost"; value: boolean }
   | { type: "voice"; value: boolean }
   | { type: "corner"; value: Corner }
   | { type: "shortcuts"; value: ShortcutMap }
-  | { type: "help"; value: boolean };
+  | { type: "help"; value: boolean }
+  | { type: "radius"; value: number };
+
+// ───── Ghost mode: última acción / dev sync log ─────
+type GhostTrigger = "scroll" | "proximity-out" | "proximity-in" | "manual-on" | "manual-off" | "shortcut";
+const GHOST_TRIGGER_LABEL: Record<GhostTrigger, string> = {
+  scroll: "Se ocultó por scroll",
+  "proximity-out": "Se ocultó porque el cursor se alejó",
+  "proximity-in": "Reapareció por proximidad del cursor",
+  "manual-on": "Modo fantasma activado manualmente",
+  "manual-off": "Modo fantasma desactivado manualmente",
+  shortcut: "Alternado por atajo de teclado",
+};
+type SyncLogEntry = { id: number; source: "broadcast" | "storage"; type: string; at: number };
+const IS_DEV = typeof import.meta !== "undefined" && !!(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV;
+
+
 
 
 
@@ -319,6 +341,24 @@ export function ChatWidget() {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(HELP_STORAGE_KEY) === "1";
   });
+  const [proximityRadius, setProximityRadius] = useState<number>(() => {
+    if (typeof window === "undefined") return PROXIMITY_DEFAULT;
+    const raw = localStorage.getItem(PROXIMITY_STORAGE_KEY);
+    const n = raw ? parseInt(raw, 10) : PROXIMITY_DEFAULT;
+    if (Number.isNaN(n)) return PROXIMITY_DEFAULT;
+    return Math.min(PROXIMITY_MAX, Math.max(PROXIMITY_MIN, n));
+  });
+  const [lastGhostAction, setLastGhostAction] = useState<{ trigger: GhostTrigger; at: number } | null>(null);
+  const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
+  const [showSyncLog, setShowSyncLog] = useState(true);
+  const syncLogIdRef = useRef(0);
+  const pushSyncLog = useCallback((source: SyncLogEntry["source"], type: string) => {
+    if (!IS_DEV) return;
+    syncLogIdRef.current += 1;
+    const entry: SyncLogEntry = { id: syncLogIdRef.current, source, type, at: Date.now() };
+    setSyncLog(prev => [...prev.slice(-9), entry]);
+  }, []);
+
 
   // Cross-tab sync (BroadcastChannel with storage-event fallback)
   const bcRef = useRef<BroadcastChannel | null>(null);
@@ -338,13 +378,16 @@ export function ChatWidget() {
         else if (m.type === "corner") setCorner(m.value);
         else if (m.type === "shortcuts") setShortcuts(m.value);
         else if (m.type === "help") setHelpDismissed(m.value);
+        else if (m.type === "radius") setProximityRadius(m.value);
+        pushSyncLog("broadcast", m.type);
       } finally {
         // Release on next tick so state effects don't re-broadcast
         setTimeout(() => { suppressBroadcastRef.current = false; }, 0);
       }
     };
     return () => { bc.close(); bcRef.current = null; };
-  }, []);
+  }, [pushSyncLog]);
+
   const broadcast = useCallback((msg: SyncMessage) => {
     if (suppressBroadcastRef.current) return;
     bcRef.current?.postMessage(msg);
@@ -356,18 +399,24 @@ export function ChatWidget() {
       if (!e.key || e.newValue == null) return;
       suppressBroadcastRef.current = true;
       try {
-        if (e.key === SHORTCUTS_STORAGE_KEY) setShortcuts(loadShortcuts());
-        else if (e.key === "soraGhost") setGhostMode(e.newValue === "1");
-        else if (e.key === "soraVoice") setVoiceEnabled(e.newValue === "1");
-        else if (e.key === "soraCorner") setCorner(e.newValue as Corner);
-        else if (e.key === HELP_STORAGE_KEY) setHelpDismissed(e.newValue === "1");
+        if (e.key === SHORTCUTS_STORAGE_KEY) { setShortcuts(loadShortcuts()); pushSyncLog("storage", "shortcuts"); }
+        else if (e.key === "soraGhost") { setGhostMode(e.newValue === "1"); pushSyncLog("storage", "ghost"); }
+        else if (e.key === "soraVoice") { setVoiceEnabled(e.newValue === "1"); pushSyncLog("storage", "voice"); }
+        else if (e.key === "soraCorner") { setCorner(e.newValue as Corner); pushSyncLog("storage", "corner"); }
+        else if (e.key === HELP_STORAGE_KEY) { setHelpDismissed(e.newValue === "1"); pushSyncLog("storage", "help"); }
+        else if (e.key === PROXIMITY_STORAGE_KEY) {
+          const n = parseInt(e.newValue, 10);
+          if (!Number.isNaN(n)) setProximityRadius(Math.min(PROXIMITY_MAX, Math.max(PROXIMITY_MIN, n)));
+          pushSyncLog("storage", "radius");
+        }
       } finally {
         setTimeout(() => { suppressBroadcastRef.current = false; }, 0);
       }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [pushSyncLog]);
+
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -405,13 +454,26 @@ export function ChatWidget() {
     broadcast({ type: "ghost", value: ghostMode });
   }, [ghostMode, broadcast]);
 
+  // Persist + broadcast proximity radius
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(PROXIMITY_STORAGE_KEY, String(proximityRadius));
+    }
+    broadcast({ type: "radius", value: proximityRadius });
+  }, [proximityRadius, broadcast]);
+
 
   // Auto-fade / auto-hide while user is scrolling the page
   useEffect(() => {
     const onScroll = () => {
       if (open && !ghostMode) return;
       setDim(true);
-      if (ghostMode && !isDragging) setHidden(true);
+      if (ghostMode && !isDragging) {
+        setHidden(prev => {
+          if (!prev) setLastGhostAction({ trigger: "scroll", at: Date.now() });
+          return true;
+        });
+      }
       if (dimTimerRef.current) clearTimeout(dimTimerRef.current);
       dimTimerRef.current = setTimeout(() => setDim(false), 900);
     };
@@ -425,7 +487,6 @@ export function ChatWidget() {
   // Ghost mode: wake when cursor approaches the corner where Sora lives
   useEffect(() => {
     if (!ghostMode) return;
-    const PROXIMITY = 140;
     const onMove = (e: MouseEvent) => {
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -433,13 +494,21 @@ export function ChatWidget() {
       const targetY = corner.startsWith("b") ? h - 48 : 48;
       const dx = e.clientX - targetX;
       const dy = e.clientY - targetY;
-      const near = Math.hypot(dx, dy) < PROXIMITY;
+      const near = Math.hypot(dx, dy) < proximityRadius;
       if (near) {
-        setHidden(false);
+        setHidden(prev => {
+          if (prev) setLastGhostAction({ trigger: "proximity-in", at: Date.now() });
+          return false;
+        });
         if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
       } else if (!open) {
         if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
-        wakeTimerRef.current = setTimeout(() => setHidden(true), 1400);
+        wakeTimerRef.current = setTimeout(() => {
+          setHidden(prev => {
+            if (!prev) setLastGhostAction({ trigger: "proximity-out", at: Date.now() });
+            return true;
+          });
+        }, 1400);
       }
     };
     window.addEventListener("mousemove", onMove, { passive: true });
@@ -447,7 +516,8 @@ export function ChatWidget() {
       window.removeEventListener("mousemove", onMove);
       if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current);
     };
-  }, [ghostMode, corner, open]);
+  }, [ghostMode, corner, open, proximityRadius]);
+
 
   const cornerClass = (c: Corner) => {
     switch (c) {
@@ -755,8 +825,10 @@ export function ChatWidget() {
       if (matchShortcut(e, shortcuts.toggleGhost)) {
         e.preventDefault();
         setGhostMode(g => !g);
+        setLastGhostAction({ trigger: "shortcut", at: Date.now() });
         return;
       }
+
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -952,7 +1024,7 @@ export function ChatWidget() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setGhostMode(g => !g)}
+                onClick={() => { setGhostMode(g => { setLastGhostAction({ trigger: g ? "manual-off" : "manual-on", at: Date.now() }); return !g; }); }}
                 title={ghostMode ? `Modo fantasma activo — se oculta al leer (${formatShortcut(shortcuts.toggleGhost)})` : `Activar modo fantasma — auto-ocultar (${formatShortcut(shortcuts.toggleGhost)})`}
                 aria-label={ghostMode ? "Desactivar modo fantasma" : "Activar modo fantasma"}
                 aria-pressed={ghostMode}
@@ -1044,10 +1116,22 @@ export function ChatWidget() {
                 <div className="mt-2.5 space-y-2 leading-relaxed">
                   {ghostMode ? (
                     <p>
-                      <span className="font-semibold text-white">Modo fantasma activo:</span> me oculto al leer o hacer scroll. Acerca el cursor <span className="font-semibold text-primary">a ~140 px</span> de la esquina <span className="font-mono uppercase text-primary">{corner}</span> para que reaparezca.
+                      <span className="font-semibold text-white">Modo fantasma activo:</span> me oculto al leer o hacer scroll. Acerca el cursor <span className="font-semibold text-primary">a ~{proximityRadius} px</span> de la esquina <span className="font-mono uppercase text-primary">{corner}</span> para que reaparezca.
                     </p>
                   ) : (
                     <p>Actívame el <span className="font-semibold text-primary">modo fantasma</span> (👁 arriba) y me esconderé al leer para no estorbar.</p>
+                  )}
+                  {lastGhostAction && (
+                    <div className="flex items-start gap-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5 text-[11px] text-white/80">
+                      <Activity className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <div className="text-[9px] font-bold uppercase tracking-wider text-white/40">Última acción</div>
+                        <div className="truncate">
+                          {GHOST_TRIGGER_LABEL[lastGhostAction.trigger]}
+                          <span className="text-white/40"> · {new Date(lastGhostAction.at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
                   <div className="grid grid-cols-1 gap-1 pt-1">
                     <div className="flex items-center justify-between gap-2 text-[11px]">
@@ -1063,8 +1147,9 @@ export function ChatWidget() {
                       <kbd className="rounded border border-white/15 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-white/90">{formatShortcut(shortcuts.toggleGhost)}</kbd>
                     </div>
                   </div>
-                  <p className="text-[10px] text-white/50 pt-1">Puedes cambiar los atajos desde <SettingsIcon className="inline h-2.5 w-2.5 -mt-0.5" /> Ajustes.</p>
+                  <p className="text-[10px] text-white/50 pt-1">Puedes cambiar los atajos y el radio de proximidad desde <SettingsIcon className="inline h-2.5 w-2.5 -mt-0.5" /> Ajustes.</p>
                 </div>
+
               </div>
             )}
             {visibleMessages.map(msg => (
@@ -1192,6 +1277,42 @@ export function ChatWidget() {
                   </button>
                 </div>
 
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+                    <Radar className="h-3 w-3" /> Radio de proximidad (modo fantasma)
+                  </div>
+                  <p className="text-xs text-white/50">
+                    Distancia (en píxeles) desde la esquina donde vive Sora a partir de la cual reaparece cuando tu cursor se acerca.
+                  </p>
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                    <div className="flex items-center justify-between text-[11px] text-white/70 mb-2">
+                      <span>Radio actual</span>
+                      <span className="font-mono font-bold text-primary tabular-nums">{proximityRadius} px</span>
+                    </div>
+                    <Slider
+                      value={[proximityRadius]}
+                      min={PROXIMITY_MIN}
+                      max={PROXIMITY_MAX}
+                      step={10}
+                      onValueChange={(vals) => setProximityRadius(vals[0] ?? PROXIMITY_DEFAULT)}
+                      aria-label="Radio de proximidad en píxeles"
+                    />
+                    <div className="mt-2 flex items-center justify-between text-[10px] text-white/40 font-mono">
+                      <span>{PROXIMITY_MIN}px · discreto</span>
+                      <span>{PROXIMITY_MAX}px · sensible</span>
+                    </div>
+                    {proximityRadius !== PROXIMITY_DEFAULT && (
+                      <button
+                        onClick={() => setProximityRadius(PROXIMITY_DEFAULT)}
+                        className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition"
+                      >
+                        <RotateCcw className="h-3 w-3" /> Volver a {PROXIMITY_DEFAULT} px
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+
                 {!helpDismissed && (
                   <button
                     onClick={() => setHelpDismissed(false)}
@@ -1264,6 +1385,66 @@ export function ChatWidget() {
           </div>
         </div>
       </div>
+
+      {IS_DEV && showSyncLog && (
+        <div
+          className="fixed bottom-3 left-3 z-[60] w-[260px] rounded-xl border border-primary/40 bg-black/85 backdrop-blur-md text-white/85 shadow-2xl font-mono text-[10px]"
+          role="log"
+          aria-label="Log de sincronización (dev)"
+        >
+          <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/10">
+            <div className="flex items-center gap-1.5 text-primary font-bold uppercase tracking-widest text-[9px]">
+              <Activity className="h-3 w-3" /> Sync log · dev
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setSyncLog([])}
+                className="rounded px-1.5 py-0.5 text-white/50 hover:bg-white/10 hover:text-white text-[9px]"
+                title="Limpiar log"
+              >
+                clear
+              </button>
+              <button
+                onClick={() => setShowSyncLog(false)}
+                className="rounded px-1.5 py-0.5 text-white/50 hover:bg-white/10 hover:text-white"
+                aria-label="Ocultar log"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <div className="max-h-[160px] overflow-y-auto p-2 space-y-0.5">
+            {syncLog.length === 0 ? (
+              <div className="text-white/40 italic">Sin eventos aún. Abre otra pestaña y cambia un ajuste.</div>
+            ) : (
+              syncLog.slice().reverse().map(e => (
+                <div key={e.id} className="flex items-center gap-2">
+                  <span className="text-white/40 tabular-nums">
+                    {new Date(e.at).toLocaleTimeString("es-MX", { hour12: false })}
+                  </span>
+                  <span className={cn(
+                    "px-1 rounded text-[9px] uppercase font-bold",
+                    e.source === "broadcast" ? "bg-primary/25 text-primary" : "bg-white/10 text-white/70"
+                  )}>
+                    {e.source === "broadcast" ? "BC" : "LS"}
+                  </span>
+                  <span className="text-white/90 truncate">{e.type}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+      {IS_DEV && !showSyncLog && (
+        <button
+          onClick={() => setShowSyncLog(true)}
+          className="fixed bottom-3 left-3 z-[60] rounded-full border border-primary/40 bg-black/80 backdrop-blur px-2.5 py-1 text-[9px] font-mono font-bold uppercase tracking-widest text-primary shadow-lg hover:bg-black/90"
+          title="Mostrar log de sincronización"
+        >
+          <Activity className="inline h-3 w-3 mr-1" /> sync log
+        </button>
+      )}
     </>
+
   );
 }
