@@ -825,8 +825,10 @@ export function ChatWidget() {
       if (matchShortcut(e, shortcuts.toggleGhost)) {
         e.preventDefault();
         setGhostMode(g => !g);
+        setLastGhostAction({ trigger: "shortcut", at: Date.now() });
         return;
       }
+
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
