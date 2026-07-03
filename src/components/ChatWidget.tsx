@@ -399,18 +399,24 @@ export function ChatWidget() {
       if (!e.key || e.newValue == null) return;
       suppressBroadcastRef.current = true;
       try {
-        if (e.key === SHORTCUTS_STORAGE_KEY) setShortcuts(loadShortcuts());
-        else if (e.key === "soraGhost") setGhostMode(e.newValue === "1");
-        else if (e.key === "soraVoice") setVoiceEnabled(e.newValue === "1");
-        else if (e.key === "soraCorner") setCorner(e.newValue as Corner);
-        else if (e.key === HELP_STORAGE_KEY) setHelpDismissed(e.newValue === "1");
+        if (e.key === SHORTCUTS_STORAGE_KEY) { setShortcuts(loadShortcuts()); pushSyncLog("storage", "shortcuts"); }
+        else if (e.key === "soraGhost") { setGhostMode(e.newValue === "1"); pushSyncLog("storage", "ghost"); }
+        else if (e.key === "soraVoice") { setVoiceEnabled(e.newValue === "1"); pushSyncLog("storage", "voice"); }
+        else if (e.key === "soraCorner") { setCorner(e.newValue as Corner); pushSyncLog("storage", "corner"); }
+        else if (e.key === HELP_STORAGE_KEY) { setHelpDismissed(e.newValue === "1"); pushSyncLog("storage", "help"); }
+        else if (e.key === PROXIMITY_STORAGE_KEY) {
+          const n = parseInt(e.newValue, 10);
+          if (!Number.isNaN(n)) setProximityRadius(Math.min(PROXIMITY_MAX, Math.max(PROXIMITY_MIN, n)));
+          pushSyncLog("storage", "radius");
+        }
       } finally {
         setTimeout(() => { suppressBroadcastRef.current = false; }, 0);
       }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [pushSyncLog]);
+
 
   useEffect(() => {
     if (typeof window !== "undefined") {
