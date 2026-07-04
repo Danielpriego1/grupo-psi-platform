@@ -349,6 +349,9 @@ export function ChatWidget() {
     return Math.min(PROXIMITY_MAX, Math.max(PROXIMITY_MIN, n));
   });
   const [lastGhostAction, setLastGhostAction] = useState<{ trigger: GhostTrigger; at: number } | null>(null);
+  const [ghostAnnouncement, setGhostAnnouncement] = useState<string>("");
+  const [radiusPreview, setRadiusPreview] = useState(false);
+  const radiusPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
   const [showSyncLog, setShowSyncLog] = useState(true);
   const syncLogIdRef = useRef(0);
@@ -358,6 +361,21 @@ export function ChatWidget() {
     const entry: SyncLogEntry = { id: syncLogIdRef.current, source, type, at: Date.now() };
     setSyncLog(prev => [...prev.slice(-9), entry]);
   }, []);
+
+  // Announce ghost trigger changes to assistive tech
+  useEffect(() => {
+    if (!lastGhostAction) return;
+    const time = new Date(lastGhostAction.at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+    setGhostAnnouncement(`${GHOST_TRIGGER_LABEL[lastGhostAction.trigger]}. ${time}.`);
+  }, [lastGhostAction]);
+
+  // Flash the proximity circle briefly whenever the radius changes
+  useEffect(() => {
+    setRadiusPreview(true);
+    if (radiusPreviewTimerRef.current) clearTimeout(radiusPreviewTimerRef.current);
+    radiusPreviewTimerRef.current = setTimeout(() => setRadiusPreview(false), 1400);
+    return () => { if (radiusPreviewTimerRef.current) clearTimeout(radiusPreviewTimerRef.current); };
+  }, [proximityRadius]);
 
 
   // Cross-tab sync (BroadcastChannel with storage-event fallback)
@@ -984,6 +1002,25 @@ export function ChatWidget() {
         )}
       </button>
 
+      {/* Círculo visualizador del radio de proximidad — muestra el umbral en tiempo real */}
+      {ghostMode && !open && !isDragging && (() => {
+        const size = proximityRadius * 2;
+        const offset = 48 - proximityRadius;
+        const circleStyle: React.CSSProperties = { width: size, height: size };
+        if (corner.endsWith("r")) circleStyle.right = offset; else circleStyle.left = offset;
+        if (corner.startsWith("b")) circleStyle.bottom = offset; else circleStyle.top = offset;
+        return (
+          <div
+            style={circleStyle}
+            aria-hidden="true"
+            className={cn(
+              "fixed z-40 pointer-events-none rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500",
+              radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25"
+            )}
+          />
+        );
+      })()}
+
       {/* Indicador persistente cuando Sora está oculta por modo fantasma:
           muestra dónde reaparecerá al acercar el cursor. */}
       {ghostMode && hidden && !open && !isDragging && (
@@ -999,6 +1036,11 @@ export function ChatWidget() {
           <span>Sora · acércate</span>
         </div>
       )}
+
+      {/* Anuncio accesible: se lee en voz al cambiar la última acción del modo fantasma */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {ghostAnnouncement}
+      </div>
 
 
       <div
@@ -1301,14 +1343,14 @@ export function ChatWidget() {
                       <span>{PROXIMITY_MIN}px · discreto</span>
                       <span>{PROXIMITY_MAX}px · sensible</span>
                     </div>
-                    {proximityRadius !== PROXIMITY_DEFAULT && (
-                      <button
-                        onClick={() => setProximityRadius(PROXIMITY_DEFAULT)}
-                        className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition"
-                      >
-                        <RotateCcw className="h-3 w-3" /> Volver a {PROXIMITY_DEFAULT} px
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setProximityRadius(PROXIMITY_DEFAULT)}
+                      disabled={proximityRadius === PROXIMITY_DEFAULT}
+                      className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-white/60"
+                      aria-label={`Restablecer radio a ${PROXIMITY_DEFAULT} píxeles`}
+                    >
+                      <RotateCcw className="h-3 w-3" /> Restablecer a {PROXIMITY_DEFAULT} px
+                    </button>
                   </div>
                 </div>
 
