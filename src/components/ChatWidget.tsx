@@ -349,6 +349,9 @@ export function ChatWidget() {
     return Math.min(PROXIMITY_MAX, Math.max(PROXIMITY_MIN, n));
   });
   const [lastGhostAction, setLastGhostAction] = useState<{ trigger: GhostTrigger; at: number } | null>(null);
+  const [ghostAnnouncement, setGhostAnnouncement] = useState<string>("");
+  const [radiusPreview, setRadiusPreview] = useState(false);
+  const radiusPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
   const [showSyncLog, setShowSyncLog] = useState(true);
   const syncLogIdRef = useRef(0);
@@ -358,6 +361,21 @@ export function ChatWidget() {
     const entry: SyncLogEntry = { id: syncLogIdRef.current, source, type, at: Date.now() };
     setSyncLog(prev => [...prev.slice(-9), entry]);
   }, []);
+
+  // Announce ghost trigger changes to assistive tech
+  useEffect(() => {
+    if (!lastGhostAction) return;
+    const time = new Date(lastGhostAction.at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+    setGhostAnnouncement(`${GHOST_TRIGGER_LABEL[lastGhostAction.trigger]}. ${time}.`);
+  }, [lastGhostAction]);
+
+  // Flash the proximity circle briefly whenever the radius changes
+  useEffect(() => {
+    setRadiusPreview(true);
+    if (radiusPreviewTimerRef.current) clearTimeout(radiusPreviewTimerRef.current);
+    radiusPreviewTimerRef.current = setTimeout(() => setRadiusPreview(false), 1400);
+    return () => { if (radiusPreviewTimerRef.current) clearTimeout(radiusPreviewTimerRef.current); };
+  }, [proximityRadius]);
 
 
   // Cross-tab sync (BroadcastChannel with storage-event fallback)
