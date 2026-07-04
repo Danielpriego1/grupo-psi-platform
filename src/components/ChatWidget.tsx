@@ -1002,6 +1002,25 @@ export function ChatWidget() {
         )}
       </button>
 
+      {/* Círculo visualizador del radio de proximidad — muestra el umbral en tiempo real */}
+      {ghostMode && !open && !isDragging && (() => {
+        const size = proximityRadius * 2;
+        const offset = 48 - proximityRadius;
+        const circleStyle: React.CSSProperties = { width: size, height: size };
+        if (corner.endsWith("r")) circleStyle.right = offset; else circleStyle.left = offset;
+        if (corner.startsWith("b")) circleStyle.bottom = offset; else circleStyle.top = offset;
+        return (
+          <div
+            style={circleStyle}
+            aria-hidden="true"
+            className={cn(
+              "fixed z-40 pointer-events-none rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500",
+              radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25"
+            )}
+          />
+        );
+      })()}
+
       {/* Indicador persistente cuando Sora está oculta por modo fantasma:
           muestra dónde reaparecerá al acercar el cursor. */}
       {ghostMode && hidden && !open && !isDragging && (
@@ -1017,6 +1036,11 @@ export function ChatWidget() {
           <span>Sora · acércate</span>
         </div>
       )}
+
+      {/* Anuncio accesible: se lee en voz al cambiar la última acción del modo fantasma */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {ghostAnnouncement}
+      </div>
 
 
       <div
