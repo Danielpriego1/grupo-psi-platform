@@ -111,26 +111,14 @@ describe("ChatWidget cross-tab sync", () => {
   it("opens the panel when another tab broadcasts { type: 'open', value: true }", async () => {
     render(<ChatWidget />);
 
-    // Panel textarea should not be reachable while closed (pointer-events-none)
-    expect(screen.queryByPlaceholderText(/escribe o toca el micrófono/i)).toBeNull();
+    // Panel is rendered but visually closed
+    expect(panelIsOpen()).toBe(false);
 
     sendBC({ type: "open", value: true });
+    await waitFor(() => expect(panelIsOpen()).toBe(true));
 
-    await waitFor(() => {
-      // When open, the textarea is present in the DOM
-      expect(screen.getByPlaceholderText(/escribe o toca el micrófono/i)).toBeInTheDocument();
-    });
-
-    // And broadcasting `open:false` from another tab closes it again
     sendBC({ type: "open", value: false });
-    await waitFor(() => {
-      const ta = screen.queryByPlaceholderText(/escribe o toca el micrófono/i) as HTMLTextAreaElement | null;
-      // Either removed from tree or its parent has opacity-0/pointer-events-none
-      if (ta) {
-        const panel = ta.closest("div.fixed") as HTMLElement | null;
-        expect(panel?.className).toMatch(/opacity-0|pointer-events-none/);
-      }
-    });
+    await waitFor(() => expect(panelIsOpen()).toBe(false));
   });
 
   it("enables ghost mode when another tab broadcasts { type: 'ghost', value: true }", async () => {
