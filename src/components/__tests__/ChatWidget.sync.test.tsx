@@ -77,19 +77,31 @@ function sendStorage(key: string, newValue: string) {
 beforeEach(() => {
   invokeMock.mockReset();
   invokeMock.mockResolvedValue({ data: { reply: "ok" }, error: null });
-  // Fresh state per test
   localStorage.clear();
   bcInstances.length = 0;
-  // Install mock BC
   (globalThis as unknown as { BroadcastChannel: typeof MockBroadcastChannel }).BroadcastChannel =
     MockBroadcastChannel;
-  // jsdom polyfills
+  // ResizeObserver polyfill for Radix Slider
+  if (typeof (globalThis as unknown as { ResizeObserver?: unknown }).ResizeObserver === "undefined") {
+    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  }
   if (!("scrollTo" in Element.prototype)) {
     (Element.prototype as unknown as { scrollTo: () => void }).scrollTo = () => {};
   } else {
     vi.spyOn(Element.prototype, "scrollTo").mockImplementation(() => {});
   }
 });
+
+function panelIsOpen(): boolean {
+  const ta = screen.queryByPlaceholderText(/escribe o toca el micrófono/i) as HTMLTextAreaElement | null;
+  if (!ta) return false;
+  const panel = ta.closest("div.fixed") as HTMLElement | null;
+  return !!panel && !/opacity-0|pointer-events-none/.test(panel.className);
+}
 
 afterEach(() => {
   cleanup();
