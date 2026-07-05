@@ -1055,6 +1055,10 @@ export function ChatWidget() {
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {ghostAnnouncement}
       </div>
+      {/* Anuncio accesible: cambios en tiempo real del radio de proximidad */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {radiusAnnouncement}
+      </div>
 
 
       <div
