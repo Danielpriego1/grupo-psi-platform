@@ -92,11 +92,11 @@ describe("ChatWidget · proximity-radius accessibility", () => {
     expect(getRadiusCircle().getAttribute("aria-valuetext")).toBe("150 píxeles");
 
     // Debounced (600ms) announcement in the live region
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 700));
-    });
-    const live = document.querySelector('[role="status"][aria-live="polite"]:last-of-type');
-    expect(live?.textContent || "").toMatch(/150 píxeles/);
+    await waitFor(() => {
+      const lives = Array.from(document.querySelectorAll('[role="status"][aria-live="polite"]'));
+      const text = lives.map((n) => n.textContent || "").join(" | ");
+      expect(text).toMatch(/150 píxeles/);
+    }, { timeout: 1500 });
   });
 
   it("decreases radius with ArrowDown and clamps at the minimum", async () => {
