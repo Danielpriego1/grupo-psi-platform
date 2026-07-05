@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
 import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost, HelpCircle, AlertTriangle, Activity, Radar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -1021,17 +1022,66 @@ export function ChatWidget() {
         if (corner.endsWith("r")) circleStyle.right = offset; else circleStyle.left = offset;
         if (corner.startsWith("b")) circleStyle.bottom = offset; else circleStyle.top = offset;
         const radiusLabel = `Zona de proximidad de Sora. Radio actual: ${proximityRadius} píxeles. Acerca el cursor a esta área para que reaparezca.`;
+        const clampRadius = (n: number) => Math.max(PROXIMITY_MIN, Math.min(PROXIMITY_MAX, Math.round(n)));
+        const handleRadiusKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+          let next: number | null = null;
+          const bigStep = e.shiftKey ? 1 : 10;
+          switch (e.key) {
+            case "ArrowUp":
+            case "ArrowRight":
+              next = proximityRadius + bigStep; break;
+            case "ArrowDown":
+            case "ArrowLeft":
+              next = proximityRadius - bigStep; break;
+            case "PageUp":
+              next = proximityRadius + 20; break;
+            case "PageDown":
+              next = proximityRadius - 20; break;
+            case "Home":
+              next = PROXIMITY_MIN; break;
+            case "End":
+              next = PROXIMITY_MAX; break;
+          }
+          if (next !== null) {
+            e.preventDefault();
+            setProximityRadius(clampRadius(next));
+          }
+        };
         return (
-          <div
-            style={circleStyle}
-            tabIndex={0}
-            role="img"
-            aria-label={radiusLabel}
-            className={cn(
-              "fixed z-40 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-primary/70",
-              radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25"
-            )}
-          />
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  style={circleStyle}
+                  tabIndex={0}
+                  role="slider"
+                  aria-label="Radio de proximidad de Sora"
+                  aria-labelledby="sora-radius-label"
+                  aria-valuemin={PROXIMITY_MIN}
+                  aria-valuemax={PROXIMITY_MAX}
+                  aria-valuenow={proximityRadius}
+                  aria-valuetext={`${proximityRadius} píxeles`}
+                  aria-describedby="sora-radius-desc"
+                  onKeyDown={handleRadiusKey}
+                  className={cn(
+                    "fixed z-40 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-primary/70 cursor-pointer",
+                    radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25"
+                  )}
+                />
+              </TooltipTrigger>
+              <TooltipContent side={corner.startsWith("t") ? "bottom" : "top"} align={corner.endsWith("r") ? "end" : "start"}>
+                <div className="max-w-[220px] space-y-1 text-xs">
+                  <p className="font-semibold text-primary">Zona de proximidad · {proximityRadius} px</p>
+                  <p className="text-muted-foreground">{radiusLabel}</p>
+                  <p className="text-[10px] text-muted-foreground/80">Flechas ↑/↓ ajustan ±10 px · Shift = ±1 · Home/End = mín/máx</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+            <span id="sora-radius-label" className="sr-only">Radio de proximidad de Sora en píxeles</span>
+            <span id="sora-radius-desc" className="sr-only">
+              Rango de {PROXIMITY_MIN} a {PROXIMITY_MAX} píxeles. Usa las flechas del teclado para ajustar el umbral en el que Sora reaparece.
+            </span>
+          </TooltipProvider>
         );
       })()}
 
