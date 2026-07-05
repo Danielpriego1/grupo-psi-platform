@@ -350,6 +350,8 @@ export function ChatWidget() {
   });
   const [lastGhostAction, setLastGhostAction] = useState<{ trigger: GhostTrigger; at: number } | null>(null);
   const [ghostAnnouncement, setGhostAnnouncement] = useState<string>("");
+  const [radiusAnnouncement, setRadiusAnnouncement] = useState<string>("");
+  const radiusAnnounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [radiusPreview, setRadiusPreview] = useState(false);
   const radiusPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
