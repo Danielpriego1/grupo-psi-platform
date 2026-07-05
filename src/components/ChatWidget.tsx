@@ -350,6 +350,8 @@ export function ChatWidget() {
   });
   const [lastGhostAction, setLastGhostAction] = useState<{ trigger: GhostTrigger; at: number } | null>(null);
   const [ghostAnnouncement, setGhostAnnouncement] = useState<string>("");
+  const [radiusAnnouncement, setRadiusAnnouncement] = useState<string>("");
+  const radiusAnnounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [radiusPreview, setRadiusPreview] = useState(false);
   const radiusPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
@@ -375,6 +377,15 @@ export function ChatWidget() {
     if (radiusPreviewTimerRef.current) clearTimeout(radiusPreviewTimerRef.current);
     radiusPreviewTimerRef.current = setTimeout(() => setRadiusPreview(false), 1400);
     return () => { if (radiusPreviewTimerRef.current) clearTimeout(radiusPreviewTimerRef.current); };
+  }, [proximityRadius]);
+
+  // Debounced live announcement for radius changes (screen readers)
+  useEffect(() => {
+    if (radiusAnnounceTimerRef.current) clearTimeout(radiusAnnounceTimerRef.current);
+    radiusAnnounceTimerRef.current = setTimeout(() => {
+      setRadiusAnnouncement(`Radio de proximidad actualizado a ${proximityRadius} píxeles.`);
+    }, 600);
+    return () => { if (radiusAnnounceTimerRef.current) clearTimeout(radiusAnnounceTimerRef.current); };
   }, [proximityRadius]);
 
 
@@ -1009,12 +1020,15 @@ export function ChatWidget() {
         const circleStyle: React.CSSProperties = { width: size, height: size };
         if (corner.endsWith("r")) circleStyle.right = offset; else circleStyle.left = offset;
         if (corner.startsWith("b")) circleStyle.bottom = offset; else circleStyle.top = offset;
+        const radiusLabel = `Zona de proximidad de Sora. Radio actual: ${proximityRadius} píxeles. Acerca el cursor a esta área para que reaparezca.`;
         return (
           <div
             style={circleStyle}
-            aria-hidden="true"
+            tabIndex={0}
+            role="img"
+            aria-label={radiusLabel}
             className={cn(
-              "fixed z-40 pointer-events-none rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500",
+              "fixed z-40 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-primary/70",
               radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25"
             )}
           />
@@ -1040,6 +1054,10 @@ export function ChatWidget() {
       {/* Anuncio accesible: se lee en voz al cambiar la última acción del modo fantasma */}
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {ghostAnnouncement}
+      </div>
+      {/* Anuncio accesible: cambios en tiempo real del radio de proximidad */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {radiusAnnouncement}
       </div>
 
 
