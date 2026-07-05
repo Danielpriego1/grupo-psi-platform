@@ -379,6 +379,15 @@ export function ChatWidget() {
     return () => { if (radiusPreviewTimerRef.current) clearTimeout(radiusPreviewTimerRef.current); };
   }, [proximityRadius]);
 
+  // Debounced live announcement for radius changes (screen readers)
+  useEffect(() => {
+    if (radiusAnnounceTimerRef.current) clearTimeout(radiusAnnounceTimerRef.current);
+    radiusAnnounceTimerRef.current = setTimeout(() => {
+      setRadiusAnnouncement(`Radio de proximidad actualizado a ${proximityRadius} píxeles.`);
+    }, 600);
+    return () => { if (radiusAnnounceTimerRef.current) clearTimeout(radiusAnnounceTimerRef.current); };
+  }, [proximityRadius]);
+
 
   // Cross-tab sync (BroadcastChannel with storage-event fallback)
   const bcRef = useRef<BroadcastChannel | null>(null);
