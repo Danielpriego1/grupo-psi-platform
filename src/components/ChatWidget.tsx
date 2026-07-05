@@ -1009,12 +1009,15 @@ export function ChatWidget() {
         const circleStyle: React.CSSProperties = { width: size, height: size };
         if (corner.endsWith("r")) circleStyle.right = offset; else circleStyle.left = offset;
         if (corner.startsWith("b")) circleStyle.bottom = offset; else circleStyle.top = offset;
+        const radiusLabel = `Zona de proximidad de Sora. Radio actual: ${proximityRadius} píxeles. Acerca el cursor a esta área para que reaparezca.`;
         return (
           <div
             style={circleStyle}
-            aria-hidden="true"
+            tabIndex={0}
+            role="img"
+            aria-label={radiusLabel}
             className={cn(
-              "fixed z-40 pointer-events-none rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500",
+              "fixed z-40 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-primary/70",
               radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25"
             )}
           />
