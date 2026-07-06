@@ -1525,19 +1525,40 @@ export function ChatWidget() {
                   <p className="text-xs text-white/50">
                     Distancia (en píxeles) desde la esquina donde vive Sora a partir de la cual reaparece cuando tu cursor se acerca.
                   </p>
-                  <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                  <div className={cn(
+                    "rounded-xl border border-white/10 bg-white/5 px-3 py-3 transition",
+                    radiusBoundaryHit && "ring-2 ring-destructive/60 border-destructive/40"
+                  )}>
                     <div className="flex items-center justify-between text-[11px] text-white/70 mb-2">
                       <span>Radio actual</span>
-                      <span className="font-mono font-bold text-primary tabular-nums">{proximityRadius} px</span>
+                      <span className={cn(
+                        "font-mono font-bold tabular-nums",
+                        radiusBoundaryHit ? "text-destructive" : "text-primary"
+                      )}>{proximityRadius} px</span>
                     </div>
                     <Slider
                       value={[proximityRadius]}
                       min={PROXIMITY_MIN}
                       max={PROXIMITY_MAX}
                       step={10}
-                      onValueChange={(vals) => setProximityRadius(vals[0] ?? PROXIMITY_DEFAULT)}
+                      onValueChange={(vals) => {
+                        const v = vals[0] ?? PROXIMITY_DEFAULT;
+                        if (v === proximityRadius && (v === PROXIMITY_MIN || v === PROXIMITY_MAX)) {
+                          triggerBoundaryHit(v === PROXIMITY_MIN ? "min" : "max");
+                        } else {
+                          setProximityRadius(v);
+                        }
+                      }}
                       aria-label="Radio de proximidad en píxeles"
+                      aria-invalid={radiusBoundaryHit !== null || undefined}
                     />
+                    {radiusBoundaryHit && (
+                      <p className="mt-1.5 text-[10px] font-semibold text-destructive" role="alert">
+                        {radiusBoundaryHit === "min"
+                          ? `Radio mínimo alcanzado (${PROXIMITY_MIN} px).`
+                          : `Radio máximo alcanzado (${PROXIMITY_MAX} px).`}
+                      </p>
+                    )}
                     <div className="mt-2 flex items-center justify-between text-[10px] text-white/40 font-mono">
                       <span>{PROXIMITY_MIN}px · discreto</span>
                       <span>{PROXIMITY_MAX}px · sensible</span>
