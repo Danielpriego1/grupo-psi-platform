@@ -522,14 +522,16 @@ export function ChatWidget() {
 
     const loadProfile = async () => {
       if (!userId) return;
-      const { data } = await supabase
-        .from("profiles")
-        .select("sora_proximity_radius" as never)
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (cancelled) return;
-      const remote = (data as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
-      if (remote != null) applyRemote(remote);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("sora_proximity_radius" as never)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (cancelled) return;
+        const remote = (data as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
+        if (remote != null) applyRemote(remote);
+      } catch { /* silent */ }
     };
 
     const setup = async () => {
