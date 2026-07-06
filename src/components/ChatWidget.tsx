@@ -533,21 +533,23 @@ export function ChatWidget() {
     };
 
     const setup = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (cancelled || !user) return;
-      userId = user.id;
-      await loadProfile();
-      channel = supabase
-        .channel(`sora-profile-${user.id}`)
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
-          (payload) => {
-            const remote = (payload.new as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
-            if (remote != null) applyRemote(remote);
-          },
-        )
-        .subscribe();
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled || !user) return;
+        userId = user.id;
+        await loadProfile();
+        channel = supabase
+          .channel(`sora-profile-${user.id}`)
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
+            (payload) => {
+              const remote = (payload.new as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
+              if (remote != null) applyRemote(remote);
+            },
+          )
+          .subscribe();
+      } catch { /* offline / no auth — silent */ }
     };
 
     void setup();
