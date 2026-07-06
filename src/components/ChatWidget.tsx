@@ -1235,6 +1235,11 @@ export function ChatWidget() {
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {radiusAnnouncement}
       </div>
+      {/* Anuncio accesible: al chocar contra los límites del radio */}
+      <div className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
+        {radiusBoundaryHit === "min" && `Ya alcanzaste el radio mínimo (${PROXIMITY_MIN} píxeles).`}
+        {radiusBoundaryHit === "max" && `Ya alcanzaste el radio máximo (${PROXIMITY_MAX} píxeles).`}
+      </div>
 
 
       <div
