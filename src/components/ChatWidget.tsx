@@ -1572,13 +1572,15 @@ export function ChatWidget() {
                     <button
                       onClick={async () => {
                         setProximityRadius(PROXIMITY_DEFAULT);
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (user) {
-                          await supabase
-                            .from("profiles")
-                            .update({ sora_proximity_radius: null } as never)
-                            .eq("user_id", user.id);
-                        }
+                        try {
+                          const { data: { user } } = await supabase.auth.getUser();
+                          if (user) {
+                            await supabase
+                              .from("profiles")
+                              .update({ sora_proximity_radius: null } as never)
+                              .eq("user_id", user.id);
+                          }
+                        } catch { /* silent */ }
                       }}
                       disabled={proximityRadius === PROXIMITY_DEFAULT}
                       className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-white/60"
