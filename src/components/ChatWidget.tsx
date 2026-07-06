@@ -355,6 +355,12 @@ export function ChatWidget() {
   const radiusAnnounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [radiusPreview, setRadiusPreview] = useState(false);
   const radiusPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [radiusBoundaryHit, setRadiusBoundaryHit] = useState<"min" | "max" | null>(null);
+  const boundaryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [radiusTooltipOpen, setRadiusTooltipOpen] = useState<boolean | undefined>(undefined);
+  const tooltipAutoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const profileRadiusSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const remoteRadiusApplyRef = useRef(false);
   const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
   const [showSyncLog, setShowSyncLog] = useState(true);
   const syncLogIdRef = useRef(0);
@@ -491,6 +497,111 @@ export function ChatWidget() {
     }
     broadcast({ type: "radius", value: proximityRadius });
   }, [proximityRadius, broadcast]);
+
+  // Helper: mark boundary hit (visual + ARIA)
+  const triggerBoundaryHit = useCallback((bound: "min" | "max") => {
+    setRadiusBoundaryHit(bound);
+    if (boundaryTimerRef.current) clearTimeout(boundaryTimerRef.current);
+    boundaryTimerRef.current = setTimeout(() => setRadiusBoundaryHit(null), 1400);
+  }, []);
+
+  // Persist radius on the user profile (cross-device) + reconcile on visibility/online
+  useEffect(() => {
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let userId: string | null = null;
+
+    const applyRemote = (val: unknown) => {
+      const n = typeof val === "number" ? val : parseInt(String(val ?? ""), 10);
+      if (!Number.isFinite(n)) return;
+      const clamped = Math.min(PROXIMITY_MAX, Math.max(PROXIMITY_MIN, Math.round(n)));
+      remoteRadiusApplyRef.current = true;
+      setProximityRadius(clamped);
+      setTimeout(() => { remoteRadiusApplyRef.current = false; }, 0);
+    };
+
+    const loadProfile = async () => {
+      if (!userId) return;
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("sora_proximity_radius" as never)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (cancelled) return;
+        const remote = (data as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
+        if (remote != null) applyRemote(remote);
+      } catch { /* silent */ }
+    };
+
+    const setup = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled || !user) return;
+        userId = user.id;
+        await loadProfile();
+        channel = supabase
+          .channel(`sora-profile-${user.id}`)
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
+            (payload) => {
+              const remote = (payload.new as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
+              if (remote != null) applyRemote(remote);
+            },
+          )
+          .subscribe();
+      } catch { /* offline / no auth — silent */ }
+    };
+
+    void setup();
+
+    const onVis = () => { if (document.visibilityState === "visible") void loadProfile(); };
+    const onOnline = () => { void loadProfile(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("online", onOnline);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", onOnline);
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Debounced save of radius to the profile (only when local change, not remote-applied)
+  useEffect(() => {
+    if (remoteRadiusApplyRef.current) return;
+    if (profileRadiusSaveRef.current) clearTimeout(profileRadiusSaveRef.current);
+    profileRadiusSaveRef.current = setTimeout(async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase
+          .from("profiles")
+          .update({ sora_proximity_radius: proximityRadius } as never)
+          .eq("user_id", user.id);
+      } catch { /* silent */ }
+    }, 800);
+    return () => { if (profileRadiusSaveRef.current) clearTimeout(profileRadiusSaveRef.current); };
+  }, [proximityRadius]);
+
+  // Re-broadcast state to sibling tabs when coming back online / becoming visible
+  useEffect(() => {
+    const rebroadcast = () => {
+      broadcast({ type: "radius", value: proximityRadius });
+      broadcast({ type: "ghost", value: ghostMode });
+    };
+    window.addEventListener("online", rebroadcast);
+    const onVis = () => { if (document.visibilityState === "visible") rebroadcast(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("online", rebroadcast);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [proximityRadius, ghostMode, broadcast]);
+
+
 
 
   // Auto-fade / auto-hide while user is scrolling the page
@@ -1044,12 +1155,30 @@ export function ChatWidget() {
           }
           if (next !== null) {
             e.preventDefault();
-            setProximityRadius(clampRadius(next));
+            const clamped = clampRadius(next);
+            // Close tooltip so ARIA live announcement isn't visually shadowed by tooltip
+            setRadiusTooltipOpen(false);
+            if (tooltipAutoCloseRef.current) { clearTimeout(tooltipAutoCloseRef.current); tooltipAutoCloseRef.current = null; }
+            if (clamped === proximityRadius) {
+              triggerBoundaryHit(clamped === PROXIMITY_MIN ? "min" : "max");
+            } else {
+              setProximityRadius(clamped);
+            }
           }
         };
+        const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+          if (e.pointerType === "touch") {
+            setRadiusTooltipOpen(true);
+            if (tooltipAutoCloseRef.current) clearTimeout(tooltipAutoCloseRef.current);
+            tooltipAutoCloseRef.current = setTimeout(() => setRadiusTooltipOpen(false), 2500);
+          }
+        };
+        const boundaryClasses = radiusBoundaryHit
+          ? "ring-2 ring-destructive/70 animate-pulse border-destructive/70"
+          : "";
         return (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip open={radiusTooltipOpen} onOpenChange={setRadiusTooltipOpen}>
               <TooltipTrigger asChild>
                 <div
                   style={circleStyle}
@@ -1060,12 +1189,15 @@ export function ChatWidget() {
                   aria-valuemin={PROXIMITY_MIN}
                   aria-valuemax={PROXIMITY_MAX}
                   aria-valuenow={proximityRadius}
-                  aria-valuetext={`${proximityRadius} píxeles`}
+                  aria-valuetext={`${proximityRadius} píxeles${radiusBoundaryHit === "min" ? " (mínimo alcanzado)" : radiusBoundaryHit === "max" ? " (máximo alcanzado)" : ""}`}
                   aria-describedby="sora-radius-desc"
+                  aria-invalid={radiusBoundaryHit !== null || undefined}
                   onKeyDown={handleRadiusKey}
+                  onPointerDown={handlePointerDown}
                   className={cn(
                     "fixed z-40 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-primary/70 cursor-pointer",
-                    radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25"
+                    radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25",
+                    boundaryClasses,
                   )}
                 />
               </TooltipTrigger>
@@ -1108,6 +1240,11 @@ export function ChatWidget() {
       {/* Anuncio accesible: cambios en tiempo real del radio de proximidad */}
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {radiusAnnouncement}
+      </div>
+      {/* Anuncio accesible: al chocar contra los límites del radio */}
+      <div className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
+        {radiusBoundaryHit === "min" && `Ya alcanzaste el radio mínimo (${PROXIMITY_MIN} píxeles).`}
+        {radiusBoundaryHit === "max" && `Ya alcanzaste el radio máximo (${PROXIMITY_MAX} píxeles).`}
       </div>
 
 
@@ -1394,25 +1531,57 @@ export function ChatWidget() {
                   <p className="text-xs text-white/50">
                     Distancia (en píxeles) desde la esquina donde vive Sora a partir de la cual reaparece cuando tu cursor se acerca.
                   </p>
-                  <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                  <div className={cn(
+                    "rounded-xl border border-white/10 bg-white/5 px-3 py-3 transition",
+                    radiusBoundaryHit && "ring-2 ring-destructive/60 border-destructive/40"
+                  )}>
                     <div className="flex items-center justify-between text-[11px] text-white/70 mb-2">
                       <span>Radio actual</span>
-                      <span className="font-mono font-bold text-primary tabular-nums">{proximityRadius} px</span>
+                      <span className={cn(
+                        "font-mono font-bold tabular-nums",
+                        radiusBoundaryHit ? "text-destructive" : "text-primary"
+                      )}>{proximityRadius} px</span>
                     </div>
                     <Slider
                       value={[proximityRadius]}
                       min={PROXIMITY_MIN}
                       max={PROXIMITY_MAX}
                       step={10}
-                      onValueChange={(vals) => setProximityRadius(vals[0] ?? PROXIMITY_DEFAULT)}
+                      onValueChange={(vals) => {
+                        const v = vals[0] ?? PROXIMITY_DEFAULT;
+                        if (v === proximityRadius && (v === PROXIMITY_MIN || v === PROXIMITY_MAX)) {
+                          triggerBoundaryHit(v === PROXIMITY_MIN ? "min" : "max");
+                        } else {
+                          setProximityRadius(v);
+                        }
+                      }}
                       aria-label="Radio de proximidad en píxeles"
+                      aria-invalid={radiusBoundaryHit !== null || undefined}
                     />
+                    {radiusBoundaryHit && (
+                      <p className="mt-1.5 text-[10px] font-semibold text-destructive" role="alert">
+                        {radiusBoundaryHit === "min"
+                          ? `Radio mínimo alcanzado (${PROXIMITY_MIN} px).`
+                          : `Radio máximo alcanzado (${PROXIMITY_MAX} px).`}
+                      </p>
+                    )}
                     <div className="mt-2 flex items-center justify-between text-[10px] text-white/40 font-mono">
                       <span>{PROXIMITY_MIN}px · discreto</span>
                       <span>{PROXIMITY_MAX}px · sensible</span>
                     </div>
                     <button
-                      onClick={() => setProximityRadius(PROXIMITY_DEFAULT)}
+                      onClick={async () => {
+                        setProximityRadius(PROXIMITY_DEFAULT);
+                        try {
+                          const { data: { user } } = await supabase.auth.getUser();
+                          if (user) {
+                            await supabase
+                              .from("profiles")
+                              .update({ sora_proximity_radius: null } as never)
+                              .eq("user_id", user.id);
+                          }
+                        } catch { /* silent */ }
+                      }}
                       disabled={proximityRadius === PROXIMITY_DEFAULT}
                       className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-white/60"
                       aria-label={`Restablecer radio a ${PROXIMITY_DEFAULT} píxeles`}
