@@ -574,12 +574,14 @@ export function ChatWidget() {
     if (remoteRadiusApplyRef.current) return;
     if (profileRadiusSaveRef.current) clearTimeout(profileRadiusSaveRef.current);
     profileRadiusSaveRef.current = setTimeout(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      await supabase
-        .from("profiles")
-        .update({ sora_proximity_radius: proximityRadius } as never)
-        .eq("user_id", user.id);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase
+          .from("profiles")
+          .update({ sora_proximity_radius: proximityRadius } as never)
+          .eq("user_id", user.id);
+      } catch { /* silent */ }
     }, 800);
     return () => { if (profileRadiusSaveRef.current) clearTimeout(profileRadiusSaveRef.current); };
   }, [proximityRadius]);
