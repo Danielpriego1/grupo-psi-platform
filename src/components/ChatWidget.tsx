@@ -498,6 +498,105 @@ export function ChatWidget() {
     broadcast({ type: "radius", value: proximityRadius });
   }, [proximityRadius, broadcast]);
 
+  // Helper: mark boundary hit (visual + ARIA)
+  const triggerBoundaryHit = useCallback((bound: "min" | "max") => {
+    setRadiusBoundaryHit(bound);
+    if (boundaryTimerRef.current) clearTimeout(boundaryTimerRef.current);
+    boundaryTimerRef.current = setTimeout(() => setRadiusBoundaryHit(null), 1400);
+  }, []);
+
+  // Persist radius on the user profile (cross-device) + reconcile on visibility/online
+  useEffect(() => {
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let userId: string | null = null;
+
+    const applyRemote = (val: unknown) => {
+      const n = typeof val === "number" ? val : parseInt(String(val ?? ""), 10);
+      if (!Number.isFinite(n)) return;
+      const clamped = Math.min(PROXIMITY_MAX, Math.max(PROXIMITY_MIN, Math.round(n)));
+      remoteRadiusApplyRef.current = true;
+      setProximityRadius(clamped);
+      setTimeout(() => { remoteRadiusApplyRef.current = false; }, 0);
+    };
+
+    const loadProfile = async () => {
+      if (!userId) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("sora_proximity_radius" as never)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cancelled) return;
+      const remote = (data as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
+      if (remote != null) applyRemote(remote);
+    };
+
+    const setup = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (cancelled || !user) return;
+      userId = user.id;
+      await loadProfile();
+      channel = supabase
+        .channel(`sora-profile-${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            const remote = (payload.new as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
+            if (remote != null) applyRemote(remote);
+          },
+        )
+        .subscribe();
+    };
+
+    void setup();
+
+    const onVis = () => { if (document.visibilityState === "visible") void loadProfile(); };
+    const onOnline = () => { void loadProfile(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("online", onOnline);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", onOnline);
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Debounced save of radius to the profile (only when local change, not remote-applied)
+  useEffect(() => {
+    if (remoteRadiusApplyRef.current) return;
+    if (profileRadiusSaveRef.current) clearTimeout(profileRadiusSaveRef.current);
+    profileRadiusSaveRef.current = setTimeout(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase
+        .from("profiles")
+        .update({ sora_proximity_radius: proximityRadius } as never)
+        .eq("user_id", user.id);
+    }, 800);
+    return () => { if (profileRadiusSaveRef.current) clearTimeout(profileRadiusSaveRef.current); };
+  }, [proximityRadius]);
+
+  // Re-broadcast state to sibling tabs when coming back online / becoming visible
+  useEffect(() => {
+    const rebroadcast = () => {
+      broadcast({ type: "radius", value: proximityRadius });
+      broadcast({ type: "ghost", value: ghostMode });
+    };
+    window.addEventListener("online", rebroadcast);
+    const onVis = () => { if (document.visibilityState === "visible") rebroadcast(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("online", rebroadcast);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [proximityRadius, ghostMode, broadcast]);
+
+
+
 
   // Auto-fade / auto-hide while user is scrolling the page
   useEffect(() => {
