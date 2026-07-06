@@ -1149,12 +1149,30 @@ export function ChatWidget() {
           }
           if (next !== null) {
             e.preventDefault();
-            setProximityRadius(clampRadius(next));
+            const clamped = clampRadius(next);
+            // Close tooltip so ARIA live announcement isn't visually shadowed by tooltip
+            setRadiusTooltipOpen(false);
+            if (tooltipAutoCloseRef.current) { clearTimeout(tooltipAutoCloseRef.current); tooltipAutoCloseRef.current = null; }
+            if (clamped === proximityRadius) {
+              triggerBoundaryHit(clamped === PROXIMITY_MIN ? "min" : "max");
+            } else {
+              setProximityRadius(clamped);
+            }
           }
         };
+        const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+          if (e.pointerType === "touch") {
+            setRadiusTooltipOpen(true);
+            if (tooltipAutoCloseRef.current) clearTimeout(tooltipAutoCloseRef.current);
+            tooltipAutoCloseRef.current = setTimeout(() => setRadiusTooltipOpen(false), 2500);
+          }
+        };
+        const boundaryClasses = radiusBoundaryHit
+          ? "ring-2 ring-destructive/70 animate-pulse border-destructive/70"
+          : "";
         return (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip open={radiusTooltipOpen} onOpenChange={setRadiusTooltipOpen}>
               <TooltipTrigger asChild>
                 <div
                   style={circleStyle}
@@ -1165,12 +1183,15 @@ export function ChatWidget() {
                   aria-valuemin={PROXIMITY_MIN}
                   aria-valuemax={PROXIMITY_MAX}
                   aria-valuenow={proximityRadius}
-                  aria-valuetext={`${proximityRadius} píxeles`}
+                  aria-valuetext={`${proximityRadius} píxeles${radiusBoundaryHit === "min" ? " (mínimo alcanzado)" : radiusBoundaryHit === "max" ? " (máximo alcanzado)" : ""}`}
                   aria-describedby="sora-radius-desc"
+                  aria-invalid={radiusBoundaryHit !== null || undefined}
                   onKeyDown={handleRadiusKey}
+                  onPointerDown={handlePointerDown}
                   className={cn(
                     "fixed z-40 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-primary/70 cursor-pointer",
-                    radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25"
+                    radiusPreview || hidden ? "opacity-100 border-primary/70 bg-primary/10 shadow-[0_0_40px_-5px_hsl(var(--primary)/0.5)]" : "opacity-25",
+                    boundaryClasses,
                   )}
                 />
               </TooltipTrigger>
