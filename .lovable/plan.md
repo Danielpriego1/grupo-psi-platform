@@ -1,68 +1,53 @@
-## Rediseño del Dashboard /admin — "Luminous Bento Admin"
+# Mejoras al control de radio de proximidad de Sora
 
-Convertir el dashboard de un layout vertical oscuro a un **bento grid claro y luminoso** con sensación de tiempo real: contadores animados, pulsos al recibir datos nuevos, feed live lateral y micro-interacciones en cada widget. El sidebar no cambia.
+Cinco cambios acotados sobre `src/components/ChatWidget.tsx`, más migración de backend y pruebas e2e.
 
-### Decisiones de diseño (fijas)
+## 1. Persistir el radio en el perfil del usuario
 
-- **Paleta clara**: fondo `#f8fafc`, superficies blancas con bordes `slate-200/60` y sombras suaves; acento principal **indigo** (`#4f46e5`); acentos secundarios ámbar/rosa/esmeralda.
-- **Tipografía**: Space Grotesk (headings) + DM Sans (body) vía `@fontsource`.
-- **Layout**: bento grid de 4 columnas con celdas asimétricas (KPI hero 2x1, mapa 2x2, feed 1x2, calendario 2x1, etc.) y esquinas grandes (rounded-3xl/40px).
-- **Modo claro forzado solo en /admin** — el resto del sitio mantiene el dark mode actual.
+- Migración: añadir columna `sora_proximity_radius smallint` (nullable, default null) a `public.profiles`. GRANTs ya existen; policies existentes de "own profile" cubren lectura/escritura.
+- En `ChatWidget`: si hay sesión (`supabase.auth.getUser`), al montar leer `profiles.sora_proximity_radius`. Si el valor remoto existe y difiere del local, adoptar el remoto (fuente de verdad entre dispositivos) y actualizar `localStorage`.
+- Al cambiar el radio: debounce ~800 ms y hacer `update profiles set sora_proximity_radius = ...` si hay sesión. Sin sesión, comportamiento actual (solo `localStorage` + BroadcastChannel).
+- Suscribirse a cambios realtime del propio `profiles` para reflejar cambios hechos en otro dispositivo sin recargar.
 
-### Estructura visual (bento)
+## 2. Pruebas e2e con Playwright
 
-```text
-┌─────────────────────┬──────────┬──────────┐
-│ HERO Ingresos Mes   │ Pedidos  │          │
-│ + sparkline +delta  │ Hoy      │          │
-├──────────┬──────────┤──────────┤  ACTIV.  │
-│          │          │ Pendient │  LIVE    │
-│   MAPA   │   MAPA   │          │  FEED    │
-│ Tabasco  │  Tabasco ├──────────┤  (1x2)   │
-│          │          │ Completd │          │
-├──────────┴──────────┼──────────┼──────────┤
-│ Agenda mes (2x1)    │ Donut    │ Barras   │
-│                     │ Estados  │ Mtto     │
-└─────────────────────┴──────────┴──────────┘
-```
+- Nuevo script en `/tmp/browser/radius-a11y/` que:
+  1. Abre `http://localhost:8080`, activa modo fantasma vía `localStorage.setItem('soraGhost','1')` + reload.
+  2. Tab hasta el círculo (`[role="slider"][aria-label*="Sora"]`) y verifica `document.activeElement`.
+  3. Envía `ArrowUp` ×3, lee `aria-valuenow` esperado (170), captura screenshot.
+  4. Verifica que el badge visual del radio muestra "170 px".
+- Se ejecuta directamente con Playwright (no se agrega al pipeline de tests unitarios).
 
-Todos los widgets actuales se conservan: 4 KPIs, chart ingresos (embebido como sparkline del hero), donut pedidos por estado, barras mantenimientos, mapa Leaflet, calendario y tabla de pedidos recientes (movida abajo).
+## 3. Tooltip táctil y ocultado al usar teclado
 
-### Interactividad / tiempo real
+- Detectar interacción táctil (`pointerType === 'touch'`) en el círculo: al `pointerdown` abrir el tooltip controlado (`open` state) y auto-cerrar a los 2.5 s.
+- En `handleRadiusKey`: cerrar el tooltip inmediatamente al recibir tecla de ajuste (evita superposición con el anuncio ARIA).
+- Añadir `TooltipProvider delayDuration={150}` local para respuesta más ágil.
 
-- **Live indicator**: badge "EN VIVO" con dot pulsante en el header, conectado al estado del canal Supabase Realtime.
-- **Count-up** en KPIs cuando cambia el valor (tween 600ms).
-- **Pulse glow** (ring indigo 600ms) en la celda que recibió update.
-- **Feed Realtime lateral**: nueva celda que suscribe a `orders`, `payments`, `maintenance_requests` y `crm_activities`; cada evento entra con `animate-slide-in-right + fade-in`, timestamp relativo auto-actualizado cada 30s ("hace 2s", "hace 4m").
-- Hover en bento cells: ligero `border-indigo-200` + sombra más marcada.
+## 4. Validación de límites (visual + ARIA)
 
-### Cambios técnicos
+- Nuevo estado `radiusBoundaryHit: 'min' | 'max' | null`.
+- En `handleRadiusKey` y en el `onValueChange` del `<Slider>`: cuando el próximo valor quede clamped en el mismo extremo, marcar `radiusBoundaryHit`, limpiar tras 1.2 s.
+- Aplicar clase `ring-2 ring-destructive/70 animate-pulse` al círculo y al thumb del slider mientras esté activo.
+- Añadir texto en el live region: "Ya alcanzaste el radio mínimo (60 px)" / "…máximo (320 px)".
+- Reflejar en `aria-invalid="true"` temporal sobre el slider.
 
-**Nuevos archivos:**
-- `src/components/admin/dashboard/BentoCard.tsx` — wrapper genérico con variantes de tamaño y prop `pulse` para el glow.
-- `src/components/admin/dashboard/HeroRevenueCard.tsx` — KPI grande con sparkline (Recharts AreaChart) y delta.
-- `src/components/admin/dashboard/KpiTile.tsx` — KPI compacto con icono, count-up y sub-label.
-- `src/components/admin/dashboard/LiveActivityFeed.tsx` — feed realtime; consume `orders`, `payments`, `maintenance_requests`, `crm_activities` vía `useRealtimeTable`; renderiza últimos 20 eventos con timestamps relativos.
-- `src/components/admin/dashboard/DonutStatus.tsx` y `BarMaintenance.tsx` — variantes claras compactas de los charts (Recharts) con colores indigo/ámbar/esmeralda.
-- `src/components/admin/dashboard/CompactCalendar.tsx` — vista de mes minimal con dots por día; al click, expande a la vista actual `react-big-calendar` en modal.
-- `src/hooks/useCountUp.ts` — tween numérico.
-- `src/hooks/useRelativeTime.ts` — formatter "hace Xs" con tick cada 30s.
+## 5. Sincronización robusta al recargar / red inestable
 
-**Editados:**
-- `src/pages/admin/AdminDashboard.tsx` — recompone con bento grid; envuelve en `<div className="admin-light bg-slate-50 ...">` para forzar la paleta clara solo aquí. Agrega query para feed inicial (últimos 20 eventos combinados) y pasa `pulse` flags cuando entran nuevos datos.
-- `src/components/admin/dashboard/DashboardCharts.tsx` — refactor a 3 componentes individuales (donut, barras, hero sparkline) reutilizando datos existentes.
-- `src/components/admin/dashboard/PendingOrdersMap.tsx` — tile estilo claro: leyenda flotante glass blanca, sin marco oscuro.
-- `src/components/admin/dashboard/RecentOrdersTable.tsx` — adapta a fondo blanco/slate.
-- `tailwind.config.ts` — añade `fontFamily.display: ['Space Grotesk', ...]` y `fontFamily.sans: ['DM Sans', ...]` solo dentro de un selector scope `.admin-light` (vía plugin) o se aplica con clases directas en los componentes.
-- `src/main.tsx` — importa `@fontsource/space-grotesk/{400,500,700}.css` y `@fontsource/dm-sans/{400,500,700}.css`.
-- `package.json` — `bun add @fontsource/space-grotesk @fontsource/dm-sans`.
+- Al montar y al detectar `online` (evento `window.online`), reconciliar: leer el perfil de nuevo y volver a emitir un `broadcast({type:'radius'|'ghost'})` para tabs vecinas.
+- Añadir `visibilitychange` listener: cuando la pestaña vuelve a estar visible, re-leer perfil si hay sesión.
+- Cubrir con test unitario en `ChatWidget.sync.test.tsx`: simular `online` y `visibilitychange`, verificar re-broadcast.
 
-**Sin cambios de backend / migraciones / RLS.** Todo se construye sobre las tablas y suscripciones realtime ya existentes.
+## Detalles técnicos
 
-### Fuera de alcance
+- Migración vía `supabase--migration`:
+  ```sql
+  ALTER TABLE public.profiles
+    ADD COLUMN IF NOT EXISTS sora_proximity_radius smallint
+    CHECK (sora_proximity_radius BETWEEN 60 AND 320);
+  ```
+- Tipos regenerados vía tooling automático (no editar `types.ts` a mano).
+- Todo el trabajo nuevo respeta las claves `soraProximityRadius`, `soraGhost` y el canal `sora-widget` ya existentes.
+- El botón "Restablecer" seguirá activo; además limpiará `sora_proximity_radius` en el perfil (set null).
 
-- Sidebar admin (queda igual).
-- Otras páginas /admin/* (mantienen su estilo actual).
-- Lógica de negocio, edge functions, autenticación o permisos.
-
-Used the Redesign skill.
+¿Procedo con los 5 puntos tal como se describen, o quieres ajustar el alcance (por ejemplo, dejar la persistencia en perfil fuera si aún no quieres tocar el backend)?
