@@ -355,6 +355,12 @@ export function ChatWidget() {
   const radiusAnnounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [radiusPreview, setRadiusPreview] = useState(false);
   const radiusPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [radiusBoundaryHit, setRadiusBoundaryHit] = useState<"min" | "max" | null>(null);
+  const boundaryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [radiusTooltipOpen, setRadiusTooltipOpen] = useState<boolean | undefined>(undefined);
+  const tooltipAutoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const profileRadiusSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const remoteRadiusApplyRef = useRef(false);
   const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
   const [showSyncLog, setShowSyncLog] = useState(true);
   const syncLogIdRef = useRef(0);
