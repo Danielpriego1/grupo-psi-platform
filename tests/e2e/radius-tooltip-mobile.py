@@ -68,9 +68,10 @@ async def main():
         # 2) Keyboard adjust hides the tooltip immediately
         await circle.focus()
         await page.keyboard.press("ArrowUp")
-        # allow re-render
-        await page.wait_for_timeout(150)
+        # allow controlled tooltip to close + unmount
+        await page.wait_for_timeout(500)
         assert not await tooltip_visible(page), "tooltip should hide on keyboard adjust"
+
         val = await circle.get_attribute("aria-valuenow")
         assert val == "150", f"expected 150 after ArrowUp, got {val}"
         print("keyboard adjust hides tooltip and updates value: OK")
