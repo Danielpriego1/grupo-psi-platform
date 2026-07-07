@@ -1277,13 +1277,13 @@ export function ChatWidget() {
                 aria-label={ghostMode ? "Desactivar modo fantasma" : "Activar modo fantasma"}
                 aria-pressed={ghostMode}
                 className={cn(
-                  "relative flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  "relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
                   ghostMode
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
-                {ghostMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {ghostMode ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
                 {ghostMode && (
                   <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#09090b] animate-pulse" aria-hidden="true" />
                 )}
@@ -1293,13 +1293,13 @@ export function ChatWidget() {
                 title={voiceEnabled ? `Silenciar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})` : `Activar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})`}
                 aria-label={voiceEnabled ? "Silenciar voz" : "Activar voz"}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  "hidden sm:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
                   voiceEnabled
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
-                {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                {voiceEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
               </button>
               <button
                 onClick={() => setShowSettings(s => !s)}
@@ -1307,30 +1307,33 @@ export function ChatWidget() {
                 aria-label="Abrir ajustes"
                 aria-pressed={showSettings}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  "flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
                   showSettings
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
-                <SettingsIcon className="h-5 w-5" />
+                <SettingsIcon className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
 
               <a
                 href={WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
+                className="hidden sm:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
                 title="WhatsApp"
               >
-                <MessageCircle className="h-5 w-5" />
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
               </a>
               <button
                 onClick={() => setOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-all"
+                aria-label="Cerrar chat"
+                title="Cerrar chat"
+                className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-all"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
+
             </div>
           </div>
         </div>
