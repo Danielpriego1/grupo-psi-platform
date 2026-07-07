@@ -1256,33 +1256,34 @@ export function ChatWidget() {
           open ? "translate-y-0 scale-100 opacity-100" : (corner.startsWith("b") ? "translate-y-10" : "-translate-y-10") + " scale-95 opacity-0 pointer-events-none"
         )}
       >
-        <div className="relative flex items-center gap-4 overflow-hidden px-6 py-5 border-b border-white/5">
+        <div className="relative flex items-center gap-3 sm:gap-4 overflow-hidden px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-50" />
-          <div className="relative z-10 flex items-center gap-4 w-full">
-            <div className="relative">
-              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl ring-2 ring-primary/30 shadow-lg shadow-primary/20">
+          <div className="relative z-10 flex items-center gap-3 sm:gap-4 w-full min-w-0">
+            <div className="relative shrink-0">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 overflow-hidden rounded-2xl ring-2 ring-primary/30 shadow-lg shadow-primary/20">
                 <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
               </div>
               <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[#09090b] bg-green-500 shadow-sm" />
             </div>
-            <div className="flex-1">
-              <div className="text-base font-black tracking-tight text-white uppercase">Sora</div>
-              <div className="text-[10px] font-bold text-primary uppercase tracking-widest">IA Ejecutiva · Grupo PSI</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-base font-black tracking-tight text-white uppercase truncate">Sora</div>
+              <div className="text-[10px] font-bold text-primary uppercase tracking-widest truncate">IA Ejecutiva · Grupo PSI</div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+
               <button
                 onClick={() => { setGhostMode(g => { setLastGhostAction({ trigger: g ? "manual-off" : "manual-on", at: Date.now() }); return !g; }); }}
                 title={ghostMode ? `Modo fantasma activo — se oculta al leer (${formatShortcut(shortcuts.toggleGhost)})` : `Activar modo fantasma — auto-ocultar (${formatShortcut(shortcuts.toggleGhost)})`}
                 aria-label={ghostMode ? "Desactivar modo fantasma" : "Activar modo fantasma"}
                 aria-pressed={ghostMode}
                 className={cn(
-                  "relative flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  "relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
                   ghostMode
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
-                {ghostMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {ghostMode ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
                 {ghostMode && (
                   <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#09090b] animate-pulse" aria-hidden="true" />
                 )}
@@ -1292,13 +1293,13 @@ export function ChatWidget() {
                 title={voiceEnabled ? `Silenciar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})` : `Activar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})`}
                 aria-label={voiceEnabled ? "Silenciar voz" : "Activar voz"}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  "hidden sm:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
                   voiceEnabled
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
-                {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                {voiceEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
               </button>
               <button
                 onClick={() => setShowSettings(s => !s)}
@@ -1306,30 +1307,33 @@ export function ChatWidget() {
                 aria-label="Abrir ajustes"
                 aria-pressed={showSettings}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+                  "flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
                   showSettings
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
-                <SettingsIcon className="h-5 w-5" />
+                <SettingsIcon className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
 
               <a
                 href={WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
+                className="hidden sm:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
                 title="WhatsApp"
               >
-                <MessageCircle className="h-5 w-5" />
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
               </a>
               <button
                 onClick={() => setOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-all"
+                aria-label="Cerrar chat"
+                title="Cerrar chat"
+                className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-all"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
+
             </div>
           </div>
         </div>
