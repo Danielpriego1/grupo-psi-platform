@@ -77,10 +77,11 @@ async def main():
         await page.screenshot(path=str(SS / "m3_after_keyboard.png"))
 
         # 3) Touch reopens, then auto-hides after ~2.5s
-        await page.touchscreen.tap(cx, cy)
+        await touch_circle()
         await page.wait_for_selector(TOOLTIP_SELECTOR, timeout=2000)
         await page.wait_for_timeout(3000)
         assert not await tooltip_visible(page), "tooltip should auto-close after touch timeout"
+
         print("touch tooltip auto-closes: OK")
         await page.screenshot(path=str(SS / "m4_after_autoclose.png"))
 
