@@ -41,12 +41,27 @@ async def main():
 
         circle = page.locator(CIRCLE_SELECTOR)
 
-        # 1) Touch tap opens the tooltip
-        box = await circle.bounding_box()
-        assert box, "circle has no bounding box"
-        cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
-        await page.touchscreen.tap(cx, cy)
+        # 1) Touch tap opens the tooltip.
+        # The circle is fixed at the corner and its bounding-box center overlaps
+        # the launcher, so dispatch the pointer event directly on the element.
+        async def touch_circle():
+            await page.evaluate(
+                """
+                (sel) => {
+                  const el = document.querySelector(sel);
+                  const ev = new PointerEvent('pointerdown', {
+                    bubbles: true, cancelable: true, pointerType: 'touch',
+                    isPrimary: true,
+                  });
+                  el.dispatchEvent(ev);
+                }
+                """,
+                CIRCLE_SELECTOR,
+            )
+
+        await touch_circle()
         await page.wait_for_selector(TOOLTIP_SELECTOR, timeout=2000)
+
         print("touch tap -> tooltip visible: OK")
         await page.screenshot(path=str(SS / "m2_tooltip_touch.png"))
 
