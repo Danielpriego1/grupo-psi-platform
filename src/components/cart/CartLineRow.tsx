@@ -18,6 +18,19 @@ interface Props {
 export function CartLineRow({ item, liveStock }: Props) {
   const { updateQuantity, removeItem, updateLine } = useCart();
 
+  // Keep UniformeDetail's per-product session selection in sync when the user
+  // re-selects size/color from the cart, so returning to the detail page
+  // rehydrates the same variant (and thus the same main image).
+  const persistSelection = (size?: string, color?: string) => {
+    try {
+      window.sessionStorage.setItem(
+        `uniforme-selection:${item.product.id}`,
+        JSON.stringify({ size: size || "", color: color || null })
+      );
+    } catch { /* storage blocked; ignore */ }
+  };
+
+
   const base = getProductPrice(item.product, item.selectedSize);
   const price = item.product.discount ? base * (1 - item.product.discount) : base;
 
@@ -72,13 +85,15 @@ export function CartLineRow({ item, liveStock }: Props) {
                       {availableSizes.map((s) => (
                         <button
                           key={s}
-                          onClick={() =>
+                          onClick={() => {
                             updateLine(
                               item.product.id,
                               { selectedSize: item.selectedSize, selectedVariant: item.selectedVariant },
                               { selectedSize: s, selectedVariant: item.selectedVariant }
-                            )
-                          }
+                            );
+                            persistSelection(s, item.selectedVariant);
+                          }}
+
                           className={cn(
                             "min-w-[40px] h-8 rounded-md border px-2 text-xs font-semibold",
                             item.selectedSize === s
@@ -101,13 +116,15 @@ export function CartLineRow({ item, liveStock }: Props) {
                       {availableColors.map((c) => (
                         <button
                           key={c}
-                          onClick={() =>
+                          onClick={() => {
                             updateLine(
                               item.product.id,
                               { selectedSize: item.selectedSize, selectedVariant: item.selectedVariant },
                               { selectedSize: item.selectedSize, selectedVariant: c }
-                            )
-                          }
+                            );
+                            persistSelection(item.selectedSize, c);
+                          }}
+
                           className={cn(
                             "h-8 rounded-md border px-2 text-xs font-semibold",
                             item.selectedVariant === c
