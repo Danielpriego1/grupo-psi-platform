@@ -27,18 +27,20 @@ const baseProduct: Product = {
 
 function renderPage(overrides: Partial<Parameters<typeof UniformeDetail>[0]> = {}) {
   return render(
-    <MemoryRouter>
-      <CartProvider>
-        <UniformeDetail
-          product={baseProduct}
-          images={["/a.jpg", "/b.jpg"]}
-          sizes={["CH", "M", "G"]}
-          categorySlug="uniformes"
-          inventoryStock={5}
-          {...overrides}
-        />
-      </CartProvider>
-    </MemoryRouter>
+    <HelmetProvider>
+      <MemoryRouter>
+        <CartProvider>
+          <UniformeDetail
+            product={baseProduct}
+            images={["/a.jpg", "/b.jpg"]}
+            sizes={["CH", "M", "G"]}
+            categorySlug="uniformes"
+            inventoryStock={5}
+            {...overrides}
+          />
+        </CartProvider>
+      </MemoryRouter>
+    </HelmetProvider>
   );
 }
 
