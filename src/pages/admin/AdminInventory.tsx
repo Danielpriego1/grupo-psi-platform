@@ -573,16 +573,38 @@ export default function AdminInventory() {
             </div>
 
             {/* Image upload + ordering */}
-            <div className="space-y-2">
+            <div
+              className="space-y-2"
+              onDragOver={(e) => {
+                if (e.dataTransfer?.types?.includes("Files")) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "copy";
+                }
+              }}
+              onDrop={async (e) => {
+                if (!e.dataTransfer?.files?.length) return;
+                e.preventDefault();
+                const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+                if (!files.length) return;
+                const tooLarge = files.filter((f) => f.size > 8 * 1024 * 1024);
+                if (tooLarge.length) {
+                  toast({ title: "Imagen muy grande", description: `${tooLarge.length} archivo(s) > 8MB fueron omitidos.`, variant: "destructive" });
+                }
+                const valid = files.filter((f) => f.size <= 8 * 1024 * 1024);
+                const normalized = await Promise.all(valid.map(normalizeImage));
+                setImages((prev) => [...prev, ...normalized.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
+              }}
+            >
               <Label>Fotos del producto ({images.length})</Label>
-              <p className="text-xs text-muted-foreground">La primera imagen es la principal. <strong>Arrastra</strong> para reordenar o usa las flechas. Las fotos se ajustan automáticamente al cuadrado de la ficha sin recortes.</p>
+              <p className="text-xs text-muted-foreground">Arrastra imágenes aquí o usa el botón. La primera imagen es la principal. Reordena arrastrando o con las flechas.</p>
               <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleImagesSelect} className="hidden" />
               {images.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 py-8">
                   <ImageIcon className="w-8 h-8 text-muted-foreground/60" />
-                  <p className="text-xs text-muted-foreground">Aún no hay fotos. Sube al menos una para mostrar en el carrusel.</p>
+                  <p className="text-xs text-muted-foreground">Aún no hay fotos. Arrástralas aquí o pulsa el botón inferior.</p>
                 </div>
               ) : (
+
                 <div ref={gridRef} className={cn("grid grid-cols-3 sm:grid-cols-4 gap-3", touchDragging && "touch-none")}>
                   {images.map((img, i) => (
                     <div
