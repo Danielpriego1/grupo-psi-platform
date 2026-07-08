@@ -256,6 +256,9 @@ export default function UniformeDetail({
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-slate-900">
                 {product.name}
+                {selectedColor && (
+                  <span className="text-slate-400 font-normal"> — {selectedColor}</span>
+                )}
               </h1>
               {basePrice > 0 && (
                 <div className="pt-2">
