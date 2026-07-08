@@ -181,10 +181,24 @@ export function CartDrawer() {
 
             {/* Footer */}
             <div className="border-t border-border pt-4 space-y-3">
+              {hasStockIssue && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive"
+                >
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>
+                    Hay {stockIssues.length} línea{stockIssues.length === 1 ? "" : "s"} con
+                    cantidad mayor al stock disponible. Ajusta las cantidades marcadas para continuar.
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between text-lg font-bold">
                 <span>Total</span>
                 <span>${totalPrice.toFixed(2)} MXN</span>
               </div>
+
 
               {/* Bulk order alert */}
               {isBulkOrder && (
