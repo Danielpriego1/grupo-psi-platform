@@ -196,6 +196,76 @@ export default function AdminNotificationHistory() {
     toast.success("Historial eliminado");
   };
 
+  // ---- Bulk selection helpers ----
+  const filteredIds = useMemo(() => new Set(filtered.map((e) => e.id)), [filtered]);
+  const visibleSelected = useMemo(
+    () => filtered.filter((e) => selected.has(e.id)),
+    [filtered, selected],
+  );
+  const allVisibleSelected =
+    filtered.length > 0 && filtered.every((e) => selected.has(e.id));
+  const someVisibleSelected = visibleSelected.length > 0 && !allVisibleSelected;
+
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+  const toggleAllVisible = (checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) filtered.forEach((e) => next.add(e.id));
+      else filtered.forEach((e) => next.delete(e.id));
+      return next;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
+
+  // Drop selection ids that no longer exist in events
+  useEffect(() => {
+    setSelected((prev) => {
+      const alive = new Set(events.map((e) => e.id));
+      const next = new Set<string>();
+      prev.forEach((id) => { if (alive.has(id)) next.add(id); });
+      return next.size === prev.size ? prev : next;
+    });
+  }, [events]);
+
+  const bulkMarkRead = async (read: boolean) => {
+    const ids = Array.from(selected).filter((id) => filteredIds.has(id));
+    if (ids.length === 0) return;
+    setBusy(true);
+    const nextRead = read ? new Date().toISOString() : null;
+    const { error } = await supabase
+      .from("notification_events")
+      .update({ read_at: nextRead })
+      .in("id", ids);
+    setBusy(false);
+    if (error) return toast.error("No se pudo actualizar", { description: error.message });
+    setEvents((prev) =>
+      prev.map((e) => (ids.includes(e.id) ? { ...e, read_at: nextRead } : e)),
+    );
+    toast.success(
+      `${ids.length} ${ids.length === 1 ? "notificación" : "notificaciones"} ${read ? "marcadas como leídas" : "marcadas como no leídas"}`,
+    );
+  };
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selected).filter((id) => filteredIds.has(id));
+    if (ids.length === 0) return;
+    if (!confirm(`¿Eliminar ${ids.length} ${ids.length === 1 ? "evento" : "eventos"} seleccionados?`)) return;
+    setBusy(true);
+    const prev = events;
+    setEvents((p) => p.filter((e) => !ids.includes(e.id)));
+    const { error } = await supabase.from("notification_events").delete().in("id", ids);
+    setBusy(false);
+    if (error) { setEvents(prev); return toast.error("No se pudo eliminar", { description: error.message }); }
+    clearSelection();
+    toast.success(`${ids.length} ${ids.length === 1 ? "evento eliminado" : "eventos eliminados"}`);
+  };
+
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-5">
       {/* Header */}
