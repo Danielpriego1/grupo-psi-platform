@@ -355,31 +355,58 @@ export default function UniformeDetail({
 
             {/* CTA buttons */}
             <div className="space-y-3 pt-2">
-              {!canAddToCart && product.inStock && (
-                <p className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-                  {!sizeValid && "Selecciona una talla para continuar."}
-                  {sizeValid && !colorValid && "Selecciona un color para continuar."}
-                  {sizeValid && colorValid && !quantityValid && "Cantidad excede el stock disponible."}
-                </p>
-              )}
-              <Button
-                size="storeCta"
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleAddToCart}
-                disabled={!canAddToCart}
-              >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                Agregar al carrito
-              </Button>
-              <Button
-                size="storeCta"
-                className="w-full bg-primary hover:bg-primary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleAddToCart}
-                disabled={!canAddToCart}
-              >
-                Comprar ahora
-              </Button>
+              {(() => {
+                const reason = !product.inStock
+                  ? "Producto agotado. No disponible para compra."
+                  : !sizeValid
+                  ? "Selecciona una talla para continuar."
+                  : !colorValid
+                  ? "Selecciona un color para continuar."
+                  : !quantityValid
+                  ? "Cantidad excede el stock disponible."
+                  : "";
+                return (
+                  <>
+                    {/* Live region — screen readers announce the reason the CTA is disabled */}
+                    <p
+                      id="uniforme-cta-hint"
+                      role="status"
+                      aria-live="polite"
+                      className={cn(
+                        "text-xs font-medium rounded-md px-3 py-2 border",
+                        reason
+                          ? "text-amber-700 bg-amber-50 border-amber-200"
+                          : "sr-only"
+                      )}
+                    >
+                      {reason || "Listo para agregar al carrito"}
+                    </p>
+                    <Button
+                      size="storeCta"
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"
+                      onClick={handleAddToCart}
+                      disabled={!canAddToCart}
+                      aria-disabled={!canAddToCart}
+                      aria-describedby={reason ? "uniforme-cta-hint" : undefined}
+                    >
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Agregar al carrito
+                    </Button>
+                    <Button
+                      size="storeCta"
+                      className="w-full bg-primary hover:bg-primary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"
+                      onClick={handleAddToCart}
+                      disabled={!canAddToCart}
+                      aria-disabled={!canAddToCart}
+                      aria-describedby={reason ? "uniforme-cta-hint" : undefined}
+                    >
+                      Comprar ahora
+                    </Button>
+                  </>
+                );
+              })()}
             </div>
+
 
 
             {/* Trust badges */}
