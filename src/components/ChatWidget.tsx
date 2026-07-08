@@ -1453,11 +1453,11 @@ export function ChatWidget() {
               onClick={jumpToBottom}
               aria-label={`Ir al final del chat. ${unreadCount} ${unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}. Atajo: tecla Fin.`}
               title="Ir al final (Fin)"
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-[#ea580c] px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-card min-h-[32px]"
+              className="absolute bottom-14 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 rounded-full bg-[#ea580c]/90 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-white shadow-md hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 min-h-[26px]"
             >
-              <span aria-hidden="true">↓</span>
+              <ChevronDown className="h-3 w-3" aria-hidden="true" />
               <span>
-                {unreadCount} {unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+                {unreadCount} {unreadCount === 1 ? "nuevo" : "nuevos"}
               </span>
             </button>
           )}
