@@ -159,8 +159,15 @@ export default function AdminInventory() {
     }
   };
 
-  // Limpieza al cerrar diálogo
+  // Limpieza al cerrar diálogo. IMPORTANT: skip the initial mount, otherwise a
+  // page reload wipes the sessionStorage draft before the restore effect can
+  // read it (dialogOpen defaults to false on mount).
+  const cleanupSkipMount = useRef(true);
   useEffect(() => {
+    if (cleanupSkipMount.current) {
+      cleanupSkipMount.current = false;
+      return;
+    }
     if (!dialogOpen) {
       images.forEach(revokeLocal);
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
