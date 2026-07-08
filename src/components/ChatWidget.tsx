@@ -54,6 +54,21 @@ const INITIAL_MESSAGES: Message[] = [
 
 const WHATSAPP_NUMBER = "5219931684717";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+
+function detectHumanRequest(text: string): boolean {
+  const t = text.toLowerCase();
+  const phrases = [
+    "hablar con un humano","hablar con una persona","hablar con alguien",
+    "conectar con un humano","conectar con una persona","conectar con alguien",
+    "agente","representante","asesor","vendedor","persona real",
+    "no quiero hablar con un bot","no quiero hablar con una maquina","no quiero hablar con ia",
+    "pasame con","pásame con","quiero hablar con","necesito hablar con",
+    "atencion personalizada","atención personalizada","hablar por telefono",
+    "hablar por teléfono","hablar por whatsapp","contactar a alguien",
+    "contactar con alguien","escalar a","derivar con","hablar con un vivo",
+  ];
+  return phrases.some(p => t.includes(p));
+}
 const MAX_RENDERED_MESSAGES = 60; // virtualize tail; older still kept for context
 const NEAR_BOTTOM_PX = 80;
 
