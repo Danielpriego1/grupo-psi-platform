@@ -17,6 +17,12 @@ interface CartContextType {
   addItem: (item: CartItem) => void;
   removeItem: (productId: string, selectedSize?: string, selectedVariant?: string) => void;
   updateQuantity: (productId: string, quantity: number, selectedSize?: string, selectedVariant?: string) => void;
+  /** Re-select size/color on an existing line; merges if the new variant already exists. */
+  updateLine: (
+    productId: string,
+    from: { selectedSize?: string; selectedVariant?: string },
+    to: { selectedSize?: string; selectedVariant?: string }
+  ) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
