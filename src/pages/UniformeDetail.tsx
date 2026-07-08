@@ -283,6 +283,34 @@ export default function UniformeDetail({
               </div>
             )}
 
+            {/* Colors */}
+            {colors.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Color{selectedColor && <span className="ml-2 font-normal text-slate-500 normal-case">— {selectedColor}</span>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map((c) => {
+                    const swatch = COLOR_SWATCHES[c.toLowerCase()] || "#e5e7eb";
+                    const active = selectedColor === c;
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => setSelectedColor(c)}
+                        title={c}
+                        aria-label={c}
+                        className={cn(
+                          "h-10 w-10 rounded-full border-2 transition-all",
+                          active ? "border-primary ring-2 ring-primary/30 scale-105" : "border-slate-300 hover:border-slate-500"
+                        )}
+                        style={{ backgroundColor: swatch }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* CTA buttons */}
             <div className="space-y-3 pt-2">
               <Button
