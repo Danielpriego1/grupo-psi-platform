@@ -60,6 +60,23 @@ export function InventoryVariantPreview({ productName, sizes, colors, images }: 
     if (i >= 0 && i < images.length) setImgIdx(i);
   }, [selectedColor, colors, images.length]);
 
+  // Radiogroup keyboard navigation, mirrors UniformeDetail so the admin
+  // preview behaves the same as the storefront.
+  const colorRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const handleColorKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    if (colors.length === 0) return;
+    const KEYS = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
+    if (!KEYS.includes(e.key)) return;
+    e.preventDefault();
+    let next = idx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (idx + 1) % colors.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (idx - 1 + colors.length) % colors.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = colors.length - 1;
+    setSelectedColor(colors[next]);
+    colorRefs.current[next]?.focus();
+  };
+
   const hasAnything = sizes.length > 0 || colors.length > 0 || images.length > 0;
   const mismatch = colors.length > 0 && images.length > 0 && colors.length !== images.length;
 
