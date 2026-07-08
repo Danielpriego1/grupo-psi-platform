@@ -903,7 +903,11 @@ export function ChatWidget() {
     }
   }, [messages, isLoading, typeMessage]);
 
-  const handleSend = () => { sendText(input); };
+  const handleSend = () => {
+    // Typed submissions are silent; the transcript flow flips this to true.
+    lastInputViaVoiceRef.current = false;
+    sendText(input);
+  };
 
   const stopRecording = useCallback(() => {
     const mr = mediaRecorderRef.current;
