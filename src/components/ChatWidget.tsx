@@ -1454,9 +1454,14 @@ export function ChatWidget() {
         className={cn(
           "fixed z-50 flex w-[calc(100vw-2rem)] sm:w-[340px] max-w-[340px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#09090b]/95 backdrop-blur-2xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]",
           panelCornerClass(corner),
-          "max-h-[min(600px,calc(100vh-2rem))] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          "max-h-[min(600px,calc(100dvh-2rem))] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
           open ? "translate-y-0 scale-100 opacity-100" : (corner.startsWith("b") ? "translate-y-10" : "-translate-y-10") + " scale-95 opacity-0 pointer-events-none"
         )}
+        style={
+          corner.startsWith("b") && kbOffset > 0
+            ? { bottom: `calc(1rem + ${kbOffset}px)`, maxHeight: `calc(100dvh - 2rem - ${kbOffset}px)` }
+            : undefined
+        }
       >
         <div className="relative flex items-center gap-3 overflow-hidden px-4 py-3 border-b border-white/5">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-40" />
