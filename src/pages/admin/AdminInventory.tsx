@@ -78,9 +78,35 @@ export default function AdminInventory() {
     unit_price: "",
     location: "",
     spec_pdf_url: "",
+    sizes: "",   // comma-separated (e.g. "ECH, CH, M, G, EG, EEG")
+    colors: "",  // comma-separated (e.g. "Blanco, Negro, Marino")
   });
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const { toast } = useToast();
+
+  // Persist current form + editItem id to sessionStorage so navigating away
+  // and coming back doesn't wipe progress. Images with local File objects
+  // can't be persisted — only remote https URLs survive.
+  const DRAFT_KEY = "admin-inventory-draft";
+  const persistDraft = (nextForm = form, nextImages = images, nextPdfName = pdfName, nextEditItemId = editItem?.id ?? null, nextOpen = dialogOpen) => {
+    try {
+      if (!nextOpen) {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      const persistableImages = nextImages
+        .filter((i) => !i.file && i.url && !i.url.startsWith("blob:"))
+        .map((i) => ({ url: i.url }));
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        form: nextForm,
+        images: persistableImages,
+        pdfName: nextPdfName,
+        editItemId: nextEditItemId,
+        skippedLocalImages: nextImages.filter((i) => i.file).length,
+      }));
+    } catch { /* storage may be blocked */ }
+  };
+
 
   const fetchItems = async () => {
     const { data } = await supabase.from("inventory").select("*").order("product_name");
