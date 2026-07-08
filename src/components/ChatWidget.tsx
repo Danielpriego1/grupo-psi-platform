@@ -166,7 +166,7 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
     <div className={cn("flex w-full mb-4", msg.role === "user" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[85%] rounded-[1.5rem] px-5 py-3.5 text-sm leading-relaxed shadow-sm transition-all duration-300",
+          "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm transition-all duration-300",
           msg.role === "user"
             ? "bg-gradient-to-br from-[#ea580c] to-[#c2410c] text-white rounded-br-none shadow-[#ea580c]/20"
             : "bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-bl-none"
@@ -321,7 +321,7 @@ export function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [inputHeight, setInputHeight] = useState(56); // base height in px
+  const [inputHeight, setInputHeight] = useState(44); // base height in px
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stickToBottomRef = useRef(true);
   const [atBottom, setAtBottom] = useState(true);
@@ -894,8 +894,8 @@ export function ChatWidget() {
     }
 
     setIsLoading(true);
-    setInputHeight(56);
-    if (inputRef.current) inputRef.current.style.height = "56px";
+    setInputHeight(44);
+    if (inputRef.current) inputRef.current.style.height = "44px";
     requestAnimationFrame(() => inputRef.current?.focus());
 
     try {
@@ -1123,6 +1123,7 @@ export function ChatWidget() {
     [messages]
   );
 
+  const launcherSize = 56;
   const launcherStyle: React.CSSProperties = dragPos
     ? { left: dragPos.x, top: dragPos.y, right: "auto", bottom: "auto" }
     : {};
@@ -1143,7 +1144,7 @@ export function ChatWidget() {
   const onLauncherPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!isDragging) return;
     dragStateRef.current.moved = true;
-    const size = 72;
+    const size = 56;
     const x = Math.min(Math.max(8, e.clientX - size / 2), window.innerWidth - size - 8);
     const y = Math.min(Math.max(8, e.clientY - size / 2), window.innerHeight - size - 8);
     setDragPos({ x, y });
@@ -1185,7 +1186,7 @@ export function ChatWidget() {
         aria-label={`Abrir chat con Sora (${formatShortcut(shortcuts.toggleOpen)}; mantén presionado para mover)`}
         title={`Sora — ${formatShortcut(shortcuts.toggleOpen)}${ghostMode ? " · Modo fantasma activo" : ""}`}
         className={cn(
-          "fixed z-50 h-[72px] w-[72px] rounded-full shadow-2xl overflow-hidden touch-none select-none",
+          "fixed z-50 h-14 w-14 rounded-full shadow-2xl overflow-hidden touch-none select-none",
           !isDragging && "transition-all duration-500 animate-glow-pulse hover:scale-110",
           isDragging && "scale-110 ring-4 ring-primary/50 cursor-grabbing",
           !dragPos && cornerClass(corner),
@@ -1338,24 +1339,24 @@ export function ChatWidget() {
 
       <div
         className={cn(
-          "fixed z-50 flex w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px] flex-col overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-[#09090b]/95 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]",
+          "fixed z-50 flex w-[calc(100vw-2rem)] sm:w-[340px] max-w-[340px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#09090b]/95 backdrop-blur-2xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]",
           panelCornerClass(corner),
           "max-h-[min(600px,calc(100vh-2rem))] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
           open ? "translate-y-0 scale-100 opacity-100" : (corner.startsWith("b") ? "translate-y-10" : "-translate-y-10") + " scale-95 opacity-0 pointer-events-none"
         )}
       >
-        <div className="relative flex items-center gap-3 sm:gap-4 overflow-hidden px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-50" />
-          <div className="relative z-10 flex items-center gap-3 sm:gap-4 w-full min-w-0">
+        <div className="relative flex items-center gap-3 overflow-hidden px-4 py-3 border-b border-white/5">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-40" />
+          <div className="relative z-10 flex items-center gap-3 w-full min-w-0">
             <div className="relative shrink-0">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 overflow-hidden rounded-2xl ring-2 ring-primary/30 shadow-lg shadow-primary/20">
+              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl ring-2 ring-primary/20 shadow-md shadow-primary/10">
                 <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
               </div>
-              <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[#09090b] bg-green-500 shadow-sm" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#09090b] bg-green-500 shadow-sm" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-base font-black tracking-tight text-white uppercase truncate">Sora</div>
-              <div className="text-[10px] font-bold text-primary uppercase tracking-widest truncate">IA Ejecutiva · Grupo PSI</div>
+              <div className="text-sm font-semibold tracking-tight text-white truncate">Sora</div>
+              <div className="text-[10px] font-medium text-primary/80 truncate">IA Ejecutiva · Grupo PSI</div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               <button
@@ -1720,7 +1721,7 @@ export function ChatWidget() {
               placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Escribe o toca el micrófono…"}
               rows={1}
               wrap="soft"
-              className="block w-full flex-1 min-w-0 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 sm:pl-6 pr-24 sm:pr-28 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+              className="block w-full flex-1 min-w-0 min-h-[44px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 pr-20 sm:pr-24 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
               disabled={isLoading || isRecording || isTranscribing}
               autoFocus
             />
@@ -1732,7 +1733,7 @@ export function ChatWidget() {
                 title={isRecording ? "Detener grabación" : "Hablar con Sora"}
                 aria-label={isRecording ? "Detener grabación" : "Grabar mensaje de voz"}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
+                  "flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
                   isRecording
                     ? "bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse"
                     : "bg-white/10 text-white hover:bg-white/20"
@@ -1743,15 +1744,15 @@ export function ChatWidget() {
               <Button
                 type="submit"
                 size="icon"
-                className="h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                className="h-8 w-8 rounded-lg bg-primary text-white shadow-md shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
                 disabled={isLoading || anyTyping || !input.trim() || isRecording || isTranscribing}
               >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
           </form>
-          <div className="mt-3 text-center">
-            <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">Powered by Grupo PSI Intelligence</span>
+          <div className="mt-2 text-center">
+            <span className="text-[9px] font-medium text-white/15">Grupo PSI</span>
           </div>
         </div>
       </div>
