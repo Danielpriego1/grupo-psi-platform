@@ -1,24 +1,44 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, FileText, Minus, Plus, Truck, ShieldCheck, RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { SEO } from "@/components/SEO";
 import { ProductImageLightbox } from "@/components/ProductImageLightbox";
 import { Button } from "@/components/ui/button";
-import type { Product } from "@/data/products";
+import { getProductPrice, type Product } from "@/data/products";
 
 interface Props {
   product: Product;
   images: string[];
   sizes: string[];
-  finalPrice: number;
-  basePrice: number;
   specPdfUrl?: string | null;
   inventoryStock?: number | null;
   categorySlug: string;
 }
+
+// Named color swatches (extend as new colors appear in the catalog).
+const COLOR_SWATCHES: Record<string, string> = {
+  blanco: "#ffffff",
+  negro: "#111111",
+  gris: "#9ca3af",
+  "gris oxford": "#4b5563",
+  azul: "#1e3a8a",
+  "azul marino": "#0b1e3f",
+  "azul rey": "#1d4ed8",
+  marino: "#0b1e3f",
+  rojo: "#b91c1c",
+  verde: "#166534",
+  amarillo: "#eab308",
+  naranja: "#ea580c",
+  beige: "#d6c7a1",
+  cafe: "#78350f",
+  café: "#78350f",
+  vino: "#7f1d1d",
+  rosa: "#f472b6",
+  morado: "#7c3aed",
+};
 
 /**
  * Yazbek-style product page (light e-commerce layout) used specifically for
