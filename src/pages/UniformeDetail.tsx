@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, FileText, Minus, Plus, Truck, ShieldCheck, RotateCcw } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, FileText, Minus, Plus, Truck, ShieldCheck, RotateCcw, Check, Info, Printer } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -256,6 +256,9 @@ export default function UniformeDetail({
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-slate-900">
                 {product.name}
+                {selectedColor && (
+                  <span className="text-slate-400 font-normal"> — {selectedColor}</span>
+                )}
               </h1>
               {basePrice > 0 && (
                 <div className="pt-2">
@@ -341,12 +344,28 @@ export default function UniformeDetail({
                         onClick={() => setSelectedColor(c)}
                         title={c}
                         aria-label={c}
+                        aria-pressed={active}
                         className={cn(
-                          "h-10 w-10 rounded-full border-2 transition-all",
-                          active ? "border-primary ring-2 ring-primary/30 scale-105" : "border-slate-300 hover:border-slate-500"
+                          "relative h-10 w-10 rounded-full border-2 transition-all flex items-center justify-center",
+                          active
+                            ? "border-primary ring-4 ring-primary/20 scale-105 shadow-md"
+                            : "border-slate-300 hover:border-slate-500"
                         )}
                         style={{ backgroundColor: swatch }}
-                      />
+                      >
+                        {active && (
+                          <Check
+                            className={cn(
+                              "h-5 w-5",
+                              // Pick contrasting checkmark for light swatches
+                              ["#ffffff", "#eab308", "#d6c7a1", "#f472b6", "#e5e7eb"].includes(swatch)
+                                ? "text-slate-900"
+                                : "text-white"
+                            )}
+                            strokeWidth={3}
+                          />
+                        )}
+                      </button>
                     );
                   })}
                 </div>
@@ -425,15 +444,7 @@ export default function UniformeDetail({
               </li>
             </ul>
 
-            {/* Description */}
-            <div className="pt-6 border-t border-slate-200 space-y-3">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">Detalles del producto</h2>
-              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                {product.description}
-              </p>
-            </div>
-
-            {/* Spec PDF */}
+            {/* Spec PDF quick-link stays in sidebar */}
             {specPdfUrl && (
               <a
                 href={specPdfUrl}
@@ -447,7 +458,85 @@ export default function UniformeDetail({
             )}
           </div>
         </div>
+
+        {/* ─── Bottom info cards (retail-clásico layout) ─── */}
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          {/* Detalles del producto */}
+          <section
+            aria-labelledby="detalles-producto-heading"
+            className="bg-slate-50 border border-slate-200 p-8 md:p-10 rounded-3xl"
+          >
+            <h2
+              id="detalles-producto-heading"
+              className="text-lg font-bold mb-6 flex items-center gap-3 text-slate-900"
+            >
+              <span className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Info className="w-5 h-5 text-primary" />
+              </span>
+              Detalles del producto
+            </h2>
+            {product.description ? (
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                {product.description}
+              </p>
+            ) : (
+              <p className="text-sm text-slate-500 italic">Sin descripción disponible.</p>
+            )}
+            {(sizes.length > 0 || colors.length > 0) && (
+              <dl className="mt-6 divide-y divide-slate-200 border-t border-slate-200">
+                {sizes.length > 0 && (
+                  <div className="flex justify-between items-center py-3">
+                    <dt className="text-slate-500 font-medium text-sm">Tallas disponibles</dt>
+                    <dd className="text-slate-800 text-sm font-semibold text-right">{sizes.join(" · ")}</dd>
+                  </div>
+                )}
+                {colors.length > 0 && (
+                  <div className="flex justify-between items-center py-3">
+                    <dt className="text-slate-500 font-medium text-sm">Colores disponibles</dt>
+                    <dd className="text-slate-800 text-sm font-semibold text-right">{colors.join(" · ")}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between items-center py-3">
+                  <dt className="text-slate-500 font-medium text-sm">SKU</dt>
+                  <dd className="text-slate-800 text-sm font-semibold text-right">{product.id}</dd>
+                </div>
+              </dl>
+            )}
+          </section>
+
+          {/* Técnicas de impresión */}
+          <section
+            aria-labelledby="tecnicas-impresion-heading"
+            className="bg-slate-50 border border-slate-200 p-8 md:p-10 rounded-3xl"
+          >
+            <h2
+              id="tecnicas-impresion-heading"
+              className="text-lg font-bold mb-6 flex items-center gap-3 text-slate-900"
+            >
+              <span className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Printer className="w-5 h-5 text-primary" />
+              </span>
+              Técnicas de impresión
+            </h2>
+            <div className="flex flex-wrap gap-2 mb-5">
+              {["Serigrafía", "Bordado", "DTF Premium", "Vinil Textil", "Sublimación"].map((t) => (
+                <span
+                  key={t}
+                  className="px-3.5 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-semibold text-slate-700"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Personalizamos este modelo con la técnica que mejor se adapte a tu logotipo,
+              tiraje y presupuesto. Solicita una cotización con tu diseño para recibir la
+              recomendación técnica ideal.
+            </p>
+          </section>
+        </div>
       </div>
     </div>
+
   );
 }
