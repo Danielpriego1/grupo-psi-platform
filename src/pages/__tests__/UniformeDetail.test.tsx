@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import UniformeDetail from "@/pages/UniformeDetail";
 import { CartProvider } from "@/contexts/CartContext";
 import type { Product } from "@/data/products";
