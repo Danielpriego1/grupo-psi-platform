@@ -904,6 +904,36 @@ export function ChatWidget() {
   useFpsMonitor(open && (isLoading || messages.some(m => m.isTyping)), "transcript");
   useLongTaskMonitor("ChatWidget");
 
+  // Detectar teclado móvil vía VisualViewport para que el input y el botón
+  // "mensajes nuevos" no queden tapados. Mantener scroll estable.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    let raf = 0;
+    const update = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const diff = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        setKbOffset(prev => (Math.abs(prev - diff) > 2 ? diff : prev));
+        // reancla el scroll cuando el usuario estaba abajo, evita saltos al abrir teclado
+        const el = scrollRef.current;
+        if (el && stickToBottomRef.current) {
+          el.scrollTop = el.scrollHeight;
+        }
+      });
+    };
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    update();
+    return () => {
+      cancelAnimationFrame(raf);
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
+
   // Track if user scrolled away from bottom — only auto-scroll when near bottom
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
