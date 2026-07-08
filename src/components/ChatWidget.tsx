@@ -321,7 +321,7 @@ export function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [inputHeight, setInputHeight] = useState(56); // base height in px
+  const [inputHeight, setInputHeight] = useState(44); // base height in px
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stickToBottomRef = useRef(true);
   const [atBottom, setAtBottom] = useState(true);
