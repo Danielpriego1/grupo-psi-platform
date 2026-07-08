@@ -34,6 +34,7 @@ export function NotificationsBell() {
     clear,
   } = useAdminNotifications();
   const [open, setOpen] = useState(false);
+  const push = useWebPush();
 
   // Auto-mark on open
   useEffect(() => {
