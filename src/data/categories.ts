@@ -40,8 +40,10 @@ export const categories: CategoryConfig[] = [
     icon: Shirt,
     description: "Playeras, camisas y ropa corporativa",
     subcategories: [
-      "Playeras tipo polo",
-      "Playera cuello redondo",
+      "Playeras polo caballero",
+      "Playeras polo Dama",
+      "Playeras cuello redondo caballero",
+      "Playeras cuello redondo Dama",
       "Camisas",
       "Sudaderas",
       "Chalecos",
