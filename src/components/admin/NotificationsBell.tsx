@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, BellOff, CheckCheck, Package, Wrench, FileText, X } from "lucide-react";
+import { Bell, BellOff, CheckCheck, Package, Smartphone, Wrench, FileText, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAdminNotifications, type AdminNotifKind } from "@/hooks/useAdminNotifications";
+import { useWebPush } from "@/hooks/useWebPush";
 import { cn } from "@/lib/utils";
 import { formatRelative } from "@/hooks/useRelativeTime";
 import { Link } from "react-router-dom";
@@ -33,6 +34,7 @@ export function NotificationsBell() {
     clear,
   } = useAdminNotifications();
   const [open, setOpen] = useState(false);
+  const push = useWebPush();
 
   // Auto-mark on open
   useEffect(() => {
@@ -119,6 +121,51 @@ export function NotificationsBell() {
               Las alertas del navegador están bloqueadas. Habilítalas desde la
               configuración del sitio para no perder ningún aviso.
             </p>
+          </div>
+        )}
+
+        {push.supported && (
+          <div className="px-4 py-3 border-b border-white/5 bg-emerald-500/[0.04]">
+            <div className="flex items-start gap-2.5">
+              <div className="mt-0.5 h-7 w-7 rounded-lg bg-emerald-500/15 text-emerald-300 flex items-center justify-center shrink-0">
+                <Smartphone className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-semibold text-foreground">
+                  Notificaciones push
+                </p>
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  {push.state === "subscribed"
+                    ? "Activadas en este dispositivo. Llegan aunque el panel esté cerrado."
+                    : "Recibe alertas aunque el panel esté cerrado en este dispositivo."}
+                </p>
+                {push.state === "subscribed" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={push.unsubscribe}
+                  >
+                    Desactivar en este dispositivo
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={push.subscribe}
+                    disabled={push.state === "subscribing"}
+                  >
+                    {push.state === "subscribing" && (
+                      <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                    )}
+                    Activar push
+                  </Button>
+                )}
+                {push.error && (
+                  <p className="text-[10px] text-red-300 mt-1.5">{push.error}</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
