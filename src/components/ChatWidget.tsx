@@ -1680,21 +1680,21 @@ export function ChatWidget() {
         </div>
 
 
-        <div className="p-5 bg-white/5 border-t border-white/5">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end gap-3">
+        <div className="p-3.5 bg-white/5 border-t border-white/5">
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end gap-2">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
               onKeyDown={handleKeyDown}
-              placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Escribe o toca el micrófono…"}
+              placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Mensaje…"}
               rows={1}
               wrap="soft"
-              className="block w-full flex-1 min-w-0 min-h-[44px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 pr-20 sm:pr-24 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+              className="block w-full flex-1 min-w-0 min-h-[40px] max-h-[120px] rounded-xl border border-white/10 bg-white/5 pl-3.5 pr-[4.5rem] sm:pr-[5rem] py-2 text-[13px] text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-2 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
               disabled={isLoading || isRecording || isTranscribing}
               autoFocus
             />
-            <div className="absolute right-2 bottom-2 flex items-center gap-1.5">
+            <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
               <button
                 type="button"
                 onClick={isRecording ? stopRecording : startRecording}
@@ -1702,25 +1702,25 @@ export function ChatWidget() {
                 title={isRecording ? "Detener grabación" : "Hablar con Sora"}
                 aria-label={isRecording ? "Detener grabación" : "Grabar mensaje de voz"}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
+                  "flex h-7 w-7 items-center justify-center rounded-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
                   isRecording
                     ? "bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse"
                     : "bg-white/10 text-white hover:bg-white/20"
                 )}
               >
-                {isRecording ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
+                {isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-3.5 w-3.5" />}
               </button>
               <Button
                 type="submit"
                 size="icon"
-                className="h-8 w-8 rounded-lg bg-primary text-white shadow-md shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                className="h-7 w-7 rounded-md bg-primary text-white shadow-sm hover:scale-105 active:scale-95 transition-all"
                 disabled={isLoading || anyTyping || !input.trim() || isRecording || isTranscribing}
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
               </Button>
             </div>
           </form>
-          <div className="mt-2 text-center">
+          <div className="mt-1.5 text-center">
             <span className="text-[9px] font-medium text-white/15">Grupo PSI</span>
           </div>
         </div>
