@@ -134,6 +134,27 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "ui-vendor": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-select",
+          ],
+          "leaflet-vendor": ["leaflet", "react-leaflet"],
+          "chart-vendor": ["recharts"],
+          "supabase-vendor": ["@supabase/supabase-js"],
+        },
+      },
+    },
+  },
   define: {
     __REACT_VERSION__: JSON.stringify(reactPkg.version),
     __REACT_LEAFLET_VERSION__: JSON.stringify(rlPkg.version),
