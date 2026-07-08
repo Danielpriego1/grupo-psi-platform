@@ -138,7 +138,10 @@ export default function AdminInventory() {
       unit_price: String(item.unit_price),
       location: item.location ?? "",
       spec_pdf_url: item.spec_pdf_url ?? "",
+      sizes: Array.isArray(item.sizes) ? item.sizes.join(", ") : "",
+      colors: Array.isArray(item.colors) ? item.colors.join(", ") : "",
     });
+
     const list: string[] = Array.isArray(item.image_urls) && item.image_urls.length
       ? item.image_urls
       : (item.image_url ? [item.image_url] : []);
