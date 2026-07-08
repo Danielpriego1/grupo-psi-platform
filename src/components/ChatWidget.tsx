@@ -1123,6 +1123,7 @@ export function ChatWidget() {
     [messages]
   );
 
+  const launcherSize = 56;
   const launcherStyle: React.CSSProperties = dragPos
     ? { left: dragPos.x, top: dragPos.y, right: "auto", bottom: "auto" }
     : {};
