@@ -77,13 +77,26 @@ async def main():
         print("keyboard adjust hides tooltip and updates value: OK")
         await page.screenshot(path=str(SS / "m3_after_keyboard.png"))
 
-        # 3) Touch reopens, then auto-hides after ~2.5s
+        # 3) Touch reopens, then auto-hides after ~2.5s.
+        # Validate a tight window around the 2500ms threshold:
+        #   - still visible shortly before (2300ms)
+        #   - closed shortly after  (total ~2800ms)
         await touch_circle()
         await page.wait_for_selector(TOOLTIP_SELECTOR, timeout=2000)
-        await page.wait_for_timeout(3000)
-        assert not await tooltip_visible(page), "tooltip should auto-close after touch timeout"
 
-        print("touch tooltip auto-closes: OK")
+        await page.wait_for_timeout(2300)
+        assert await tooltip_visible(page), (
+            "tooltip should still be visible ~200ms before the 2.5s auto-close"
+        )
+        await page.screenshot(path=str(SS / "m4a_before_autoclose.png"))
+
+        # Wait past the 2.5s threshold (2300 + 500 = 2800ms total since tap)
+        await page.wait_for_timeout(500)
+        assert not await tooltip_visible(page), (
+            "tooltip should auto-close ~2.5s after touch tap"
+        )
+
+        print("touch tooltip auto-closes at ~2.5s: OK")
         await page.screenshot(path=str(SS / "m4_after_autoclose.png"))
 
         print("OK — mobile tooltip e2e passed")
