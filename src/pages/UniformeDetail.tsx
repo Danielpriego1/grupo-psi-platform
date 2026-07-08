@@ -50,8 +50,6 @@ export default function UniformeDetail({
   product,
   images,
   sizes,
-  finalPrice,
-  basePrice,
   specPdfUrl,
   inventoryStock,
   categorySlug,
@@ -59,8 +57,28 @@ export default function UniformeDetail({
   const { addItem } = useCart();
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Live price recomputed from selected size (overoles/playeras have size-tier pricing)
+  const basePrice = getProductPrice(product, selectedSize || undefined);
+  const finalPrice = product.discount ? basePrice * (1 - product.discount) : basePrice;
+
+  // Detect color variants from product.variants (any key that contains "color")
+  const colors = useMemo(() => {
+    if (!product.variants) return [] as string[];
+    const key = Object.keys(product.variants).find((k) => /color/i.test(k));
+    return key ? product.variants[key] : [];
+  }, [product.variants]);
+
+  // When a color is picked, jump the gallery to the image at the same index
+  // (fallback: no image swap when data doesn't have a matching image count).
+  useEffect(() => {
+    if (!selectedColor) return;
+    const idx = colors.indexOf(selectedColor);
+    if (idx >= 0 && idx < images.length) setCurrentImage(idx);
+  }, [selectedColor, colors, images.length]);
 
   const handleAddToCart = () => {
     if (sizes.length > 0 && !selectedSize) {
