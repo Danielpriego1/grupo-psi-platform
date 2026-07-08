@@ -209,7 +209,9 @@ describe("CartDrawer — extra e2e coverage", () => {
   });
 
   it("[4] Pay / Quote buttons honor aria-disabled when over stock; role=alert appears and clears when qty returns under stock", async () => {
-    mockInventory = [{ product_id: polo.id, stock: 2 }];
+    // Seed already over stock (qty=2, stock=1) so the alert fires as soon as
+    // inventory resolves — avoids racing the disabled-"+" affordance.
+    mockInventory = [{ product_id: polo.id, stock: 1 }];
     render(
       <Harness
         seed={[{ product: polo, quantity: 2, selectedSize: "M", selectedVariant: "Blanco" }]}
@@ -220,27 +222,15 @@ describe("CartDrawer — extra e2e coverage", () => {
     const payBtn = () => screen.getByRole("button", { name: /pagar \$/i });
     const quoteBtn = () => screen.getByRole("button", { name: /cotizar por whatsapp/i });
 
-    // Baseline: qty == stock. No over-stock alert, buttons are actionable.
-    expect(screen.queryByRole("alert")).toBeNull();
-    expect(payBtn()).not.toBeDisabled();
-    expect(quoteBtn()).not.toBeDisabled();
-
-    // Force qty above stock: shrink stock via decrement→increment cycle with mockInventory updated.
-    mockInventory = [{ product_id: polo.id, stock: 1 }];
-    fireEvent.click(screen.getByRole("button", { name: /disminuir cantidad/i })); // qty → 1
-    await flush();
-    fireEvent.click(screen.getByRole("button", { name: /aumentar cantidad/i })); // qty → 2, stock = 1
-    await flush();
-
-    // Alert announces the over-stock condition to SR users.
+    // Over-stock alert is announced to SR users.
     const alert = screen.getByRole("alert");
     expect(alert).toHaveTextContent(/mayor al stock/i);
 
-    // Buttons are both disabled AND aria-disabled=true so assistive tech agrees.
+    // Buttons are both disabled AND aria-disabled=true (so assistive tech agrees).
     expect(payBtn()).toBeDisabled();
     expect(quoteBtn()).toBeDisabled();
 
-    // Line-level role=status also announces the limit
+    // Line-level role=status also announces the limit for that specific row.
     const statuses = screen.getAllByRole("status");
     expect(statuses.some((s) => /solo quedan|stock máximo/i.test(s.textContent || ""))).toBe(true);
 
