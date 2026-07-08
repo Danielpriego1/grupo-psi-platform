@@ -255,7 +255,7 @@ export function CartDrawer() {
                 variant={isBulkOrder ? "default" : "outline"}
                 size="storeCta"
                 onClick={handleQuoteRequest}
-                disabled={isSubmitting || isCheckingOut || (isBulkOrder && !clientName.trim())}
+                disabled={isSubmitting || isCheckingOut || hasStockIssue || (isBulkOrder && !clientName.trim())}
               >
                 {isSubmitting ? (
                   <Loader2 className="mr-2 animate-spin" />
