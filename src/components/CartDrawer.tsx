@@ -11,15 +11,50 @@ import { getProductPrice } from "@/data/products";
 import { CartLineRow } from "@/components/cart/CartLineRow";
 
 export function CartDrawer() {
-  const { items, isOpen, setIsOpen, removeItem, updateQuantity, clearCart, totalItems, totalPrice } = useCart();
+  const { items, isOpen, setIsOpen, clearCart, totalItems, totalPrice } = useCart();
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [stockByProduct, setStockByProduct] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   const BULK_THRESHOLD = 10;
   const isBulkOrder = items.some((i) => i.quantity >= BULK_THRESHOLD);
+
+  // Fetch live inventory stock for every product currently in the cart so we can
+  // gate +/- controls and the checkout button against the real available stock.
+  useEffect(() => {
+    if (!isOpen || items.length === 0) return;
+    const ids = [...new Set(items.map((i) => i.product.id))];
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("inventory")
+        .select("product_id, stock")
+        .in("product_id", ids);
+      if (cancelled || !data) return;
+      const map: Record<string, number> = {};
+      for (const row of data) map[row.product_id] = Number(row.stock);
+      setStockByProduct(map);
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, items]);
+
+  // Aggregate demand per product across all cart lines (variants share the same
+  // pool). Line is "over stock" if the sum of its product's quantities exceeds
+  // available inventory.
+  const demandByProduct = useMemo(() => {
+    const d: Record<string, number> = {};
+    for (const i of items) d[i.product.id] = (d[i.product.id] || 0) + i.quantity;
+    return d;
+  }, [items]);
+
+  const stockIssues = items.filter((i) => {
+    const stock = stockByProduct[i.product.id];
+    return stock != null && demandByProduct[i.product.id] > stock;
+  });
+  const hasStockIssue = stockIssues.length > 0;
 
   // Build WhatsApp message from cart
   const buildWhatsAppMessage = (orderNumber?: string) => {
