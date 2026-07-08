@@ -1170,7 +1170,14 @@ export function ChatWidget() {
           if (e.pointerType === "touch") {
             setRadiusTooltipOpen(true);
             if (tooltipAutoCloseRef.current) clearTimeout(tooltipAutoCloseRef.current);
-            tooltipAutoCloseRef.current = setTimeout(() => setRadiusTooltipOpen(false), 2500);
+            // Respect prefers-reduced-motion: skip the timed auto-close so users
+            // relying on reduced motion can dismiss the tooltip on their own terms.
+            const prefersReducedMotion =
+              typeof window !== "undefined" &&
+              window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+            if (!prefersReducedMotion) {
+              tooltipAutoCloseRef.current = setTimeout(() => setRadiusTooltipOpen(false), 2500);
+            }
           }
         };
         const boundaryClasses = radiusBoundaryHit
