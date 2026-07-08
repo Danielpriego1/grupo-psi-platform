@@ -25,6 +25,8 @@ Deno.serve(async (req) => {
     const bodyText = String(body.body ?? "");
     const url = String(body.url ?? "/admin");
     const tag = String(body.tag ?? "psi-notif");
+    const kind = String(body.kind ?? body.tag ?? "other");
+    const refNumber = body.ref_number ? String(body.ref_number) : null;
     const payload = JSON.stringify({ title, body: bodyText, url, tag, data: body.data ?? {} });
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, SERVICE_ROLE);
@@ -50,7 +52,27 @@ Deno.serve(async (req) => {
       }
     }));
 
-    return json({ ok: true, sent, removed, failed, total: subs?.length ?? 0 });
+    const total = subs?.length ?? 0;
+    const status =
+      total === 0 ? "no_targets" : failed === total ? "failed" : failed > 0 ? "partial" : "sent";
+
+    try {
+      await admin.from("notification_events").insert({
+        kind,
+        title,
+        body: bodyText,
+        url,
+        tag,
+        ref_number: refNumber,
+        sent,
+        removed,
+        failed,
+        total_targets: total,
+        status,
+      });
+    } catch (_) { /* logging is best-effort */ }
+
+    return json({ ok: true, sent, removed, failed, total, status });
   } catch (e) {
     return json({ error: String((e as Error).message ?? e) }, 500);
   }
