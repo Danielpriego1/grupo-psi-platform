@@ -35,17 +35,18 @@ async def run_axe(page, label: str):
     touch the radius circle or its tooltip. This keeps unrelated app-level
     findings out of the pass/fail signal for this test."""
     result = await page.evaluate(
-        """async ({ circleSel, tooltipSel }) => {
+        """async ({ circleSel }) => {
           const res = await window.axe.run(document, {
             resultTypes: ['violations'],
             rules: {
-              // Region/landmark rules are app-wide; not what we're testing.
               region: { enabled: false },
               'landmark-one-main': { enabled: false },
             },
           });
           const circle = document.querySelector(circleSel);
-          const tooltip = document.querySelector(tooltipSel);
+          // Playwright's :has-text is not valid CSS — find the tooltip in JS.
+          const tooltip = Array.from(document.querySelectorAll('[role="tooltip"]'))
+            .find(el => (el.textContent || '').includes('Zona de proximidad')) || null;
           const inScope = (target) => {
             const el = document.querySelector(target);
             if (!el) return false;
@@ -63,7 +64,7 @@ async def run_axe(page, label: str):
             .filter(v => v.nodes.length > 0);
           return scoped;
         }""",
-        {"circleSel": CIRCLE_SELECTOR, "tooltipSel": TOOLTIP_SELECTOR},
+        {"circleSel": CIRCLE_SELECTOR},
     )
     print(f"[axe:{label}] scoped violations:", json.dumps(result, indent=2))
     serious = [v for v in result if v["impact"] in ("serious", "critical")]
