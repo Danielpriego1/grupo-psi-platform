@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -80,6 +81,7 @@ export default function AdminNotificationHistory() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setLoading(true);
@@ -195,6 +197,76 @@ export default function AdminNotificationHistory() {
     toast.success("Historial eliminado");
   };
 
+  // ---- Bulk selection helpers ----
+  const filteredIds = useMemo(() => new Set(filtered.map((e) => e.id)), [filtered]);
+  const visibleSelected = useMemo(
+    () => filtered.filter((e) => selected.has(e.id)),
+    [filtered, selected],
+  );
+  const allVisibleSelected =
+    filtered.length > 0 && filtered.every((e) => selected.has(e.id));
+  const someVisibleSelected = visibleSelected.length > 0 && !allVisibleSelected;
+
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+  const toggleAllVisible = (checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) filtered.forEach((e) => next.add(e.id));
+      else filtered.forEach((e) => next.delete(e.id));
+      return next;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
+
+  // Drop selection ids that no longer exist in events
+  useEffect(() => {
+    setSelected((prev) => {
+      const alive = new Set(events.map((e) => e.id));
+      const next = new Set<string>();
+      prev.forEach((id) => { if (alive.has(id)) next.add(id); });
+      return next.size === prev.size ? prev : next;
+    });
+  }, [events]);
+
+  const bulkMarkRead = async (read: boolean) => {
+    const ids = Array.from(selected).filter((id) => filteredIds.has(id));
+    if (ids.length === 0) return;
+    setBusy(true);
+    const nextRead = read ? new Date().toISOString() : null;
+    const { error } = await supabase
+      .from("notification_events")
+      .update({ read_at: nextRead })
+      .in("id", ids);
+    setBusy(false);
+    if (error) return toast.error("No se pudo actualizar", { description: error.message });
+    setEvents((prev) =>
+      prev.map((e) => (ids.includes(e.id) ? { ...e, read_at: nextRead } : e)),
+    );
+    toast.success(
+      `${ids.length} ${ids.length === 1 ? "notificación" : "notificaciones"} ${read ? "marcadas como leídas" : "marcadas como no leídas"}`,
+    );
+  };
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selected).filter((id) => filteredIds.has(id));
+    if (ids.length === 0) return;
+    if (!confirm(`¿Eliminar ${ids.length} ${ids.length === 1 ? "evento" : "eventos"} seleccionados?`)) return;
+    setBusy(true);
+    const prev = events;
+    setEvents((p) => p.filter((e) => !ids.includes(e.id)));
+    const { error } = await supabase.from("notification_events").delete().in("id", ids);
+    setBusy(false);
+    if (error) { setEvents(prev); return toast.error("No se pudo eliminar", { description: error.message }); }
+    clearSelection();
+    toast.success(`${ids.length} ${ids.length === 1 ? "evento eliminado" : "eventos eliminados"}`);
+  };
+
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-5">
       {/* Header */}
@@ -301,6 +373,33 @@ export default function AdminNotificationHistory() {
       <DevicesSection />
 
 
+      {/* Bulk actions bar */}
+      {visibleSelected.length > 0 && (
+        <div className="sticky top-14 z-20 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.08] backdrop-blur px-3 py-2">
+          <span className="text-xs font-semibold text-foreground">
+            {visibleSelected.length} seleccionada{visibleSelected.length === 1 ? "" : "s"}
+          </span>
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bulkMarkRead(true)} disabled={busy}>
+            <CheckCheck className="w-3.5 h-3.5 mr-1.5" /> Marcar leídas
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bulkMarkRead(false)} disabled={busy}>
+            <Bell className="w-3.5 h-3.5 mr-1.5" /> Marcar no leídas
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs text-red-300 border-red-500/30 hover:bg-red-500/10 hover:text-red-200"
+            onClick={bulkDelete}
+            disabled={busy}
+          >
+            <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Eliminar
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs ml-auto text-muted-foreground" onClick={clearSelection}>
+            <X className="w-3.5 h-3.5 mr-1" /> Cancelar
+          </Button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="rounded-xl border border-white/5 bg-[#0d0d10] overflow-hidden">
         {loading ? (
@@ -317,6 +416,13 @@ export default function AdminNotificationHistory() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-white/5">
+                <TableHead className="w-9 pr-0">
+                  <Checkbox
+                    checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+                    onCheckedChange={(v) => toggleAllVisible(v === true)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider text-muted-foreground">Cuándo</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider text-muted-foreground">Tipo</TableHead>
                 <TableHead className="text-[10px] uppercase tracking-wider text-muted-foreground">Notificación</TableHead>
@@ -334,11 +440,20 @@ export default function AdminNotificationHistory() {
                 return (
                   <TableRow
                     key={e.id}
+                    data-state={selected.has(e.id) ? "selected" : undefined}
                     className={cn(
                       "border-white/5 hover:bg-white/[0.02]",
                       isUnread && "bg-primary/[0.03]",
+                      selected.has(e.id) && "bg-primary/[0.08]",
                     )}
                   >
+                    <TableCell className="pr-0 align-top">
+                      <Checkbox
+                        checked={selected.has(e.id)}
+                        onCheckedChange={(v) => toggleOne(e.id, v === true)}
+                        aria-label="Seleccionar notificación"
+                      />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap align-top">
                       <div>{formatRelative(e.created_at)}</div>
                       <div className="text-[10px] opacity-60">
