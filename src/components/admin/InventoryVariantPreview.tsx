@@ -169,7 +169,7 @@ export function InventoryVariantPreview({ productName, sizes, colors, images }: 
                       onClick={() => setSelectedColor(c)}
                       onKeyDown={(e) => handleColorKeyDown(e, i)}
                       title={hasImage ? c : `${c} (sin foto en la posición ${i + 1})`}
-                      aria-label={`Color ${c}${hasImage ? "" : " (sin foto)"}`}
+                      aria-label={c}
                       tabIndex={tabIndex}
                       data-testid={`preview-color-${c}`}
                       className={cn(

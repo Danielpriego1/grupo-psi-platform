@@ -374,7 +374,7 @@ export default function UniformeDetail({
                         type="button"
                         role="radio"
                         aria-checked={active}
-                        aria-label={`Color ${c}`}
+                        aria-label={c}
                         title={c}
                         tabIndex={tabIndex}
                         onClick={() => setSelectedColor(c)}
