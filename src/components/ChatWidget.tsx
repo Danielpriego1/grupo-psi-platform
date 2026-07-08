@@ -1334,7 +1334,7 @@ export function ChatWidget() {
                 aria-label={ghostMode ? "Desactivar modo fantasma" : "Activar modo fantasma"}
                 aria-pressed={ghostMode}
                 className={cn(
-                  "relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
+                  "relative hidden sm:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
                   ghostMode
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
