@@ -1,24 +1,44 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, FileText, Minus, Plus, Truck, ShieldCheck, RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { SEO } from "@/components/SEO";
 import { ProductImageLightbox } from "@/components/ProductImageLightbox";
 import { Button } from "@/components/ui/button";
-import type { Product } from "@/data/products";
+import { getProductPrice, type Product } from "@/data/products";
 
 interface Props {
   product: Product;
   images: string[];
   sizes: string[];
-  finalPrice: number;
-  basePrice: number;
   specPdfUrl?: string | null;
   inventoryStock?: number | null;
   categorySlug: string;
 }
+
+// Named color swatches (extend as new colors appear in the catalog).
+const COLOR_SWATCHES: Record<string, string> = {
+  blanco: "#ffffff",
+  negro: "#111111",
+  gris: "#9ca3af",
+  "gris oxford": "#4b5563",
+  azul: "#1e3a8a",
+  "azul marino": "#0b1e3f",
+  "azul rey": "#1d4ed8",
+  marino: "#0b1e3f",
+  rojo: "#b91c1c",
+  verde: "#166534",
+  amarillo: "#eab308",
+  naranja: "#ea580c",
+  beige: "#d6c7a1",
+  cafe: "#78350f",
+  café: "#78350f",
+  vino: "#7f1d1d",
+  rosa: "#f472b6",
+  morado: "#7c3aed",
+};
 
 /**
  * Yazbek-style product page (light e-commerce layout) used specifically for
@@ -30,8 +50,6 @@ export default function UniformeDetail({
   product,
   images,
   sizes,
-  finalPrice,
-  basePrice,
   specPdfUrl,
   inventoryStock,
   categorySlug,
@@ -39,8 +57,28 @@ export default function UniformeDetail({
   const { addItem } = useCart();
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Live price recomputed from selected size (overoles/playeras have size-tier pricing)
+  const basePrice = getProductPrice(product, selectedSize || undefined);
+  const finalPrice = product.discount ? basePrice * (1 - product.discount) : basePrice;
+
+  // Detect color variants from product.variants (any key that contains "color")
+  const colors = useMemo(() => {
+    if (!product.variants) return [] as string[];
+    const key = Object.keys(product.variants).find((k) => /color/i.test(k));
+    return key ? product.variants[key] : [];
+  }, [product.variants]);
+
+  // When a color is picked, jump the gallery to the image at the same index
+  // (fallback: no image swap when data doesn't have a matching image count).
+  useEffect(() => {
+    if (!selectedColor) return;
+    const idx = colors.indexOf(selectedColor);
+    if (idx >= 0 && idx < images.length) setCurrentImage(idx);
+  }, [selectedColor, colors, images.length]);
 
   const handleAddToCart = () => {
     if (sizes.length > 0 && !selectedSize) {
@@ -241,6 +279,34 @@ export default function UniformeDetail({
                       {size}
                     </button>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Colors */}
+            {colors.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Color{selectedColor && <span className="ml-2 font-normal text-slate-500 normal-case">— {selectedColor}</span>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map((c) => {
+                    const swatch = COLOR_SWATCHES[c.toLowerCase()] || "#e5e7eb";
+                    const active = selectedColor === c;
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => setSelectedColor(c)}
+                        title={c}
+                        aria-label={c}
+                        className={cn(
+                          "h-10 w-10 rounded-full border-2 transition-all",
+                          active ? "border-primary ring-2 ring-primary/30 scale-105" : "border-slate-300 hover:border-slate-500"
+                        )}
+                        style={{ backgroundColor: swatch }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
