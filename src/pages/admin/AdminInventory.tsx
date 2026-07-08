@@ -159,8 +159,15 @@ export default function AdminInventory() {
     }
   };
 
-  // Limpieza al cerrar diálogo
+  // Limpieza al cerrar diálogo. IMPORTANT: skip the initial mount, otherwise a
+  // page reload wipes the sessionStorage draft before the restore effect can
+  // read it (dialogOpen defaults to false on mount).
+  const cleanupSkipMount = useRef(true);
   useEffect(() => {
+    if (cleanupSkipMount.current) {
+      cleanupSkipMount.current = false;
+      return;
+    }
     if (!dialogOpen) {
       images.forEach(revokeLocal);
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
@@ -168,13 +175,9 @@ export default function AdminInventory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOpen]);
 
-  // Autopersist current draft on any relevant change
-  useEffect(() => {
-    persistDraft(form, images, pdfName, editItem?.id ?? null, dialogOpen);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form, images, pdfName, editItem, dialogOpen]);
-
-  // Restore draft on first mount if present
+  // Restore draft on first mount if present. MUST run before the autopersist
+  // effect below — otherwise autopersist fires on mount with dialogOpen=false
+  // and wipes the sessionStorage draft before we can read it.
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY);
@@ -197,6 +200,12 @@ export default function AdminInventory() {
     } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Autopersist current draft on any relevant change
+  useEffect(() => {
+    persistDraft(form, images, pdfName, editItem?.id ?? null, dialogOpen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, images, pdfName, editItem, dialogOpen]);
 
   // Prevent the browser from navigating away (opening the dropped file in a new tab)
   // when a file is dropped anywhere outside our drop zone.
