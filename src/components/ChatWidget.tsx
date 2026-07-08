@@ -1489,6 +1489,44 @@ export function ChatWidget() {
                 </div>
 
                 <div className="space-y-2">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Accesos rápidos</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setVoiceEnabled(v => !v)}
+                      aria-pressed={voiceEnabled}
+                      className={cn(
+                        "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition",
+                        voiceEnabled
+                          ? "border-primary/50 bg-primary/15 text-primary"
+                          : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                      )}
+                    >
+                      {voiceEnabled ? <Volume2 className="h-4 w-4 shrink-0" /> : <VolumeX className="h-4 w-4 shrink-0" />}
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold uppercase tracking-wider">Voz</div>
+                        <div className="text-[10px] opacity-70 truncate">{voiceEnabled ? "Activada" : "Silenciada"}</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => { setGhostMode(g => { setLastGhostAction({ trigger: g ? "manual-off" : "manual-on", at: Date.now() }); return !g; }); }}
+                      aria-pressed={ghostMode}
+                      className={cn(
+                        "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition",
+                        ghostMode
+                          ? "border-primary/50 bg-primary/15 text-primary"
+                          : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                      )}
+                    >
+                      {ghostMode ? <EyeOff className="h-4 w-4 shrink-0" /> : <Eye className="h-4 w-4 shrink-0" />}
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold uppercase tracking-wider">Fantasma</div>
+                        <div className="text-[10px] opacity-70 truncate">{ghostMode ? "Se auto-oculta" : "Siempre visible"}</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
                     <Keyboard className="h-3 w-3" /> Atajos de teclado
                   </div>
