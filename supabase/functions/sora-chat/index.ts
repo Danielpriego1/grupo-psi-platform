@@ -123,9 +123,9 @@ Deno.serve(async (req) => {
       })),
     ];
 
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-    if (!OPENROUTER_API_KEY) {
-      console.error("OPENROUTER_API_KEY missing");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY missing");
       return new Response(JSON.stringify({ reply: "Intenta de nuevo en un momento." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
         function: {
           name: "registrar_oportunidad_crm",
           description:
-            "Registrar un lead u oportunidad de venta en el CRM cuando el cliente expresa interés comercial real: pide cotización, menciona volumen (10+ unidades), solicita visita técnica, requiere especialista, o describe un riesgo/normativa específica. NO usar para preguntas casuales ni cuando ya estás cerrando la venta con cerrar_venta_y_cobrar.",
+            "Registrar un lead u oportunidad de venta en el CRM cuando el cliente expresa interés comercial real: pide cotización, menciona volumen (10+ unidades), solicita visita técnica, requiere especialista, o describe un riesgo/normativa específica. También úsala cuando el cliente pida hablar con un humano/agente (needs_human_escalation=true). NO usar cuando ya estás cerrando la venta con cerrar_venta_y_cobrar.",
           parameters: {
             type: "object",
             properties: {
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
               diagnostic_summary: { type: "string", description: "Qué riesgo, actividad, normativa y consecuencias identificaste" },
               risk_notes: { type: "string" },
               normativa: { type: "string" },
-              needs_human_escalation: { type: "boolean", description: "true cuando se requiera visita, inspección, prueba especializada o propuesta técnica compleja" },
+              needs_human_escalation: { type: "boolean", description: "true cuando el cliente pida hablar con un humano o se requiera visita, inspección, prueba especializada o propuesta técnica compleja" },
               escalation_reason: { type: "string" },
             },
             required: ["title"],
@@ -195,27 +195,35 @@ Deno.serve(async (req) => {
       },
     ];
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
-      "HTTP-Referer":
-      "https://grupopsi.com",
-      "X-Title": "Sora - Grupo Psi",
       },
       body: JSON.stringify({
-        model: "nvidia/nemotron-ultra-253b-v1",
+        model: "google/gemini-2.5-flash",
         messages: apiMessages,
-        max_tokens: 700,
-        temperature: 0.6,
+        max_tokens: 800,
+        temperature: 0.5,
         tools,
+        tool_choice: "auto",
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI API error:", response.status, errorText);
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ reply: "Tenemos mucha demanda en este momento, dame un segundo e intenta de nuevo." }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ reply: "Tuve un problema técnico. Te voy a conectar con un ejecutivo por WhatsApp." }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ reply: "Intenta de nuevo en un momento." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

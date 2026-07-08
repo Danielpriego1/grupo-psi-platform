@@ -70,6 +70,40 @@ Deno.serve(async (req) => {
 
     if (itemsError) throw itemsError;
 
+    // Notificar al equipo comercial (no bloquea la respuesta al cliente)
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const fmt = (n: number) =>
+        `$${Number(n).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({
+          templateName: "nueva-cotizacion",
+          idempotencyKey: `quote-${orderNumber}`,
+          templateData: {
+            orderNumber,
+            total: fmt(Number(total || 0)),
+            currency: "MXN",
+            clientName: clientName || "Sin nombre",
+            clientPhone: clientPhone || "Sin teléfono",
+            createdAt: new Date().toLocaleString("es-MX", { timeZone: "America/Mexico_City" }),
+            items: orderItems.map((it: any) => ({
+              name: it.product_name,
+              qty: it.quantity,
+              price: fmt(Number(it.unit_price || 0)),
+            })),
+          },
+        }),
+      }).catch((e) => console.warn("notify quote email failed", e));
+    } catch (notifyErr) {
+      console.warn("notify quote email exception", notifyErr);
+    }
+
     return new Response(
       JSON.stringify({ success: true, orderNumber }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
