@@ -15,14 +15,21 @@ interface CartContextType {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (productId: string, selectedSize?: string, selectedVariant?: string) => void;
+  updateQuantity: (productId: string, quantity: number, selectedSize?: string, selectedVariant?: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+// A cart line is uniquely identified by product + size + color-variant so that
+// two variants of the same product can coexist and be managed independently.
+const sameLine = (a: CartItem, b: { product: { id: string }; selectedSize?: string; selectedVariant?: string }) =>
+  a.product.id === b.product.id &&
+  (a.selectedSize || "") === (b.selectedSize || "") &&
+  (a.selectedVariant || "") === (b.selectedVariant || "");
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
@@ -39,9 +46,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = (newItem: CartItem) => {
     setItems((prev) => {
-      const existing = prev.find(
-        (i) => i.product.id === newItem.product.id && i.selectedSize === newItem.selectedSize && i.selectedVariant === newItem.selectedVariant
-      );
+      const existing = prev.find((i) => sameLine(i, newItem));
       if (existing) {
         return prev.map((i) =>
           i === existing ? { ...i, quantity: i.quantity + newItem.quantity } : i
@@ -52,14 +57,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsOpen(true);
   };
 
-  const removeItem = (productId: string) => {
-    setItems((prev) => prev.filter((i) => i.product.id !== productId));
+  const removeItem = (productId: string, selectedSize?: string, selectedVariant?: string) => {
+    setItems((prev) =>
+      prev.filter((i) => !sameLine(i, { product: { id: productId }, selectedSize, selectedVariant }))
+    );
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) return removeItem(productId);
+  const updateQuantity = (productId: string, quantity: number, selectedSize?: string, selectedVariant?: string) => {
+    if (quantity <= 0) return removeItem(productId, selectedSize, selectedVariant);
     setItems((prev) =>
-      prev.map((i) => (i.product.id === productId ? { ...i, quantity } : i))
+      prev.map((i) =>
+        sameLine(i, { product: { id: productId }, selectedSize, selectedVariant })
+          ? { ...i, quantity }
+          : i
+      )
     );
   };
 
