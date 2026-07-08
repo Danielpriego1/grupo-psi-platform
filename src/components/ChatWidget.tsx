@@ -1733,7 +1733,7 @@ export function ChatWidget() {
                 title={isRecording ? "Detener grabación" : "Hablar con Sora"}
                 aria-label={isRecording ? "Detener grabación" : "Grabar mensaje de voz"}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
+                  "flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
                   isRecording
                     ? "bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse"
                     : "bg-white/10 text-white hover:bg-white/20"
