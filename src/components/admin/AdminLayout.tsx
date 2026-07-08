@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Target,
   Receipt,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const navItems = [
   { label: "Contenido Web", icon: Sparkles, path: "/admin/contenido" },
   { label: "Eventos de pago", icon: Receipt, path: "/admin/payment-events" },
   { label: "Auditoría Stripe", icon: ShieldCheck, path: "/admin/auditoria" },
+  { label: "Notificaciones", icon: Bell, path: "/admin/notificaciones" },
 ];
 
 export function AdminLayout() {

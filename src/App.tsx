@@ -21,6 +21,7 @@ import Ticket from "./pages/Ticket";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminNotificationHistory from "./pages/admin/AdminNotificationHistory";
 import AdminDeliveries from "./pages/admin/AdminDeliveries";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminClients from "./pages/admin/AdminClients";
@@ -219,6 +220,7 @@ const App = () => (
                 <Route path="auditoria" element={<AdminStripeAudit />} />
                 <Route path="crm" element={<AdminCRM />} />
                 <Route path="payment-events" element={<AdminPaymentEvents />} />
+                <Route path="notificaciones" element={<AdminNotificationHistory />} />
               </Route>
 
               {/* Print view (admin auth required) */}
