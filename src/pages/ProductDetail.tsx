@@ -16,6 +16,7 @@ import { useInventoryImages } from "@/hooks/useInventoryImages";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { ProductImageLightbox } from "@/components/ProductImageLightbox";
+import UniformeDetail from "@/pages/UniformeDetail";
 
 const ProductDetail = () => {
   const { id } = useParams();
