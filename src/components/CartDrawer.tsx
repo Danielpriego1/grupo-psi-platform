@@ -26,12 +26,11 @@ export function CartDrawer() {
       ? `¡Hola! Mi pedido ${orderNumber}. Me gustaría cotizar los siguientes productos:\n\n`
       : "¡Hola! Me gustaría cotizar los siguientes productos:\n\n";
     items.forEach((item, i) => {
-      const price = item.product.discount
-        ? item.product.priceOriginalMxn * (1 - item.product.discount)
-        : item.product.priceOriginalMxn;
+      const base = getProductPrice(item.product, item.selectedSize);
+      const price = item.product.discount ? base * (1 - item.product.discount) : base;
       msg += `${i + 1}. ${item.product.name}`;
       if (item.selectedSize) msg += ` — Talla: ${item.selectedSize}`;
-      if (item.selectedVariant) msg += ` — Variante: ${item.selectedVariant}`;
+      if (item.selectedVariant) msg += ` — Color: ${item.selectedVariant}`;
       msg += ` x${item.quantity} ($${(price * item.quantity).toFixed(2)} MXN)\n`;
     });
     msg += `\nTotal estimado: $${totalPrice.toFixed(2)} MXN`;
