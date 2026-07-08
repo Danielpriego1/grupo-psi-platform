@@ -55,11 +55,32 @@ export default function UniformeDetail({
   categorySlug,
 }: Props) {
   const { addItem } = useCart();
+  // Persist size/color selection per-product across navigation (back from cart,
+  // route swaps, refreshes within the tab). Keyed by product.id so different
+  // products don't leak selection into each other.
+  const storageKey = `uniforme-selection:${product.id}`;
+  const initial = (() => {
+    if (typeof window === "undefined") return { size: "", color: null as string | null };
+    try {
+      const raw = window.sessionStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) as { size: string; color: string | null } : { size: "", color: null };
+    } catch {
+      return { size: "", color: null };
+    }
+  })();
+
   const [currentImage, setCurrentImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("");
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string>(initial.size);
+  const [selectedColor, setSelectedColor] = useState<string | null>(initial.color);
   const [quantity, setQuantity] = useState(1);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(storageKey, JSON.stringify({ size: selectedSize, color: selectedColor }));
+    } catch { /* storage may be blocked; ignore */ }
+  }, [storageKey, selectedSize, selectedColor]);
 
   // Live price recomputed from selected size (overoles/playeras have size-tier pricing)
   const basePrice = getProductPrice(product, selectedSize || undefined);
