@@ -439,6 +439,7 @@ export function ChatWidget() {
   const [atBottom, setAtBottom] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessageCountRef = useRef(messages.length);
+  const [kbOffset, setKbOffset] = useState(0); // altura ocupada por el teclado móvil
 
   // Positioning & dim-on-scroll so Sora no estorba
   const [corner, setCorner] = useState<Corner>(() => {
