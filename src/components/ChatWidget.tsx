@@ -894,8 +894,8 @@ export function ChatWidget() {
     }
 
     setIsLoading(true);
-    setInputHeight(44);
-    if (inputRef.current) inputRef.current.style.height = "44px";
+    setInputHeight(40);
+    if (inputRef.current) inputRef.current.style.height = "40px";
     requestAnimationFrame(() => inputRef.current?.focus());
 
     try {
