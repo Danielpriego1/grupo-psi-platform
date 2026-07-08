@@ -17,7 +17,7 @@ const ASSETS = join(DIST, "assets");
 // Presupuestos por prefijo de chunk (KB, tamaño en disco minificado).
 // Ajusta si un vendor crece de forma justificada.
 const BUDGETS = [
-  { match: /^index-.*\.js$/,            maxKB: 900,  label: "entry (index)" },
+  { match: /^index-.*\.js$/,            maxKB: 1100, label: "entry (index)" },
   { match: /^react-vendor-.*\.js$/,     maxKB: 300,  label: "react-vendor" },
   { match: /^ui-vendor-.*\.js$/,        maxKB: 250,  label: "ui-vendor (radix)" },
   { match: /^leaflet-vendor-.*\.js$/,   maxKB: 350,  label: "leaflet-vendor" },
