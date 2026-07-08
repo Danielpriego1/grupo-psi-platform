@@ -64,9 +64,14 @@ export function CartDrawer() {
     items.forEach((item, i) => {
       const base = getProductPrice(item.product, item.selectedSize);
       const price = item.product.discount ? base * (1 - item.product.discount) : base;
+      const hasSizes = !!item.product.sizes && Object.values(item.product.sizes).flat().length > 0;
+      const colorKey = item.product.variants
+        ? Object.keys(item.product.variants).find((k) => /color/i.test(k))
+        : undefined;
+      const hasColors = !!colorKey && (item.product.variants?.[colorKey!]?.length || 0) > 0;
       msg += `${i + 1}. ${item.product.name}`;
-      if (item.selectedSize) msg += ` — Talla: ${item.selectedSize}`;
-      if (item.selectedVariant) msg += ` — Color: ${item.selectedVariant}`;
+      if (hasSizes) msg += ` — Talla: ${item.selectedSize || "—"}`;
+      if (hasColors) msg += ` — Color: ${item.selectedVariant || "—"}`;
       msg += ` x${item.quantity} ($${(price * item.quantity).toFixed(2)} MXN)\n`;
     });
     msg += `\nTotal estimado: $${totalPrice.toFixed(2)} MXN`;
