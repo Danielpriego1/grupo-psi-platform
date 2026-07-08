@@ -39,6 +39,13 @@ const SUBCATEGORY_OPTIONS = [
   "Detección-Emergencia",
   "Primeros-Auxilios",
   "Señalización-Vial",
+  "Uniformes-Playeras polo caballero",
+  "Uniformes-Playeras polo Dama",
+  "Uniformes-Playeras cuello redondo caballero",
+  "Uniformes-Playeras cuello redondo Dama",
+  "Uniformes-Camisas",
+  "Uniformes-Sudaderas",
+  "Uniformes-Chalecos",
 ];
 
 export default function AdminInventory() {
