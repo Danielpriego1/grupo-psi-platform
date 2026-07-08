@@ -162,9 +162,58 @@ export default function AdminInventory() {
   useEffect(() => {
     if (!dialogOpen) {
       images.forEach(revokeLocal);
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOpen]);
+
+  // Autopersist current draft on any relevant change
+  useEffect(() => {
+    persistDraft(form, images, pdfName, editItem?.id ?? null, dialogOpen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, images, pdfName, editItem, dialogOpen]);
+
+  // Restore draft on first mount if present
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { form: typeof form; images: { url: string }[]; pdfName: string | null; editItemId: string | null; skippedLocalImages?: number };
+      setForm(draft.form);
+      setImages((draft.images || []).map((i) => ({ url: i.url })));
+      setPdfName(draft.pdfName ?? null);
+      if (draft.editItemId) {
+        supabase.from("inventory").select("*").eq("id", draft.editItemId).maybeSingle().then(({ data }) => {
+          if (data) setEditItem(data);
+        });
+      }
+      setDialogOpen(true);
+      if (draft.skippedLocalImages && draft.skippedLocalImages > 0) {
+        toast({ title: "Borrador restaurado", description: `Se recuperó el formulario, pero ${draft.skippedLocalImages} foto(s) locales sin guardar se perdieron. Súbelas de nuevo.` });
+      } else {
+        toast({ title: "Borrador restaurado", description: "Continuamos donde te quedaste." });
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Prevent the browser from navigating away (opening the dropped file in a new tab)
+  // when a file is dropped anywhere outside our drop zone.
+  useEffect(() => {
+    const stop = (e: DragEvent) => {
+      // Only intercept file drags — leave regular DnD (image reordering) alone.
+      if (e.dataTransfer?.types?.includes("Files")) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("dragover", stop);
+    window.addEventListener("drop", stop);
+    return () => {
+      window.removeEventListener("dragover", stop);
+      window.removeEventListener("drop", stop);
+    };
+  }, []);
+
 
   // Normaliza una imagen: la encaja (contain) en un lienzo cuadrado 1600x1600 sobre fondo blanco,
   // así todas las fichas del carrusel salen completas, centradas y al mismo tamaño (sin recortes).
