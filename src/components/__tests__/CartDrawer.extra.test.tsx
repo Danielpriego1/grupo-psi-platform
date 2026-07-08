@@ -193,8 +193,9 @@ describe("CartDrawer — extra e2e coverage", () => {
     const talleG = screen.getByRole("button", { name: "G" });
     expect(talleG.className).toMatch(/bg-primary/);
 
-    // Color chip "Azul" active (border-primary marker)
-    const azul = screen.getByRole("button", { name: "Azul" });
+    // Color swatch "Azul" active (radio group, border-primary marker)
+    const azul = screen.getByRole("radio", { name: "Azul" });
+    expect(azul).toHaveAttribute("aria-checked", "true");
     expect(azul.className).toMatch(/border-primary/);
 
     // Main image resolved to Azul (index 2 → /img-azul.jpg)

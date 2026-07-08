@@ -105,7 +105,7 @@ describe("Cart → UniformeDetail rehydration after changing a line", () => {
     expect(talleM.className).toMatch(/bg-primary/);
 
     // 3b) Color chip "Azul" is active
-    const azul = screen.getByRole("button", { name: "Azul" });
+    const azul = screen.getByRole("radio", { name: "Azul" });
     expect(azul.className).toMatch(/border-primary/);
 
     // 3c) Main image resolved to Azul (index 2 → /img-azul.jpg)

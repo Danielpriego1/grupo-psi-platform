@@ -93,7 +93,7 @@ describe("UniformeDetail ↔ Cart round-trip", () => {
 
     // 1) Pick talla M and color "Negro" (index 1 → image should switch to /img-negro.jpg)
     fireEvent.click(screen.getByRole("button", { name: "M" }));
-    fireEvent.click(screen.getByRole("button", { name: "Negro" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Negro" }));
 
     // Main image reflects the selected color's index
     const mainImg = screen.getAllByAltText(product.name)[0] as HTMLImageElement;

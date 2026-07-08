@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ImageIcon } from "lucide-react";
 
@@ -59,6 +59,23 @@ export function InventoryVariantPreview({ productName, sizes, colors, images }: 
     const i = colors.indexOf(selectedColor);
     if (i >= 0 && i < images.length) setImgIdx(i);
   }, [selectedColor, colors, images.length]);
+
+  // Radiogroup keyboard navigation, mirrors UniformeDetail so the admin
+  // preview behaves the same as the storefront.
+  const colorRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const handleColorKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    if (colors.length === 0) return;
+    const KEYS = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
+    if (!KEYS.includes(e.key)) return;
+    e.preventDefault();
+    let next = idx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (idx + 1) % colors.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (idx - 1 + colors.length) % colors.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = colors.length - 1;
+    setSelectedColor(colors[next]);
+    colorRefs.current[next]?.focus();
+  };
 
   const hasAnything = sizes.length > 0 || colors.length > 0 || images.length > 0;
   const mismatch = colors.length > 0 && images.length > 0 && colors.length !== images.length;
@@ -129,25 +146,35 @@ export function InventoryVariantPreview({ productName, sizes, colors, images }: 
 
           {colors.length > 0 && (
             <div className="space-y-1.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <div id="preview-color-label" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Color{selectedColor && <span className="ml-1 normal-case font-normal text-foreground/80">— {selectedColor}</span>}
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div
+                role="radiogroup"
+                aria-labelledby="preview-color-label"
+                className="flex flex-wrap gap-1.5"
+              >
                 {colors.map((c, i) => {
                   const swatch = COLOR_SWATCHES[c.toLowerCase()] || "#e5e7eb";
                   const active = selectedColor === c;
                   const hasImage = i < images.length;
+                  const tabIndex = active || (!selectedColor && i === 0) ? 0 : -1;
                   return (
                     <button
                       key={c}
+                      ref={(el) => { colorRefs.current[i] = el; }}
                       type="button"
+                      role="radio"
+                      aria-checked={active}
                       onClick={() => setSelectedColor(c)}
+                      onKeyDown={(e) => handleColorKeyDown(e, i)}
                       title={hasImage ? c : `${c} (sin foto en la posición ${i + 1})`}
                       aria-label={c}
-                      aria-pressed={active}
+                      tabIndex={tabIndex}
                       data-testid={`preview-color-${c}`}
                       className={cn(
                         "h-8 w-8 rounded-full border-2 transition-all relative",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         active ? "border-primary ring-2 ring-primary/40 scale-105" : "border-white/30 hover:border-white/60",
                         !hasImage && "opacity-60"
                       )}

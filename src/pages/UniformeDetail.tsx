@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, FileText, Minus, Plus, Truck, ShieldCheck, RotateCcw, Check, Info, Printer } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
@@ -100,6 +100,25 @@ export default function UniformeDetail({
     const idx = colors.indexOf(selectedColor);
     if (idx >= 0 && idx < images.length) setCurrentImage(idx);
   }, [selectedColor, colors, images.length]);
+
+  // Radiogroup keyboard navigation for color swatches.
+  // ArrowRight/Down → next, ArrowLeft/Up → previous, Home → first, End → last.
+  // Selection follows focus so screen readers announce the new color immediately.
+  const colorRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const handleColorKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    if (colors.length === 0) return;
+    const KEYS = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
+    if (!KEYS.includes(e.key)) return;
+    e.preventDefault();
+    let next = idx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (idx + 1) % colors.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (idx - 1 + colors.length) % colors.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = colors.length - 1;
+    setSelectedColor(colors[next]);
+    colorRefs.current[next]?.focus();
+  };
+
 
   // Validation state — used both to gate the CTA and to render inline hints.
   const needsSize = sizes.length > 0;
@@ -331,22 +350,38 @@ export default function UniformeDetail({
             {/* Colors */}
             {colors.length > 0 && (
               <div className="space-y-2">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Color{selectedColor && <span className="ml-2 font-normal text-slate-500 normal-case">— {selectedColor}</span>}
+                <div id="color-group-label" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Color
+                  {selectedColor && (
+                    <span className="ml-2 font-normal text-slate-500 normal-case">— {selectedColor}</span>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {colors.map((c) => {
+                <div
+                  role="radiogroup"
+                  aria-labelledby="color-group-label"
+                  className="flex flex-wrap gap-2"
+                >
+                  {colors.map((c, i) => {
                     const swatch = COLOR_SWATCHES[c.toLowerCase()] || "#e5e7eb";
                     const active = selectedColor === c;
+                    // Roving tabindex: only the active (or first when none selected)
+                    // swatch is reachable via Tab; Arrow keys move between the rest.
+                    const tabIndex = active || (!selectedColor && i === 0) ? 0 : -1;
                     return (
                       <button
                         key={c}
-                        onClick={() => setSelectedColor(c)}
-                        title={c}
+                        ref={(el) => { colorRefs.current[i] = el; }}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
                         aria-label={c}
-                        aria-pressed={active}
+                        title={c}
+                        tabIndex={tabIndex}
+                        onClick={() => setSelectedColor(c)}
+                        onKeyDown={(e) => handleColorKeyDown(e, i)}
                         className={cn(
                           "relative h-10 w-10 rounded-full border-2 transition-all flex items-center justify-center",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                           active
                             ? "border-primary ring-4 ring-primary/20 scale-105 shadow-md"
                             : "border-slate-300 hover:border-slate-500"
@@ -355,9 +390,9 @@ export default function UniformeDetail({
                       >
                         {active && (
                           <Check
+                            aria-hidden="true"
                             className={cn(
                               "h-5 w-5",
-                              // Pick contrasting checkmark for light swatches
                               ["#ffffff", "#eab308", "#d6c7a1", "#f472b6", "#e5e7eb"].includes(swatch)
                                 ? "text-slate-900"
                                 : "text-white"

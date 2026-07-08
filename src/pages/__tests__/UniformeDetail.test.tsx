@@ -69,7 +69,7 @@ describe("UniformeDetail — CTA gating", () => {
   it("enables CTAs once size and color are both valid", () => {
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: "M" }));
-    fireEvent.click(screen.getByRole("button", { name: "Blanco" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Blanco" }));
     const addBtn = screen.getByRole("button", { name: /agregar al carrito/i });
     expect(addBtn).not.toBeDisabled();
     expect(addBtn).toHaveAttribute("aria-disabled", "false");
@@ -78,7 +78,7 @@ describe("UniformeDetail — CTA gating", () => {
   it("disables CTAs when product is out of stock, regardless of selection", () => {
     renderPage({ product: { ...baseProduct, inStock: false } });
     fireEvent.click(screen.getByRole("button", { name: "M" }));
-    fireEvent.click(screen.getByRole("button", { name: "Blanco" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Blanco" }));
     expect(screen.getByRole("button", { name: /agregar al carrito/i })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent(/agotado/i);
   });
@@ -86,7 +86,7 @@ describe("UniformeDetail — CTA gating", () => {
   it("disables CTAs when quantity exceeds inventory stock", () => {
     renderPage({ inventoryStock: 1 });
     fireEvent.click(screen.getByRole("button", { name: "M" }));
-    fireEvent.click(screen.getByRole("button", { name: "Blanco" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Blanco" }));
     // Add-to-cart is enabled at qty=1 (== stock)
     expect(screen.getByRole("button", { name: /agregar al carrito/i })).not.toBeDisabled();
     // Increase quantity past stock via the "+" control
@@ -101,7 +101,7 @@ describe("UniformeDetail — CTA gating", () => {
   it("persists selected size/color across remounts via sessionStorage", () => {
     const { unmount } = renderPage();
     fireEvent.click(screen.getByRole("button", { name: "G" }));
-    fireEvent.click(screen.getByRole("button", { name: "Negro" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Negro" }));
     unmount();
 
     renderPage();
