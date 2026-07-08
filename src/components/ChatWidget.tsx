@@ -1721,7 +1721,7 @@ export function ChatWidget() {
               placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Escribe o toca el micrófono…"}
               rows={1}
               wrap="soft"
-              className="block w-full flex-1 min-w-0 min-h-[56px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 sm:pl-6 pr-24 sm:pr-28 py-3.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+              className="block w-full flex-1 min-w-0 min-h-[44px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 pr-20 sm:pr-24 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
               disabled={isLoading || isRecording || isTranscribing}
               autoFocus
             />
