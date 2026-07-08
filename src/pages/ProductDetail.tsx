@@ -163,8 +163,6 @@ const ProductDetail = () => {
         product={product}
         images={allImages}
         sizes={allSizes}
-        finalPrice={finalPrice}
-        basePrice={basePrice}
         specPdfUrl={specPdfUrl}
         inventoryStock={inventoryItem?.stock ?? null}
         categorySlug={categorySlug}
