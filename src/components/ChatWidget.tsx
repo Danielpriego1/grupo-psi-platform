@@ -863,7 +863,7 @@ export function ChatWidget() {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "auto";
-    const maxH = 160; // max ~5-6 lines
+    const maxH = 120; // max ~4-5 lines
     const target = Math.min(el.scrollHeight, maxH);
     el.style.height = target + "px";
     setInputHeight(target);
