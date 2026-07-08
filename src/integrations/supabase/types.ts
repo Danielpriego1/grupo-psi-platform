@@ -779,6 +779,60 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_events: {
+        Row: {
+          body: string | null
+          created_at: string
+          failed: number
+          id: string
+          kind: string
+          meta: Json
+          read_at: string | null
+          ref_number: string | null
+          removed: number
+          sent: number
+          status: string
+          tag: string | null
+          title: string
+          total_targets: number
+          url: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          failed?: number
+          id?: string
+          kind?: string
+          meta?: Json
+          read_at?: string | null
+          ref_number?: string | null
+          removed?: number
+          sent?: number
+          status?: string
+          tag?: string | null
+          title: string
+          total_targets?: number
+          url?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          failed?: number
+          id?: string
+          kind?: string
+          meta?: Json
+          read_at?: string | null
+          ref_number?: string | null
+          removed?: number
+          sent?: number
+          status?: string
+          tag?: string | null
+          title?: string
+          total_targets?: number
+          url?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
