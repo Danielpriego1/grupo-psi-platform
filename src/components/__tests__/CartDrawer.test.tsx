@@ -119,11 +119,14 @@ describe("CartDrawer", () => {
     expect(screen.getByText(/Talla: CH/)).toBeInTheDocument();
     expect(screen.getByText(/Color: Blanco/)).toBeInTheDocument();
 
-    // Open the "Cambiar" popover
+    // Open the "Cambiar" popover and pick a new size. Changing size re-keys
+    // the line (CartDrawer keys by id|size|variant), so the popover unmounts
+    // — reopen it for the color change.
     fireEvent.click(screen.getByRole("button", { name: /cambiar talla o color/i }));
-    // Pick a new size and a new color (both from popover-rendered chips)
     fireEvent.click(screen.getByRole("button", { name: "G" }));
+    fireEvent.click(screen.getByRole("button", { name: /cambiar talla o color/i }));
     fireEvent.click(screen.getByRole("button", { name: "Negro" }));
+
 
     // Line survives, label reflects new variant
     expect(screen.getByText(/Talla: G/)).toBeInTheDocument();
