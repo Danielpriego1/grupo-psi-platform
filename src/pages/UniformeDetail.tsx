@@ -344,12 +344,28 @@ export default function UniformeDetail({
                         onClick={() => setSelectedColor(c)}
                         title={c}
                         aria-label={c}
+                        aria-pressed={active}
                         className={cn(
-                          "h-10 w-10 rounded-full border-2 transition-all",
-                          active ? "border-primary ring-2 ring-primary/30 scale-105" : "border-slate-300 hover:border-slate-500"
+                          "relative h-10 w-10 rounded-full border-2 transition-all flex items-center justify-center",
+                          active
+                            ? "border-primary ring-4 ring-primary/20 scale-105 shadow-md"
+                            : "border-slate-300 hover:border-slate-500"
                         )}
                         style={{ backgroundColor: swatch }}
-                      />
+                      >
+                        {active && (
+                          <Check
+                            className={cn(
+                              "h-5 w-5",
+                              // Pick contrasting checkmark for light swatches
+                              ["#ffffff", "#eab308", "#d6c7a1", "#f472b6", "#e5e7eb"].includes(swatch)
+                                ? "text-slate-900"
+                                : "text-white"
+                            )}
+                            strokeWidth={3}
+                          />
+                        )}
+                      </button>
                     );
                   })}
                 </div>
