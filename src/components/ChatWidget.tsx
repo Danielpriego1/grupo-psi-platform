@@ -1144,7 +1144,7 @@ export function ChatWidget() {
   const onLauncherPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!isDragging) return;
     dragStateRef.current.moved = true;
-    const size = 72;
+    const size = 56;
     const x = Math.min(Math.max(8, e.clientX - size / 2), window.innerWidth - size - 8);
     const y = Math.min(Math.max(8, e.clientY - size / 2), window.innerHeight - size - 8);
     setDragPos({ x, y });
