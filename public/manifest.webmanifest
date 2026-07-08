@@ -1,0 +1,25 @@
+{
+  "name": "Grupo PSI · Panel",
+  "short_name": "Grupo PSI",
+  "description": "Panel de control Grupo PSI: pedidos, cotizaciones, mantenimiento y CRM en tiempo real.",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
