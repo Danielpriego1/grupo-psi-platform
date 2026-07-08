@@ -1744,7 +1744,7 @@ export function ChatWidget() {
               <Button
                 type="submit"
                 size="icon"
-                className="h-10 w-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                className="h-8 w-8 rounded-lg bg-primary text-white shadow-md shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
                 disabled={isLoading || anyTyping || !input.trim() || isRecording || isTranscribing}
               >
                 <Send className="h-4 w-4" />
