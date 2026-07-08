@@ -163,20 +163,20 @@ function OrderCard({ order }: { order: OrderSummary }) {
 const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   const content = useMemo(() => renderMarkdown(msg.content), [msg.content]);
   return (
-    <div className={cn("flex w-full mb-4", msg.role === "user" ? "justify-end" : "justify-start")}>
+    <div className={cn("flex w-full mb-3", msg.role === "user" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm transition-all duration-300",
+          "max-w-[85%] rounded-[14px] px-3 py-2 text-[13px] leading-[1.55]",
           msg.role === "user"
-            ? "bg-gradient-to-br from-[#ea580c] to-[#c2410c] text-white rounded-br-none shadow-[#ea580c]/20"
-            : "bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-bl-none"
+            ? "bg-[#ea580c] text-white rounded-br-[4px]"
+            : "bg-white/[0.06] border border-white/[0.08] text-white/90 rounded-bl-[4px]"
         )}
       >
-        <div className="prose prose-invert max-w-none">
+        <div className="max-w-none">
           {content}
         </div>
         {msg.isTyping && (
-          <span className="inline-block w-1.5 h-4 bg-primary/60 animate-pulse ml-1 align-text-bottom rounded-full" />
+          <span className="inline-block w-1 h-3.5 bg-white/50 animate-pulse ml-1 align-text-bottom rounded-full" />
         )}
         {msg.order && !msg.isTyping && <OrderCard order={msg.order} />}
       </div>
