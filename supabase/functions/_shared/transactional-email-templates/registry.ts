@@ -12,10 +12,12 @@ import { template as nuevoPedidoPagado } from './nuevo-pedido-pagado.tsx'
 import { template as nuevaSolicitudMantenimiento } from './nueva-solicitud-mantenimiento.tsx'
 import { template as nuevaCitaAgendada } from './nueva-cita-agendada.tsx'
 import { template as reportePagosDiario } from './reporte-pagos-diario.tsx'
+import { template as nuevaCotizacion } from './nueva-cotizacion.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'nuevo-pedido-pagado': nuevoPedidoPagado,
   'nueva-solicitud-mantenimiento': nuevaSolicitudMantenimiento,
   'nueva-cita-agendada': nuevaCitaAgendada,
   'reporte-pagos-diario': reportePagosDiario,
+  'nueva-cotizacion': nuevaCotizacion,
 }
