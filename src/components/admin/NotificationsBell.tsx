@@ -217,6 +217,16 @@ export function NotificationsBell() {
             </ul>
           )}
         </div>
+
+        <div className="border-t border-white/5 px-3 py-2">
+          <Link
+            to="/admin/notificaciones"
+            onClick={() => setOpen(false)}
+            className="block text-center text-[11px] font-semibold text-primary hover:text-primary/80 py-1"
+          >
+            Ver historial completo →
+          </Link>
+        </div>
       </PopoverContent>
     </Popover>
   );
