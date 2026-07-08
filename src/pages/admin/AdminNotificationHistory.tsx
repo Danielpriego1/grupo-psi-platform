@@ -121,12 +121,18 @@ export default function AdminNotificationHistory() {
   }, []);
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return events.filter((e) => {
       if (kindFilter !== "all" && (e.kind || "other") !== kindFilter) return false;
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
+      if (q) {
+        const hay = [e.ref_number, e.title, e.body, e.tag]
+          .filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
-  }, [events, kindFilter, statusFilter]);
+  }, [events, kindFilter, statusFilter, search]);
 
   const unreadCount = events.filter((e) => !e.read_at).length;
 
