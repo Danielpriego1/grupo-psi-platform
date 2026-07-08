@@ -83,7 +83,7 @@ describe("Cart → UniformeDetail rehydration after changing a line", () => {
 
     // 2) Open the "Cambiar" popover and switch color to Azul (index 2)
     fireEvent.click(screen.getByRole("button", { name: /cambiar talla o color/i }));
-    fireEvent.click(screen.getByRole("button", { name: "Azul" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Azul" }));
 
     // The line label reflects the change without deleting the line
     expect(screen.getByText(/Talla: M/)).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe("Cart → UniformeDetail rehydration after changing a line", () => {
     expect(talleM.className).toMatch(/bg-primary/);
 
     // 3b) Color chip "Azul" is active
-    const azul = screen.getByRole("button", { name: "Azul" });
+    const azul = screen.getByRole("radio", { name: "Azul" });
     expect(azul.className).toMatch(/border-primary/);
 
     // 3c) Main image resolved to Azul (index 2 → /img-azul.jpg)
