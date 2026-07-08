@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AdminNotificationsProvider } from "@/hooks/useAdminNotifications";
+import { NotificationsBell } from "@/components/admin/NotificationsBell";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
@@ -51,6 +53,7 @@ export function AdminLayout() {
     )?.label ?? "Admin";
 
   return (
+    <AdminNotificationsProvider>
     <div className="admin-theme min-h-screen bg-[#09090b] text-foreground flex">
       {/* Sidebar */}
       <aside
@@ -160,7 +163,9 @@ export function AdminLayout() {
             <span className="text-[11px] text-muted-foreground">Panel</span>
             <h1 className="text-[15px] font-semibold tracking-tight text-foreground">{currentLabel}</h1>
           </div>
-          <div id="admin-header-actions" className="ml-auto flex items-center gap-2" />
+          <div id="admin-header-actions" className="ml-auto flex items-center gap-2">
+            <NotificationsBell />
+          </div>
         </header>
 
         <main className="flex-1 p-5 lg:p-8">
@@ -168,5 +173,6 @@ export function AdminLayout() {
         </main>
       </div>
     </div>
+    </AdminNotificationsProvider>
   );
 }
