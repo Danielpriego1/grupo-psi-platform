@@ -164,58 +164,15 @@ export function CartDrawer() {
             {/* Items list */}
             <div className="flex-1 overflow-y-auto space-y-3 py-4">
               {items.map((item) => {
-                const base = getProductPrice(item.product, item.selectedSize);
-                const price = item.product.discount ? base * (1 - item.product.discount) : base;
                 const lineKey = `${item.product.id}|${item.selectedSize || ""}|${item.selectedVariant || ""}`;
-                return (
-                  <div key={lineKey} className="flex gap-3 rounded-xl border border-border p-3">
-                    <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-muted/30">
-                      <img
-                        src={item.product.image || "/placeholder.svg"}
-                        alt={item.product.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold line-clamp-1">{item.product.name}</h4>
-                      {item.selectedSize && (
-                        <p className="text-xs text-muted-foreground">Talla: {item.selectedSize}</p>
-                      )}
-                      {item.selectedVariant && (
-                        <p className="text-xs text-muted-foreground">Color: {item.selectedVariant}</p>
-                      )}
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-sm font-bold text-primary">${(price * item.quantity).toFixed(2)}</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selectedSize, item.selectedVariant)}
-                            className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors"
-                            aria-label="Disminuir cantidad"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedSize, item.selectedVariant)}
-                            className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors"
-                            aria-label="Aumentar cantidad"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={() => removeItem(item.product.id, item.selectedSize, item.selectedVariant)}
-                            className="h-7 w-7 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors ml-1"
-                            aria-label="Eliminar del carrito"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
+                // Live stock minus what other lines of the same product already claim
+                const productStock = stockByProduct[item.product.id];
+                const otherDemand = (demandByProduct[item.product.id] || 0) - item.quantity;
+                const lineStock = productStock != null ? Math.max(0, productStock - otherDemand) : undefined;
+                return <CartLineRow key={lineKey} item={item} liveStock={lineStock} />;
               })}
             </div>
+
 
             {/* Footer */}
             <div className="border-t border-border pt-4 space-y-3">
