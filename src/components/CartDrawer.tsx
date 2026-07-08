@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Minus, Plus, Trash2, ShoppingBag, CreditCard, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getProductPrice } from "@/data/products";
 
 export function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, clearCart, totalItems, totalPrice } = useCart();
@@ -25,12 +26,11 @@ export function CartDrawer() {
       ? `¡Hola! Mi pedido ${orderNumber}. Me gustaría cotizar los siguientes productos:\n\n`
       : "¡Hola! Me gustaría cotizar los siguientes productos:\n\n";
     items.forEach((item, i) => {
-      const price = item.product.discount
-        ? item.product.priceOriginalMxn * (1 - item.product.discount)
-        : item.product.priceOriginalMxn;
+      const base = getProductPrice(item.product, item.selectedSize);
+      const price = item.product.discount ? base * (1 - item.product.discount) : base;
       msg += `${i + 1}. ${item.product.name}`;
       if (item.selectedSize) msg += ` — Talla: ${item.selectedSize}`;
-      if (item.selectedVariant) msg += ` — Variante: ${item.selectedVariant}`;
+      if (item.selectedVariant) msg += ` — Color: ${item.selectedVariant}`;
       msg += ` x${item.quantity} ($${(price * item.quantity).toFixed(2)} MXN)\n`;
     });
     msg += `\nTotal estimado: $${totalPrice.toFixed(2)} MXN`;
@@ -128,11 +128,11 @@ export function CartDrawer() {
             {/* Items list */}
             <div className="flex-1 overflow-y-auto space-y-3 py-4">
               {items.map((item) => {
-                const price = item.product.discount
-                  ? item.product.priceOriginalMxn * (1 - item.product.discount)
-                  : item.product.priceOriginalMxn;
+                const base = getProductPrice(item.product, item.selectedSize);
+                const price = item.product.discount ? base * (1 - item.product.discount) : base;
+                const lineKey = `${item.product.id}|${item.selectedSize || ""}|${item.selectedVariant || ""}`;
                 return (
-                  <div key={item.product.id + (item.selectedSize || "")} className="flex gap-3 rounded-xl border border-border p-3">
+                  <div key={lineKey} className="flex gap-3 rounded-xl border border-border p-3">
                     <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-muted/30">
                       <img
                         src={item.product.image || "/placeholder.svg"}
@@ -146,27 +146,30 @@ export function CartDrawer() {
                         <p className="text-xs text-muted-foreground">Talla: {item.selectedSize}</p>
                       )}
                       {item.selectedVariant && (
-                        <p className="text-xs text-muted-foreground">Variante: {item.selectedVariant}</p>
+                        <p className="text-xs text-muted-foreground">Color: {item.selectedVariant}</p>
                       )}
                       <div className="flex items-center justify-between mt-1.5">
                         <span className="text-sm font-bold text-primary">${(price * item.quantity).toFixed(2)}</span>
                         <div className="flex items-center gap-1">
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selectedSize, item.selectedVariant)}
                             className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                            aria-label="Disminuir cantidad"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
                           <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedSize, item.selectedVariant)}
                             className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                            aria-label="Aumentar cantidad"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
                           <button
-                            onClick={() => removeItem(item.product.id)}
+                            onClick={() => removeItem(item.product.id, item.selectedSize, item.selectedVariant)}
                             className="h-7 w-7 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors ml-1"
+                            aria-label="Eliminar del carrito"
                           >
                             <Trash2 className="h-3 w-3" />
                           </button>
