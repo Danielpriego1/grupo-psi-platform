@@ -435,6 +435,9 @@ export default function AdminInventory() {
       image_url: finalUrls[0] || null,
       image_urls: finalUrls,
       spec_pdf_url: specPdfUrl,
+      sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
+      colors: form.colors.split(",").map((s) => s.trim()).filter(Boolean),
+
     };
 
     if (editItem) {
