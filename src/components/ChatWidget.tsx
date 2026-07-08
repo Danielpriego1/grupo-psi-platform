@@ -986,7 +986,7 @@ export function ChatWidget() {
       console.error("mic permission error", err);
       alert("No pudimos acceder al micrófono. Revisa los permisos.");
     }
-  }, [isRecording, isTranscribing, isLoading, voiceEnabled, sendText]);
+  }, [isRecording, isTranscribing, isLoading, voiceEnabled, sendText, input, adjustHeight]);
 
 
 
