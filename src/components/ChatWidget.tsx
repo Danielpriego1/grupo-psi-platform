@@ -1327,16 +1327,6 @@ export function ChatWidget() {
               <div className="text-[10px] font-bold text-primary uppercase tracking-widest truncate">IA Ejecutiva · Grupo PSI</div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
-                title="WhatsApp"
-                aria-label="Abrir WhatsApp"
-              >
-                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-              </a>
               <button
                 onClick={() => setShowSettings(s => !s)}
                 title="Ajustes, voz y modo fantasma"
