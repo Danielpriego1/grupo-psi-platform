@@ -1345,18 +1345,18 @@ export function ChatWidget() {
           open ? "translate-y-0 scale-100 opacity-100" : (corner.startsWith("b") ? "translate-y-10" : "-translate-y-10") + " scale-95 opacity-0 pointer-events-none"
         )}
       >
-        <div className="relative flex items-center gap-3 sm:gap-4 overflow-hidden px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-50" />
-          <div className="relative z-10 flex items-center gap-3 sm:gap-4 w-full min-w-0">
+        <div className="relative flex items-center gap-3 overflow-hidden px-4 py-3 border-b border-white/5">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-40" />
+          <div className="relative z-10 flex items-center gap-3 w-full min-w-0">
             <div className="relative shrink-0">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 overflow-hidden rounded-2xl ring-2 ring-primary/30 shadow-lg shadow-primary/20">
+              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl ring-2 ring-primary/20 shadow-md shadow-primary/10">
                 <video src="/videos/sora.mp4" poster="/images/foto_chat.png" autoPlay loop muted playsInline className="h-full w-full object-cover scale-150" />
               </div>
-              <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[#09090b] bg-green-500 shadow-sm" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#09090b] bg-green-500 shadow-sm" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-base font-black tracking-tight text-white uppercase truncate">Sora</div>
-              <div className="text-[10px] font-bold text-primary uppercase tracking-widest truncate">IA Ejecutiva · Grupo PSI</div>
+              <div className="text-sm font-semibold tracking-tight text-white truncate">Sora</div>
+              <div className="text-[10px] font-medium text-primary/80 truncate">IA Ejecutiva · Grupo PSI</div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               <button
