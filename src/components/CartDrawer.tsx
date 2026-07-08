@@ -237,7 +237,7 @@ export function CartDrawer() {
                 <Button
                   size="storeCta"
                   onClick={handleStripeCheckout}
-                  disabled={isCheckingOut || isSubmitting}
+                  disabled={isCheckingOut || isSubmitting || hasStockIssue}
                 >
                   {isCheckingOut ? (
                     <Loader2 className="mr-2 animate-spin" />
