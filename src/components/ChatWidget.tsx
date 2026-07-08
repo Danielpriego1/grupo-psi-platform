@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
-import { X, Send, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost, HelpCircle, AlertTriangle, Activity, Radar } from "lucide-react";
+import { X, Send, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost, HelpCircle, AlertTriangle, Activity, Radar, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -163,20 +163,20 @@ function OrderCard({ order }: { order: OrderSummary }) {
 const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   const content = useMemo(() => renderMarkdown(msg.content), [msg.content]);
   return (
-    <div className={cn("flex w-full mb-4", msg.role === "user" ? "justify-end" : "justify-start")}>
+    <div className={cn("flex w-full mb-3", msg.role === "user" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm transition-all duration-300",
+          "max-w-[85%] rounded-[14px] px-3 py-2 text-[13px] leading-[1.55]",
           msg.role === "user"
-            ? "bg-gradient-to-br from-[#ea580c] to-[#c2410c] text-white rounded-br-none shadow-[#ea580c]/20"
-            : "bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-bl-none"
+            ? "bg-[#ea580c] text-white rounded-br-[4px]"
+            : "bg-white/[0.06] border border-white/[0.08] text-white/90 rounded-bl-[4px]"
         )}
       >
-        <div className="prose prose-invert max-w-none">
+        <div className="max-w-none">
           {content}
         </div>
         {msg.isTyping && (
-          <span className="inline-block w-1.5 h-4 bg-primary/60 animate-pulse ml-1 align-text-bottom rounded-full" />
+          <span className="inline-block w-1 h-3.5 bg-white/50 animate-pulse ml-1 align-text-bottom rounded-full" />
         )}
         {msg.order && !msg.isTyping && <OrderCard order={msg.order} />}
       </div>
@@ -847,7 +847,7 @@ export function ChatWidget() {
       });
       // instant scroll during streaming — cheaper than smooth
       const el = scrollRef.current;
-      if (el && stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+      if (el && stickToBottomRef.current) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
       if (!done) {
         typingTimeoutRef.current = setTimeout(tick, 18 + Math.random() * 12);
       } else {
@@ -863,7 +863,7 @@ export function ChatWidget() {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "auto";
-    const maxH = 160; // max ~5-6 lines
+    const maxH = 120; // max ~4-5 lines
     const target = Math.min(el.scrollHeight, maxH);
     el.style.height = target + "px";
     setInputHeight(target);
@@ -894,8 +894,8 @@ export function ChatWidget() {
     }
 
     setIsLoading(true);
-    setInputHeight(44);
-    if (inputRef.current) inputRef.current.style.height = "44px";
+    setInputHeight(40);
+    if (inputRef.current) inputRef.current.style.height = "40px";
     requestAnimationFrame(() => inputRef.current?.focus());
 
     try {
@@ -1401,56 +1401,25 @@ export function ChatWidget() {
             tabIndex={0}
           >
             {!helpDismissed && (
-              <div className="mb-4 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 p-4 text-xs text-white/85 shadow-lg shadow-primary/10 animate-fade-in">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-                    <HelpCircle className="h-3.5 w-3.5" /> Ayuda rápida
+              <div className="mb-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 text-[12px] text-white/70 leading-relaxed">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-white/90">
+                    <HelpCircle className="h-3.5 w-3.5 text-white/60" />
+                    <span>Consejo rápido</span>
                   </div>
                   <button
                     onClick={() => setHelpDismissed(true)}
-                    className="shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/60 hover:bg-white/10 hover:text-white transition"
-                    aria-label="Ocultar la ayuda rápida"
+                    className="shrink-0 rounded-md p-1 text-white/40 hover:bg-white/10 hover:text-white/80 transition"
+                    aria-label="Ocultar consejo"
                   >
-                    Entendido ✕
+                    <X className="h-3 w-3" />
                   </button>
                 </div>
-                <div className="mt-2.5 space-y-2 leading-relaxed">
-                  {ghostMode ? (
-                    <p>
-                      <span className="font-semibold text-white">Modo fantasma activo:</span> me oculto al leer o hacer scroll. Acerca el cursor <span className="font-semibold text-primary">a ~{proximityRadius} px</span> de la esquina <span className="font-mono uppercase text-primary">{corner}</span> para que reaparezca.
-                    </p>
-                  ) : (
-                    <p>Actívame el <span className="font-semibold text-primary">modo fantasma</span> (👁 arriba) y me esconderé al leer para no estorbar.</p>
-                  )}
-                  {lastGhostAction && (
-                    <div className="flex items-start gap-2 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5 text-[11px] text-white/80">
-                      <Activity className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
-                      <div className="min-w-0">
-                        <div className="text-[9px] font-bold uppercase tracking-wider text-white/40">Última acción</div>
-                        <div className="truncate">
-                          {GHOST_TRIGGER_LABEL[lastGhostAction.trigger]}
-                          <span className="text-white/40"> · {new Date(lastGhostAction.at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-1 gap-1 pt-1">
-                    <div className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="text-white/60">Abrir / cerrar chat</span>
-                      <kbd className="rounded border border-white/15 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-white/90">{formatShortcut(shortcuts.toggleOpen)}</kbd>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="text-white/60">Alternar voz</span>
-                      <kbd className="rounded border border-white/15 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-white/90">{formatShortcut(shortcuts.toggleVoice)}</kbd>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="text-white/60">Modo fantasma</span>
-                      <kbd className="rounded border border-white/15 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-white/90">{formatShortcut(shortcuts.toggleGhost)}</kbd>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-white/50 pt-1">Puedes cambiar los atajos y el radio de proximidad desde <SettingsIcon className="inline h-2.5 w-2.5 -mt-0.5" /> Ajustes.</p>
-                </div>
-
+                <p className="mt-1.5">
+                  {ghostMode
+                    ? <>Modo fantasma activo. Acerca el cursor a <span className="font-medium text-white">~{proximityRadius}px</span> de la esquina para que reaparezca.</>
+                    : <>Activa el <span className="font-medium text-white">modo fantasma</span> en Ajustes para que Sora no estorbe al navegar.</>}
+                </p>
               </div>
             )}
             {visibleMessages.map(msg => (
@@ -1459,13 +1428,13 @@ export function ChatWidget() {
 
             {isLoading && (
               <div className="flex justify-start animate-fade-in" role="status" aria-label="Sora está escribiendo">
-                <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
+                <div className="flex items-center gap-2 rounded-[14px] rounded-bl-[4px] bg-white/[0.06] border border-white/[0.08] px-3 py-2 text-[13px]">
                   <span className="inline-flex gap-1" aria-hidden="true">
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
                   </span>
-                  <span className="text-xs text-muted-foreground italic">Sora está escribiendo…</span>
+                  <span className="text-[11px] text-white/50">Sora está escribiendo…</span>
                 </div>
               </div>
             )}
@@ -1484,11 +1453,11 @@ export function ChatWidget() {
               onClick={jumpToBottom}
               aria-label={`Ir al final del chat. ${unreadCount} ${unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}. Atajo: tecla Fin.`}
               title="Ir al final (Fin)"
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-[#ea580c] px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-card min-h-[32px]"
+              className="absolute bottom-14 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 rounded-full bg-[#ea580c]/90 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-white shadow-md hover:bg-[#c2410c] active:scale-95 transition-all animate-fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 min-h-[26px]"
             >
-              <span aria-hidden="true">↓</span>
+              <ChevronDown className="h-3 w-3" aria-hidden="true" />
               <span>
-                {unreadCount} {unreadCount === 1 ? "mensaje nuevo" : "mensajes nuevos"}
+                {unreadCount} {unreadCount === 1 ? "nuevo" : "nuevos"}
               </span>
             </button>
           )}
@@ -1711,21 +1680,21 @@ export function ChatWidget() {
         </div>
 
 
-        <div className="p-5 bg-white/5 border-t border-white/5">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end gap-3">
+        <div className="p-3.5 bg-white/5 border-t border-white/5">
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end gap-2">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
               onKeyDown={handleKeyDown}
-              placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Escribe o toca el micrófono…"}
+              placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Mensaje…"}
               rows={1}
               wrap="soft"
-              className="block w-full flex-1 min-w-0 min-h-[44px] max-h-[160px] rounded-2xl border border-white/10 bg-white/5 pl-4 pr-20 sm:pr-24 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
+              className="block w-full flex-1 min-w-0 min-h-[40px] max-h-[120px] rounded-xl border border-white/10 bg-white/5 pl-3.5 pr-[4.5rem] sm:pr-[5rem] py-2 text-[13px] text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-2 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"
               disabled={isLoading || isRecording || isTranscribing}
               autoFocus
             />
-            <div className="absolute right-2 bottom-2 flex items-center gap-1.5">
+            <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
               <button
                 type="button"
                 onClick={isRecording ? stopRecording : startRecording}
@@ -1733,25 +1702,25 @@ export function ChatWidget() {
                 title={isRecording ? "Detener grabación" : "Hablar con Sora"}
                 aria-label={isRecording ? "Detener grabación" : "Grabar mensaje de voz"}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
+                  "flex h-7 w-7 items-center justify-center rounded-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed",
                   isRecording
                     ? "bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse"
                     : "bg-white/10 text-white hover:bg-white/20"
                 )}
               >
-                {isRecording ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
+                {isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-3.5 w-3.5" />}
               </button>
               <Button
                 type="submit"
                 size="icon"
-                className="h-8 w-8 rounded-lg bg-primary text-white shadow-md shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                className="h-7 w-7 rounded-md bg-primary text-white shadow-sm hover:scale-105 active:scale-95 transition-all"
                 disabled={isLoading || anyTyping || !input.trim() || isRecording || isTranscribing}
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
               </Button>
             </div>
           </form>
-          <div className="mt-2 text-center">
+          <div className="mt-1.5 text-center">
             <span className="text-[9px] font-medium text-white/15">Grupo PSI</span>
           </div>
         </div>
