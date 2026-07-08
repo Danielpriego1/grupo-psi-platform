@@ -13,7 +13,6 @@ webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    // Auth: service role bearer OR trigger secret header
     const auth = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
     const trig = req.headers.get("x-psi-push-key") ?? "";
     if (auth !== SERVICE_ROLE && (TRIGGER_SECRET === "" || trig !== TRIGGER_SECRET)) {
@@ -27,20 +26,40 @@ Deno.serve(async (req) => {
     const tag = String(body.tag ?? "psi-notif");
     const kind = String(body.kind ?? body.tag ?? "other");
     const refNumber = body.ref_number ? String(body.ref_number) : null;
-    const payload = JSON.stringify({ title, body: bodyText, url, tag, data: body.data ?? {} });
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, SERVICE_ROLE);
-    const { data: subs, error } = await admin
+    const { data: allSubs, error } = await admin
       .from("push_subscriptions")
-      .select("id,endpoint,p256dh,auth");
+      .select("id,endpoint,p256dh,auth,kinds,sound,priority");
     if (error) return json({ error: error.message }, 500);
 
+    // Filter by user preferences (kinds). "other" always delivers.
+    const subs = (allSubs ?? []).filter((s: any) => {
+      if (kind === "other") return true;
+      const kinds: string[] = Array.isArray(s.kinds) ? s.kinds : ["order", "quote", "maintenance"];
+      return kinds.includes(kind);
+    });
+
     let sent = 0, removed = 0, failed = 0;
-    await Promise.all((subs ?? []).map(async (s) => {
+    const deliveredIds: string[] = [];
+    await Promise.all(subs.map(async (s: any) => {
       const sub = { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } };
+      const payload = JSON.stringify({
+        title,
+        body: bodyText,
+        url,
+        tag,
+        silent: s.sound === false || s.priority === "silent",
+        priority: s.priority ?? "normal",
+        data: body.data ?? {},
+      });
       try {
-        await webpush.sendNotification(sub as any, payload, { TTL: 60 });
+        await webpush.sendNotification(sub as any, payload, {
+          TTL: 60,
+          urgency: s.priority === "high" ? "high" : s.priority === "silent" ? "low" : "normal",
+        });
         sent++;
+        deliveredIds.push(s.id);
       } catch (err: any) {
         const status = err?.statusCode;
         if (status === 404 || status === 410) {
@@ -52,25 +71,23 @@ Deno.serve(async (req) => {
       }
     }));
 
-    const total = subs?.length ?? 0;
+    if (deliveredIds.length) {
+      await admin
+        .from("push_subscriptions")
+        .update({ last_delivered_at: new Date().toISOString() })
+        .in("id", deliveredIds);
+    }
+
+    const total = subs.length;
     const status =
       total === 0 ? "no_targets" : failed === total ? "failed" : failed > 0 ? "partial" : "sent";
 
     try {
       await admin.from("notification_events").insert({
-        kind,
-        title,
-        body: bodyText,
-        url,
-        tag,
-        ref_number: refNumber,
-        sent,
-        removed,
-        failed,
-        total_targets: total,
-        status,
+        kind, title, body: bodyText, url, tag, ref_number: refNumber,
+        sent, removed, failed, total_targets: total, status,
       });
-    } catch (_) { /* logging is best-effort */ }
+    } catch (_) { /* best-effort */ }
 
     return json({ ok: true, sent, removed, failed, total, status });
   } catch (e) {
