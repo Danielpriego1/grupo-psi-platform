@@ -440,11 +440,20 @@ export default function AdminNotificationHistory() {
                 return (
                   <TableRow
                     key={e.id}
+                    data-state={selected.has(e.id) ? "selected" : undefined}
                     className={cn(
                       "border-white/5 hover:bg-white/[0.02]",
                       isUnread && "bg-primary/[0.03]",
+                      selected.has(e.id) && "bg-primary/[0.08]",
                     )}
                   >
+                    <TableCell className="pr-0 align-top">
+                      <Checkbox
+                        checked={selected.has(e.id)}
+                        onCheckedChange={(v) => toggleOne(e.id, v === true)}
+                        aria-label="Seleccionar notificación"
+                      />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap align-top">
                       <div>{formatRelative(e.created_at)}</div>
                       <div className="text-[10px] opacity-60">
