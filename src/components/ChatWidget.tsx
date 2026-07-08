@@ -73,12 +73,22 @@ const MAX_RENDERED_MESSAGES = 60; // virtualize tail; older still kept for conte
 const NEAR_BOTTOM_PX = 80;
 
 function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
-  // 1) negritas, 2) links markdown [txt](url), 3) urls sueltas
-  const tokens = text.split(/(\*\*.*?\*\*|\[[^\]]+\]\([^)]+\)|https?:\/\/[^\s)]+)/g);
+  // negritas **x**, cursivas *x*, code `x`, links [txt](url), urls sueltas
+  const tokens = text.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*|`[^`\n]+`|\[[^\]]+\]\([^)]+\)|https?:\/\/[^\s)]+)/g);
   return tokens.map((tok, i) => {
     if (!tok) return null;
-    if (tok.startsWith("**") && tok.endsWith("**")) {
-      return <strong key={`${keyPrefix}-b${i}`}>{tok.slice(2, -2)}</strong>;
+    if (tok.startsWith("**") && tok.endsWith("**") && tok.length > 4) {
+      return <strong key={`${keyPrefix}-b${i}`} className="font-semibold text-white">{tok.slice(2, -2)}</strong>;
+    }
+    if (tok.startsWith("*") && tok.endsWith("*") && tok.length > 2 && !tok.startsWith("**")) {
+      return <em key={`${keyPrefix}-i${i}`} className="italic">{tok.slice(1, -1)}</em>;
+    }
+    if (tok.startsWith("`") && tok.endsWith("`") && tok.length > 2) {
+      return (
+        <code key={`${keyPrefix}-c${i}`} className="px-1.5 py-0.5 rounded-md bg-white/10 text-[12px] font-mono text-[#ffb380]">
+          {tok.slice(1, -1)}
+        </code>
+      );
     }
     const md = tok.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (md) {
@@ -105,14 +115,116 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
   });
 }
 
-function renderMarkdown(text: string) {
-  const out: React.ReactNode[] = [];
+function renderMarkdown(text: string): React.ReactNode[] {
   const lines = text.split("\n");
-  lines.forEach((line, li) => {
-    if (li > 0) out.push(<br key={`br-${li}`} />);
-    if (line) out.push(...renderInline(line, `l${li}`));
-  });
-  return out;
+  const blocks: React.ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+  const nextKey = () => `md-${key++}`;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // fenced code block
+    if (line.trim().startsWith("```")) {
+      const code: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
+        code.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++;
+      blocks.push(
+        <pre key={nextKey()} className="my-1.5 p-2.5 rounded-lg bg-black/40 border border-white/10 text-[12px] font-mono text-white/85 overflow-x-auto whitespace-pre">
+          <code>{code.join("\n")}</code>
+        </pre>
+      );
+      continue;
+    }
+
+    // headings
+    const h = line.match(/^(#{1,3})\s+(.*)$/);
+    if (h) {
+      const lvl = h[1].length;
+      const cls =
+        lvl === 1
+          ? "text-[15px] font-bold text-white mt-1.5 mb-1"
+          : lvl === 2
+          ? "text-[14px] font-bold text-white mt-1.5 mb-1"
+          : "text-[13px] font-semibold text-white/95 mt-1 mb-0.5";
+      blocks.push(
+        <div key={nextKey()} className={cls}>
+          {renderInline(h[2], `h${key}`)}
+        </div>
+      );
+      i++;
+      continue;
+    }
+
+    // unordered list
+    if (/^\s*[-*]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*[-*]\s+/, ""));
+        i++;
+      }
+      const listKey = key;
+      blocks.push(
+        <ul key={nextKey()} className="my-1 ml-4 list-disc space-y-0.5 marker:text-[#ea580c]/70">
+          {items.map((it, k) => (
+            <li key={k} className="pl-0.5">{renderInline(it, `ul${listKey}-${k}`)}</li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    // ordered list
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*\d+\.\s+/, ""));
+        i++;
+      }
+      const listKey = key;
+      blocks.push(
+        <ol key={nextKey()} className="my-1 ml-5 list-decimal space-y-0.5 marker:text-[#ea580c]/80 marker:font-semibold">
+          {items.map((it, k) => (
+            <li key={k} className="pl-0.5">{renderInline(it, `ol${listKey}-${k}`)}</li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    // blank line = pequeño gap entre párrafos
+    if (line.trim() === "") {
+      blocks.push(<div key={nextKey()} className="h-1.5" />);
+      i++;
+      continue;
+    }
+
+    // párrafo: agrupa líneas normales con <br/>
+    const para: string[] = [line];
+    i++;
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !/^(#{1,3}\s|\s*[-*]\s|\s*\d+\.\s|```)/.test(lines[i])
+    ) {
+      para.push(lines[i]);
+      i++;
+    }
+    const paraKey = key;
+    const nodes: React.ReactNode[] = [];
+    para.forEach((p, k) => {
+      if (k > 0) nodes.push(<br key={`pbr-${paraKey}-${k}`} />);
+      nodes.push(...renderInline(p, `p${paraKey}-${k}`));
+    });
+    blocks.push(<p key={nextKey()} className="my-0">{nodes}</p>);
+  }
+
+  return blocks;
 }
 
 function OrderCard({ order }: { order: OrderSummary }) {
