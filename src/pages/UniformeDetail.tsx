@@ -80,15 +80,36 @@ export default function UniformeDetail({
     if (idx >= 0 && idx < images.length) setCurrentImage(idx);
   }, [selectedColor, colors, images.length]);
 
+  // Validation state — used both to gate the CTA and to render inline hints.
+  const needsSize = sizes.length > 0;
+  const needsColor = colors.length > 0;
+  const sizeValid = !needsSize || (!!selectedSize && sizes.includes(selectedSize));
+  const colorValid = !needsColor || (!!selectedColor && colors.includes(selectedColor));
+  const quantityValid = quantity > 0 && (inventoryStock == null || quantity <= inventoryStock);
+  const canAddToCart = product.inStock && sizeValid && colorValid && quantityValid;
+
   const handleAddToCart = () => {
-    if (sizes.length > 0 && !selectedSize) {
-      toast.error("Selecciona una talla");
+    if (!product.inStock) {
+      toast.error("Producto agotado");
+      return;
+    }
+    if (!sizeValid) {
+      toast.error("Selecciona una talla válida");
+      return;
+    }
+    if (!colorValid) {
+      toast.error("Selecciona un color");
+      return;
+    }
+    if (!quantityValid) {
+      toast.error("Cantidad no disponible en stock");
       return;
     }
     addItem({
       product,
       quantity,
       selectedSize: selectedSize || undefined,
+      selectedVariant: selectedColor || undefined,
       serviceType: "delivery",
     });
     toast.success(`${product.name} agregado al carrito`);
