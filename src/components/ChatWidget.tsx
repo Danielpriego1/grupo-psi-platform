@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
-import { X, Send, MessageCircle, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost, HelpCircle, AlertTriangle, Activity, Radar } from "lucide-react";
+import { X, Send, Lock, Mic, Square, Volume2, VolumeX, Eye, EyeOff, Settings as SettingsIcon, Keyboard, RotateCcw, Ghost, HelpCircle, AlertTriangle, Activity, Radar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -54,6 +54,21 @@ const INITIAL_MESSAGES: Message[] = [
 
 const WHATSAPP_NUMBER = "5219931684717";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+
+function detectHumanRequest(text: string): boolean {
+  const t = text.toLowerCase();
+  const phrases = [
+    "hablar con un humano","hablar con una persona","hablar con alguien",
+    "conectar con un humano","conectar con una persona","conectar con alguien",
+    "agente","representante","asesor","vendedor","persona real",
+    "no quiero hablar con un bot","no quiero hablar con una maquina","no quiero hablar con ia",
+    "pasame con","pásame con","quiero hablar con","necesito hablar con",
+    "atencion personalizada","atención personalizada","hablar por telefono",
+    "hablar por teléfono","hablar por whatsapp","contactar a alguien",
+    "contactar con alguien","escalar a","derivar con","hablar con un vivo",
+  ];
+  return phrases.some(p => t.includes(p));
+}
 const MAX_RENDERED_MESSAGES = 60; // virtualize tail; older still kept for context
 const NEAR_BOTTOM_PX = 80;
 
@@ -862,6 +877,22 @@ export function ChatWidget() {
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
+
+    // Escalación humana detectada: responder directamente sin llamar a la API
+    if (detectHumanRequest(text)) {
+      const msgId = (Date.now() + 1).toString();
+      const humanMsg = `Entendido. Te conecto con un asesor de Grupo PSI por WhatsApp.\n\n[Abrir WhatsApp →](${WHATSAPP_URL})`;
+      setIsLoading(true);
+      setMessages(prev => [
+        ...prev,
+        { id: msgId, role: "assistant", content: "", isTyping: true },
+      ]);
+      setIsLoading(false);
+      typeMessage(humanMsg, msgId);
+      requestAnimationFrame(() => inputRef.current?.focus());
+      return;
+    }
+
     setIsLoading(true);
     setInputHeight(56);
     if (inputRef.current) inputRef.current.style.height = "56px";
@@ -1327,16 +1358,6 @@ export function ChatWidget() {
               <div className="text-[10px] font-bold text-primary uppercase tracking-widest truncate">IA Ejecutiva · Grupo PSI</div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
-                title="WhatsApp"
-                aria-label="Abrir WhatsApp"
-              >
-                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-              </a>
               <button
                 onClick={() => setShowSettings(s => !s)}
                 title="Ajustes, voz y modo fantasma"
