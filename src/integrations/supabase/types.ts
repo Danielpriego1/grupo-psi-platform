@@ -987,7 +987,12 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
+          kinds: string[]
+          label: string | null
+          last_delivered_at: string | null
           p256dh: string
+          priority: string
+          sound: boolean
           updated_at: string
           user_agent: string | null
           user_id: string
@@ -997,7 +1002,12 @@ export type Database = {
           created_at?: string
           endpoint: string
           id?: string
+          kinds?: string[]
+          label?: string | null
+          last_delivered_at?: string | null
           p256dh: string
+          priority?: string
+          sound?: boolean
           updated_at?: string
           user_agent?: string | null
           user_id: string
@@ -1007,7 +1017,12 @@ export type Database = {
           created_at?: string
           endpoint?: string
           id?: string
+          kinds?: string[]
+          label?: string | null
+          last_delivered_at?: string | null
           p256dh?: string
+          priority?: string
+          sound?: boolean
           updated_at?: string
           user_agent?: string | null
           user_id?: string

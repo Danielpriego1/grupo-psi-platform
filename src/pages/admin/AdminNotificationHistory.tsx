@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -28,10 +30,14 @@ import {
   ExternalLink,
   Loader2,
   RefreshCw,
+  Search,
+  Smartphone,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatRelative } from "@/hooks/useRelativeTime";
+import { useAuth } from "@/hooks/useAuth";
 
 type Event = {
   id: string;
@@ -72,6 +78,7 @@ export default function AdminNotificationHistory() {
   const [loading, setLoading] = useState(true);
   const [kindFilter, setKindFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
@@ -114,12 +121,18 @@ export default function AdminNotificationHistory() {
   }, []);
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return events.filter((e) => {
       if (kindFilter !== "all" && (e.kind || "other") !== kindFilter) return false;
       if (statusFilter !== "all" && e.status !== statusFilter) return false;
+      if (q) {
+        const hay = [e.ref_number, e.title, e.body, e.tag]
+          .filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
-  }, [events, kindFilter, statusFilter]);
+  }, [events, kindFilter, statusFilter, search]);
 
   const unreadCount = events.filter((e) => !e.read_at).length;
 
@@ -260,10 +273,33 @@ export default function AdminNotificationHistory() {
             </SelectContent>
           </Select>
         </div>
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por folio, título…"
+            className="h-8 pl-8 pr-8 text-xs bg-[#0d0d10] border-white/10"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Limpiar búsqueda"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
         <span className="text-[11px] text-muted-foreground ml-auto">
           Mostrando {filtered.length} de {events.length}
         </span>
       </div>
+
+      {/* Devices & preferences */}
+      <DevicesSection />
+
 
       {/* Table */}
       <div className="rounded-xl border border-white/5 bg-[#0d0d10] overflow-hidden">
@@ -404,6 +440,189 @@ export default function AdminNotificationHistory() {
           </Table>
         )}
       </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------
+// Devices & push preferences (per-device, per-user)
+// ------------------------------------------------------------------
+
+type Device = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  label: string | null;
+  user_agent: string | null;
+  created_at: string;
+  last_delivered_at: string | null;
+  kinds: string[];
+  sound: boolean;
+  priority: string;
+};
+
+const ALL_KINDS: { key: string; label: string }[] = [
+  { key: "order", label: "Pedidos" },
+  { key: "quote", label: "Cotizaciones" },
+  { key: "maintenance", label: "Mantenimiento" },
+];
+
+function shortUA(ua: string | null) {
+  if (!ua) return "Dispositivo";
+  if (/iPhone|iPad|iOS/i.test(ua)) return "iOS / Safari";
+  if (/Android/i.test(ua)) return "Android";
+  if (/Edg\//i.test(ua)) return "Edge";
+  if (/Chrome/i.test(ua)) return "Chrome";
+  if (/Firefox/i.test(ua)) return "Firefox";
+  if (/Safari/i.test(ua)) return "Safari";
+  return "Navegador";
+}
+
+function DevicesSection() {
+  const { user } = useAuth();
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    if (!user) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("push_subscriptions")
+      .select("id,user_id,endpoint,label,user_agent,created_at,last_delivered_at,kinds,sound,priority")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    setLoading(false);
+    if (error) {
+      toast.error("No se pudieron cargar los dispositivos", { description: error.message });
+      return;
+    }
+    setDevices((data ?? []) as Device[]);
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const patch = async (id: string, patch: Partial<Device>) => {
+    setDevices((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+    const { error } = await supabase
+      .from("push_subscriptions")
+      .update(patch as any)
+      .eq("id", id);
+    if (error) { toast.error("No se pudo guardar"); load(); }
+  };
+
+  const toggleKind = (d: Device, key: string) => {
+    const set = new Set(d.kinds ?? []);
+    if (set.has(key)) set.delete(key); else set.add(key);
+    patch(d.id, { kinds: Array.from(set) });
+  };
+
+  const removeDevice = async (d: Device) => {
+    if (!confirm("¿Desactivar este dispositivo? No recibirá más notificaciones push.")) return;
+    const prev = devices;
+    setDevices((p) => p.filter((x) => x.id !== d.id));
+    const { error } = await supabase.from("push_subscriptions").delete().eq("id", d.id);
+    if (error) { setDevices(prev); toast.error("No se pudo eliminar"); return; }
+    toast.success("Dispositivo desactivado");
+  };
+
+  return (
+    <div className="rounded-xl border border-white/5 bg-[#0d0d10] p-4 sm:p-5 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-primary" />
+            Mis dispositivos push
+          </h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Activa qué tipo de aviso recibe cada equipo, ajusta la prioridad o desactívalo por completo.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={loading} className="shrink-0">
+          <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground py-6 justify-center">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Cargando dispositivos…
+        </div>
+      ) : devices.length === 0 ? (
+        <p className="text-xs text-muted-foreground py-4 text-center">
+          Aún no tienes dispositivos suscritos. Activa "Activar push" desde la campana del panel.
+        </p>
+      ) : (
+        <ul className="divide-y divide-white/5">
+          {devices.map((d) => (
+            <li key={d.id} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex flex-wrap items-start gap-3">
+                <div className="flex-1 min-w-[200px]">
+                  <p className="text-sm font-semibold text-foreground">
+                    {d.label || shortUA(d.user_agent)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate max-w-md">
+                    {d.user_agent ?? d.endpoint}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                    Registrado {formatRelative(d.created_at)}
+                    {" · "}
+                    Última entrega {d.last_delivered_at ? formatRelative(d.last_delivered_at) : "—"}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <Select value={d.priority} onValueChange={(v) => patch(d.id, { priority: v })}>
+                    <SelectTrigger className="h-7 w-[140px] text-[11px] bg-[#09090b] border-white/10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">Alta prioridad</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="silent">Silenciosa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-muted-foreground">Sonido</span>
+                    <Switch
+                      checked={d.sound}
+                      onCheckedChange={(v) => patch(d.id, { sound: v })}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                {ALL_KINDS.map((k) => {
+                  const active = d.kinds?.includes(k.key);
+                  return (
+                    <button
+                      key={k.key}
+                      type="button"
+                      onClick={() => toggleKind(d, k.key)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors",
+                        active
+                          ? "bg-primary/15 text-primary border-primary/30"
+                          : "bg-white/[0.02] text-muted-foreground border-white/10 hover:text-foreground",
+                      )}
+                    >
+                      {k.label}
+                    </button>
+                  );
+                })}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 ml-auto text-[11px] text-red-300 hover:text-red-200 hover:bg-red-500/10"
+                  onClick={() => removeDevice(d)}
+                >
+                  <Trash2 className="w-3 h-3 mr-1" /> Desactivar
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
