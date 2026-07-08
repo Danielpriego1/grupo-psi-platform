@@ -1326,62 +1326,34 @@ export function ChatWidget() {
               <div className="text-base font-black tracking-tight text-white uppercase truncate">Sora</div>
               <div className="text-[10px] font-bold text-primary uppercase tracking-widest truncate">IA Ejecutiva · Grupo PSI</div>
             </div>
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-
-              <button
-                onClick={() => { setGhostMode(g => { setLastGhostAction({ trigger: g ? "manual-off" : "manual-on", at: Date.now() }); return !g; }); }}
-                title={ghostMode ? `Modo fantasma activo — se oculta al leer (${formatShortcut(shortcuts.toggleGhost)})` : `Activar modo fantasma — auto-ocultar (${formatShortcut(shortcuts.toggleGhost)})`}
-                aria-label={ghostMode ? "Desactivar modo fantasma" : "Activar modo fantasma"}
-                aria-pressed={ghostMode}
-                className={cn(
-                  "relative hidden sm:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
-                  ghostMode
-                    ? "bg-primary/20 text-primary hover:bg-primary/30"
-                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-                )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
+                title="WhatsApp"
+                aria-label="Abrir WhatsApp"
               >
-                {ghostMode ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
-                {ghostMode && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#09090b] animate-pulse" aria-hidden="true" />
-                )}
-              </button>
-              <button
-                onClick={() => setVoiceEnabled(v => !v)}
-                title={voiceEnabled ? `Silenciar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})` : `Activar voz de Sora (${formatShortcut(shortcuts.toggleVoice)})`}
-                aria-label={voiceEnabled ? "Silenciar voz" : "Activar voz"}
-                className={cn(
-                  "hidden sm:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
-                  voiceEnabled
-                    ? "bg-primary/20 text-primary hover:bg-primary/30"
-                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-                )}
-              >
-                {voiceEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
-              </button>
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+              </a>
               <button
                 onClick={() => setShowSettings(s => !s)}
-                title="Ajustes y atajos de teclado"
+                title="Ajustes, voz y modo fantasma"
                 aria-label="Abrir ajustes"
                 aria-pressed={showSettings}
                 className={cn(
-                  "flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
+                  "relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all",
                   showSettings
                     ? "bg-primary/20 text-primary hover:bg-primary/30"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
                 <SettingsIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                {ghostMode && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#09090b] animate-pulse" aria-hidden="true" />
+                )}
               </button>
-
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/70 hover:bg-green-500/20 hover:text-green-400 transition-all"
-                title="WhatsApp"
-              >
-                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-              </a>
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Cerrar chat"
@@ -1390,7 +1362,6 @@ export function ChatWidget() {
               >
                 <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
-
             </div>
           </div>
         </div>
