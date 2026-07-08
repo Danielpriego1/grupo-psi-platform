@@ -1186,7 +1186,7 @@ export function ChatWidget() {
         aria-label={`Abrir chat con Sora (${formatShortcut(shortcuts.toggleOpen)}; mantén presionado para mover)`}
         title={`Sora — ${formatShortcut(shortcuts.toggleOpen)}${ghostMode ? " · Modo fantasma activo" : ""}`}
         className={cn(
-          "fixed z-50 h-[72px] w-[72px] rounded-full shadow-2xl overflow-hidden touch-none select-none",
+          "fixed z-50 h-14 w-14 rounded-full shadow-2xl overflow-hidden touch-none select-none",
           !isDragging && "transition-all duration-500 animate-glow-pulse hover:scale-110",
           isDragging && "scale-110 ring-4 ring-primary/50 cursor-grabbing",
           !dragPos && cornerClass(corner),
