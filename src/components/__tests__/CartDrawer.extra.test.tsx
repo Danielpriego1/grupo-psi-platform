@@ -118,15 +118,14 @@ describe("CartDrawer — extra e2e coverage", () => {
     expect(screen.getByRole("button", { name: /pagar \$1500\.00 MXN/i })).toBeInTheDocument();
 
     // Change the FIRST line (M/Blanco → G/Blanco → G/Negro) so it collides with line 2.
-    // Grab the "Cambiar" trigger inside the first line's container.
-    const firstLine = screen.getByText(/Talla: M/).closest("div")!.parentElement!.parentElement!;
-    const changeBtn = within(firstLine).getByRole("button", { name: /cambiar talla o color/i });
-    fireEvent.click(changeBtn);
+    const changeButtons = () => screen.getAllByRole("button", { name: /cambiar talla o color/i });
+    fireEvent.click(changeButtons()[0]);
+    // "G" appears both in the popover AND in the second line's own popover trigger contents?
+    // No — sizes only render inside the open popover, so a single "G" button exists.
     fireEvent.click(screen.getByRole("button", { name: "G" }));
 
-    // Popover re-mounts — reopen and pick Negro (this collides with line 2 exactly)
-    const firstLineAfter = screen.getAllByText(polo.name)[0].closest("div")!.parentElement!.parentElement!;
-    fireEvent.click(within(firstLineAfter).getByRole("button", { name: /cambiar talla o color/i }));
+    // Popover closes on selection; reopen the first line and pick Negro.
+    fireEvent.click(changeButtons()[0]);
     fireEvent.click(screen.getByRole("button", { name: "Negro" }));
 
     // After collision, lines merge: only ONE line for polo remains
