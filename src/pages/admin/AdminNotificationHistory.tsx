@@ -80,6 +80,7 @@ export default function AdminNotificationHistory() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setLoading(true);
