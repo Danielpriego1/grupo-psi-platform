@@ -549,6 +549,29 @@ export default function AdminInventory() {
               <Label>Ubicación</Label>
               <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Almacén A" />
             </div>
+
+            {/* Variantes: tallas y colores (aplica principalmente a Uniformes) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tallas disponibles</Label>
+                <Input
+                  value={form.sizes}
+                  onChange={(e) => setForm({ ...form, sizes: e.target.value })}
+                  placeholder="ECH, CH, M, G, EG, EEG"
+                />
+                <p className="text-[11px] text-muted-foreground">Sepáralas con coma. Déjalo vacío si el producto no tiene tallas.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Colores disponibles</Label>
+                <Input
+                  value={form.colors}
+                  onChange={(e) => setForm({ ...form, colors: e.target.value })}
+                  placeholder="Blanco, Negro, Marino"
+                />
+                <p className="text-[11px] text-muted-foreground">Sube las fotos en el mismo orden de los colores para que la imagen cambie al seleccionar cada color.</p>
+              </div>
+            </div>
+
             {/* Image upload + ordering */}
             <div className="space-y-2">
               <Label>Fotos del producto ({images.length})</Label>
