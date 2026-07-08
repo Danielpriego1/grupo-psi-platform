@@ -84,10 +84,15 @@ describe("UniformeDetail — CTA gating", () => {
     renderPage({ inventoryStock: 1 });
     fireEvent.click(screen.getByRole("button", { name: "M" }));
     fireEvent.click(screen.getByRole("button", { name: "Blanco" }));
-    // bump quantity past stock (initial 1 → click + once = 2)
-    fireEvent.click(screen.getByRole("button", { name: "" }).parentElement!.querySelector("button:last-child")!);
-    // Fallback: query by icon-only + buttons in the qty group is fragile; instead
-    // simulate quantity change through the +/- controls by label lookup:
+    // Add-to-cart is enabled at qty=1 (== stock)
+    expect(screen.getByRole("button", { name: /agregar al carrito/i })).not.toBeDisabled();
+    // Increase quantity past stock via the "+" control
+    const plusBtn = screen.getAllByRole("button").find((b) => b.textContent === "" && b.querySelector("svg.lucide-plus"));
+    // Fallback: rely on the labelless +/- pair being the only ones under "Cantidad"
+    const qtyButtons = screen.getAllByRole("button").filter((b) => b.className.includes("h-11 w-11"));
+    fireEvent.click(qtyButtons[qtyButtons.length - 1]); // last one is "+"
+    expect(screen.getByRole("button", { name: /agregar al carrito/i })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent(/stock/i);
   });
 
   it("persists selected size/color across remounts via sessionStorage", () => {
