@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -28,10 +30,14 @@ import {
   ExternalLink,
   Loader2,
   RefreshCw,
+  Search,
+  Smartphone,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatRelative } from "@/hooks/useRelativeTime";
+import { useAuth } from "@/hooks/useAuth";
 
 type Event = {
   id: string;
