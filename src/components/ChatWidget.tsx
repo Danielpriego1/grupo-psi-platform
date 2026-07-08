@@ -877,6 +877,22 @@ export function ChatWidget() {
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
+
+    // Escalación humana detectada: responder directamente sin llamar a la API
+    if (detectHumanRequest(text)) {
+      const msgId = (Date.now() + 1).toString();
+      const humanMsg = `Entendido. Te conecto con un asesor de Grupo PSI por WhatsApp.\n\n[Abrir WhatsApp →](${WHATSAPP_URL})`;
+      setIsLoading(true);
+      setMessages(prev => [
+        ...prev,
+        { id: msgId, role: "assistant", content: "", isTyping: true },
+      ]);
+      setIsLoading(false);
+      typeMessage(humanMsg, msgId);
+      requestAnimationFrame(() => inputRef.current?.focus());
+      return;
+    }
+
     setIsLoading(true);
     setInputHeight(56);
     if (inputRef.current) inputRef.current.style.height = "56px";
