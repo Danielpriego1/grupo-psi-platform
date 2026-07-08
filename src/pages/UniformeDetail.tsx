@@ -334,24 +334,32 @@ export default function UniformeDetail({
 
             {/* CTA buttons */}
             <div className="space-y-3 pt-2">
+              {!canAddToCart && product.inStock && (
+                <p className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                  {!sizeValid && "Selecciona una talla para continuar."}
+                  {sizeValid && !colorValid && "Selecciona un color para continuar."}
+                  {sizeValid && colorValid && !quantityValid && "Cantidad excede el stock disponible."}
+                </p>
+              )}
               <Button
                 size="storeCta"
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
+                disabled={!canAddToCart}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Agregar al carrito
               </Button>
               <Button
                 size="storeCta"
-                className="w-full bg-primary hover:bg-primary/90 text-white"
+                className="w-full bg-primary hover:bg-primary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
+                disabled={!canAddToCart}
               >
                 Comprar ahora
               </Button>
             </div>
+
 
             {/* Trust badges */}
             <ul className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-200">
