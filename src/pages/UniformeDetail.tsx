@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, FileText, Minus, Plus, Truck, ShieldCheck, RotateCcw } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, FileText, Minus, Plus, Truck, ShieldCheck, RotateCcw, Check, Info, Printer } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
