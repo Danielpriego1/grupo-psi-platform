@@ -1428,13 +1428,13 @@ export function ChatWidget() {
 
             {isLoading && (
               <div className="flex justify-start animate-fade-in" role="status" aria-label="Sora está escribiendo">
-                <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm">
+                <div className="flex items-center gap-2 rounded-[14px] rounded-bl-[4px] bg-white/[0.06] border border-white/[0.08] px-3 py-2 text-[13px]">
                   <span className="inline-flex gap-1" aria-hidden="true">
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#ea580c]" style={{ animationDelay: "300ms" }} />
                   </span>
-                  <span className="text-xs text-muted-foreground italic">Sora está escribiendo…</span>
+                  <span className="text-[11px] text-white/50">Sora está escribiendo…</span>
                 </div>
               </div>
             )}
