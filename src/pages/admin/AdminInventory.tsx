@@ -118,7 +118,7 @@ export default function AdminInventory() {
 
   const openNew = () => {
     setEditItem(null);
-    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", spec_pdf_url: "" });
+    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", spec_pdf_url: "", sizes: "", colors: "" });
     setImages([]);
     setPdfFile(null);
     setPdfName(null);
