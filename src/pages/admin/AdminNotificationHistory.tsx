@@ -273,10 +273,33 @@ export default function AdminNotificationHistory() {
             </SelectContent>
           </Select>
         </div>
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por folio, título…"
+            className="h-8 pl-8 pr-8 text-xs bg-[#0d0d10] border-white/10"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Limpiar búsqueda"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
         <span className="text-[11px] text-muted-foreground ml-auto">
           Mostrando {filtered.length} de {events.length}
         </span>
       </div>
+
+      {/* Devices & preferences */}
+      <DevicesSection />
+
 
       {/* Table */}
       <div className="rounded-xl border border-white/5 bg-[#0d0d10] overflow-hidden">
