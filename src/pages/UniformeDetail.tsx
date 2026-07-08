@@ -101,6 +101,25 @@ export default function UniformeDetail({
     if (idx >= 0 && idx < images.length) setCurrentImage(idx);
   }, [selectedColor, colors, images.length]);
 
+  // Radiogroup keyboard navigation for color swatches.
+  // ArrowRight/Down → next, ArrowLeft/Up → previous, Home → first, End → last.
+  // Selection follows focus so screen readers announce the new color immediately.
+  const colorRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const handleColorKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    if (colors.length === 0) return;
+    const KEYS = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
+    if (!KEYS.includes(e.key)) return;
+    e.preventDefault();
+    let next = idx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (idx + 1) % colors.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (idx - 1 + colors.length) % colors.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = colors.length - 1;
+    setSelectedColor(colors[next]);
+    colorRefs.current[next]?.focus();
+  };
+
+
   // Validation state — used both to gate the CTA and to render inline hints.
   const needsSize = sizes.length > 0;
   const needsColor = colors.length > 0;
