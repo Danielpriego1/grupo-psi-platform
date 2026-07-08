@@ -847,7 +847,7 @@ export function ChatWidget() {
       });
       // instant scroll during streaming — cheaper than smooth
       const el = scrollRef.current;
-      if (el && stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+      if (el && stickToBottomRef.current) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
       if (!done) {
         typingTimeoutRef.current = setTimeout(tick, 18 + Math.random() * 12);
       } else {
