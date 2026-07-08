@@ -17,6 +17,12 @@ interface CartContextType {
   addItem: (item: CartItem) => void;
   removeItem: (productId: string, selectedSize?: string, selectedVariant?: string) => void;
   updateQuantity: (productId: string, quantity: number, selectedSize?: string, selectedVariant?: string) => void;
+  /** Re-select size/color on an existing line; merges if the new variant already exists. */
+  updateLine: (
+    productId: string,
+    from: { selectedSize?: string; selectedVariant?: string },
+    to: { selectedSize?: string; selectedVariant?: string }
+  ) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -74,6 +80,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updateLine: CartContextType["updateLine"] = (productId, from, to) => {
+    setItems((prev) => {
+      const source = prev.find((i) => sameLine(i, { product: { id: productId }, ...from }));
+      if (!source) return prev;
+      // Merge into an existing line if the target variant already exists
+      const target = prev.find(
+        (i) => i !== source && sameLine(i, { product: { id: productId }, ...to })
+      );
+      if (target) {
+        return prev
+          .filter((i) => i !== source)
+          .map((i) => (i === target ? { ...i, quantity: i.quantity + source.quantity } : i));
+      }
+      return prev.map((i) =>
+        i === source
+          ? { ...i, selectedSize: to.selectedSize, selectedVariant: to.selectedVariant }
+          : i
+      );
+    });
+  };
+
   const clearCart = () => setItems([]);
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
@@ -86,7 +113,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, 0);
 
   return (
-    <CartContext.Provider value={{ items, isOpen, setIsOpen, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice }}>
+    <CartContext.Provider value={{ items, isOpen, setIsOpen, addItem, removeItem, updateQuantity, updateLine, clearCart, totalItems, totalPrice }}>
       {children}
     </CartContext.Provider>
   );

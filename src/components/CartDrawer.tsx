@@ -1,24 +1,60 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus, Trash2, ShoppingBag, CreditCard, Loader2 } from "lucide-react";
+import { ShoppingBag, CreditCard, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getProductPrice } from "@/data/products";
+import { CartLineRow } from "@/components/cart/CartLineRow";
 
 export function CartDrawer() {
-  const { items, isOpen, setIsOpen, removeItem, updateQuantity, clearCart, totalItems, totalPrice } = useCart();
+  const { items, isOpen, setIsOpen, clearCart, totalItems, totalPrice } = useCart();
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [stockByProduct, setStockByProduct] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   const BULK_THRESHOLD = 10;
   const isBulkOrder = items.some((i) => i.quantity >= BULK_THRESHOLD);
+
+  // Fetch live inventory stock for every product currently in the cart so we can
+  // gate +/- controls and the checkout button against the real available stock.
+  useEffect(() => {
+    if (!isOpen || items.length === 0) return;
+    const ids = [...new Set(items.map((i) => i.product.id))];
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("inventory")
+        .select("product_id, stock")
+        .in("product_id", ids);
+      if (cancelled || !data) return;
+      const map: Record<string, number> = {};
+      for (const row of data) map[row.product_id] = Number(row.stock);
+      setStockByProduct(map);
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, items]);
+
+  // Aggregate demand per product across all cart lines (variants share the same
+  // pool). Line is "over stock" if the sum of its product's quantities exceeds
+  // available inventory.
+  const demandByProduct = useMemo(() => {
+    const d: Record<string, number> = {};
+    for (const i of items) d[i.product.id] = (d[i.product.id] || 0) + i.quantity;
+    return d;
+  }, [items]);
+
+  const stockIssues = items.filter((i) => {
+    const stock = stockByProduct[i.product.id];
+    return stock != null && demandByProduct[i.product.id] > stock;
+  });
+  const hasStockIssue = stockIssues.length > 0;
 
   // Build WhatsApp message from cart
   const buildWhatsAppMessage = (orderNumber?: string) => {
@@ -28,9 +64,14 @@ export function CartDrawer() {
     items.forEach((item, i) => {
       const base = getProductPrice(item.product, item.selectedSize);
       const price = item.product.discount ? base * (1 - item.product.discount) : base;
+      const hasSizes = !!item.product.sizes && Object.values(item.product.sizes).flat().length > 0;
+      const colorKey = item.product.variants
+        ? Object.keys(item.product.variants).find((k) => /color/i.test(k))
+        : undefined;
+      const hasColors = !!colorKey && (item.product.variants?.[colorKey!]?.length || 0) > 0;
       msg += `${i + 1}. ${item.product.name}`;
-      if (item.selectedSize) msg += ` — Talla: ${item.selectedSize}`;
-      if (item.selectedVariant) msg += ` — Color: ${item.selectedVariant}`;
+      if (hasSizes) msg += ` — Talla: ${item.selectedSize || "—"}`;
+      if (hasColors) msg += ` — Color: ${item.selectedVariant || "—"}`;
       msg += ` x${item.quantity} ($${(price * item.quantity).toFixed(2)} MXN)\n`;
     });
     msg += `\nTotal estimado: $${totalPrice.toFixed(2)} MXN`;
@@ -128,65 +169,36 @@ export function CartDrawer() {
             {/* Items list */}
             <div className="flex-1 overflow-y-auto space-y-3 py-4">
               {items.map((item) => {
-                const base = getProductPrice(item.product, item.selectedSize);
-                const price = item.product.discount ? base * (1 - item.product.discount) : base;
                 const lineKey = `${item.product.id}|${item.selectedSize || ""}|${item.selectedVariant || ""}`;
-                return (
-                  <div key={lineKey} className="flex gap-3 rounded-xl border border-border p-3">
-                    <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-muted/30">
-                      <img
-                        src={item.product.image || "/placeholder.svg"}
-                        alt={item.product.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold line-clamp-1">{item.product.name}</h4>
-                      {item.selectedSize && (
-                        <p className="text-xs text-muted-foreground">Talla: {item.selectedSize}</p>
-                      )}
-                      {item.selectedVariant && (
-                        <p className="text-xs text-muted-foreground">Color: {item.selectedVariant}</p>
-                      )}
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-sm font-bold text-primary">${(price * item.quantity).toFixed(2)}</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selectedSize, item.selectedVariant)}
-                            className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors"
-                            aria-label="Disminuir cantidad"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedSize, item.selectedVariant)}
-                            className="h-7 w-7 rounded-md border border-border flex items-center justify-center hover:bg-muted transition-colors"
-                            aria-label="Aumentar cantidad"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={() => removeItem(item.product.id, item.selectedSize, item.selectedVariant)}
-                            className="h-7 w-7 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors ml-1"
-                            aria-label="Eliminar del carrito"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
+                // Live stock minus what other lines of the same product already claim
+                const productStock = stockByProduct[item.product.id];
+                const otherDemand = (demandByProduct[item.product.id] || 0) - item.quantity;
+                const lineStock = productStock != null ? Math.max(0, productStock - otherDemand) : undefined;
+                return <CartLineRow key={lineKey} item={item} liveStock={lineStock} />;
               })}
             </div>
 
+
             {/* Footer */}
             <div className="border-t border-border pt-4 space-y-3">
+              {hasStockIssue && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive"
+                >
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>
+                    Hay {stockIssues.length} línea{stockIssues.length === 1 ? "" : "s"} con
+                    cantidad mayor al stock disponible. Ajusta las cantidades marcadas para continuar.
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between text-lg font-bold">
                 <span>Total</span>
                 <span>${totalPrice.toFixed(2)} MXN</span>
               </div>
+
 
               {/* Bulk order alert */}
               {isBulkOrder && (
@@ -225,7 +237,7 @@ export function CartDrawer() {
                 <Button
                   size="storeCta"
                   onClick={handleStripeCheckout}
-                  disabled={isCheckingOut || isSubmitting}
+                  disabled={isCheckingOut || isSubmitting || hasStockIssue}
                 >
                   {isCheckingOut ? (
                     <Loader2 className="mr-2 animate-spin" />
@@ -243,7 +255,7 @@ export function CartDrawer() {
                 variant={isBulkOrder ? "default" : "outline"}
                 size="storeCta"
                 onClick={handleQuoteRequest}
-                disabled={isSubmitting || isCheckingOut || (isBulkOrder && !clientName.trim())}
+                disabled={isSubmitting || isCheckingOut || hasStockIssue || (isBulkOrder && !clientName.trim())}
               >
                 {isSubmitting ? (
                   <Loader2 className="mr-2 animate-spin" />
