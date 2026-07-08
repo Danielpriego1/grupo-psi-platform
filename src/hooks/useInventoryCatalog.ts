@@ -28,24 +28,34 @@ export function useInventoryCatalog() {
             const img = (item.image_url || "").trim();
             return img.length > 0 && Number(item.unit_price) > 0;
           })
-          .map((item) => ({
-            id: item.product_id,
-            name: item.product_name,
-            category: item.subcategory
-              ? item.subcategory.split("-").slice(0, 1).join("")
-              : item.category || "EPP",
-            description: `${item.product_name}. ${item.category ? `Categoría: ${item.category}.` : ""} ${item.subcategory ? `Subcategoría: ${item.subcategory}.` : ""}`,
-            priceOriginalMxn: Number(item.unit_price),
-            discount: null,
-            purchaseUrl: null,
-            purchaseStatus: "Available",
-            inStock: item.stock > 0,
-            image: item.image_url || undefined,
-            fromInventory: true,
-            subcategory: (item as any).subcategory || null,
-            specPdfUrl: (item as any).spec_pdf_url || null,
-            stock: item.stock,
-          }));
+          .map((item) => {
+            const sizes = Array.isArray((item as any).sizes) ? ((item as any).sizes as string[]).filter(Boolean) : [];
+            const colors = Array.isArray((item as any).colors) ? ((item as any).colors as string[]).filter(Boolean) : [];
+            return {
+              id: item.product_id,
+              name: item.product_name,
+              category: item.subcategory
+                ? item.subcategory.split("-").slice(0, 1).join("")
+                : item.category || "EPP",
+              description: `${item.product_name}. ${item.category ? `Categoría: ${item.category}.` : ""} ${item.subcategory ? `Subcategoría: ${item.subcategory}.` : ""}`,
+              priceOriginalMxn: Number(item.unit_price),
+              discount: null,
+              purchaseUrl: null,
+              purchaseStatus: "Available",
+              inStock: item.stock > 0,
+              image: item.image_url || undefined,
+              images: Array.isArray((item as any).image_urls) && (item as any).image_urls.length
+                ? (item as any).image_urls
+                : (item.image_url ? [item.image_url] : []),
+              sizes: sizes.length ? { sizeGeneric: sizes } : undefined,
+              variants: colors.length ? { color: colors } : undefined,
+              fromInventory: true,
+              subcategory: (item as any).subcategory || null,
+              specPdfUrl: (item as any).spec_pdf_url || null,
+              stock: item.stock,
+            } as InventoryProduct;
+          });
+
         setInventoryProducts(products);
       }
       setLoading(false);

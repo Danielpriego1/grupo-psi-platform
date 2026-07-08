@@ -650,6 +650,7 @@ export type Database = {
       inventory: {
         Row: {
           category: string | null
+          colors: string[]
           created_at: string
           description: string | null
           id: string
@@ -659,6 +660,7 @@ export type Database = {
           min_stock: number
           product_id: string
           product_name: string
+          sizes: string[]
           spec_pdf_url: string | null
           stock: number
           subcategory: string | null
@@ -667,6 +669,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          colors?: string[]
           created_at?: string
           description?: string | null
           id?: string
@@ -676,6 +679,7 @@ export type Database = {
           min_stock?: number
           product_id: string
           product_name: string
+          sizes?: string[]
           spec_pdf_url?: string | null
           stock?: number
           subcategory?: string | null
@@ -684,6 +688,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          colors?: string[]
           created_at?: string
           description?: string | null
           id?: string
@@ -693,6 +698,7 @@ export type Database = {
           min_stock?: number
           product_id?: string
           product_name?: string
+          sizes?: string[]
           spec_pdf_url?: string | null
           stock?: number
           subcategory?: string | null

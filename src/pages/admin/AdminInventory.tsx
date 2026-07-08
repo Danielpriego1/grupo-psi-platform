@@ -78,9 +78,35 @@ export default function AdminInventory() {
     unit_price: "",
     location: "",
     spec_pdf_url: "",
+    sizes: "",   // comma-separated (e.g. "ECH, CH, M, G, EG, EEG")
+    colors: "",  // comma-separated (e.g. "Blanco, Negro, Marino")
   });
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const { toast } = useToast();
+
+  // Persist current form + editItem id to sessionStorage so navigating away
+  // and coming back doesn't wipe progress. Images with local File objects
+  // can't be persisted — only remote https URLs survive.
+  const DRAFT_KEY = "admin-inventory-draft";
+  const persistDraft = (nextForm = form, nextImages = images, nextPdfName = pdfName, nextEditItemId = editItem?.id ?? null, nextOpen = dialogOpen) => {
+    try {
+      if (!nextOpen) {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      const persistableImages = nextImages
+        .filter((i) => !i.file && i.url && !i.url.startsWith("blob:"))
+        .map((i) => ({ url: i.url }));
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        form: nextForm,
+        images: persistableImages,
+        pdfName: nextPdfName,
+        editItemId: nextEditItemId,
+        skippedLocalImages: nextImages.filter((i) => i.file).length,
+      }));
+    } catch { /* storage may be blocked */ }
+  };
+
 
   const fetchItems = async () => {
     const { data } = await supabase.from("inventory").select("*").order("product_name");
@@ -92,7 +118,7 @@ export default function AdminInventory() {
 
   const openNew = () => {
     setEditItem(null);
-    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", spec_pdf_url: "" });
+    setForm({ product_id: "", product_name: "", category: "", subcategory: "", description: "", stock: "", min_stock: "5", unit_price: "", location: "", spec_pdf_url: "", sizes: "", colors: "" });
     setImages([]);
     setPdfFile(null);
     setPdfName(null);
@@ -112,7 +138,10 @@ export default function AdminInventory() {
       unit_price: String(item.unit_price),
       location: item.location ?? "",
       spec_pdf_url: item.spec_pdf_url ?? "",
+      sizes: Array.isArray(item.sizes) ? item.sizes.join(", ") : "",
+      colors: Array.isArray(item.colors) ? item.colors.join(", ") : "",
     });
+
     const list: string[] = Array.isArray(item.image_urls) && item.image_urls.length
       ? item.image_urls
       : (item.image_url ? [item.image_url] : []);
@@ -133,9 +162,58 @@ export default function AdminInventory() {
   useEffect(() => {
     if (!dialogOpen) {
       images.forEach(revokeLocal);
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOpen]);
+
+  // Autopersist current draft on any relevant change
+  useEffect(() => {
+    persistDraft(form, images, pdfName, editItem?.id ?? null, dialogOpen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, images, pdfName, editItem, dialogOpen]);
+
+  // Restore draft on first mount if present
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { form: typeof form; images: { url: string }[]; pdfName: string | null; editItemId: string | null; skippedLocalImages?: number };
+      setForm(draft.form);
+      setImages((draft.images || []).map((i) => ({ url: i.url })));
+      setPdfName(draft.pdfName ?? null);
+      if (draft.editItemId) {
+        supabase.from("inventory").select("*").eq("id", draft.editItemId).maybeSingle().then(({ data }) => {
+          if (data) setEditItem(data);
+        });
+      }
+      setDialogOpen(true);
+      if (draft.skippedLocalImages && draft.skippedLocalImages > 0) {
+        toast({ title: "Borrador restaurado", description: `Se recuperó el formulario, pero ${draft.skippedLocalImages} foto(s) locales sin guardar se perdieron. Súbelas de nuevo.` });
+      } else {
+        toast({ title: "Borrador restaurado", description: "Continuamos donde te quedaste." });
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Prevent the browser from navigating away (opening the dropped file in a new tab)
+  // when a file is dropped anywhere outside our drop zone.
+  useEffect(() => {
+    const stop = (e: DragEvent) => {
+      // Only intercept file drags — leave regular DnD (image reordering) alone.
+      if (e.dataTransfer?.types?.includes("Files")) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("dragover", stop);
+    window.addEventListener("drop", stop);
+    return () => {
+      window.removeEventListener("dragover", stop);
+      window.removeEventListener("drop", stop);
+    };
+  }, []);
+
 
   // Normaliza una imagen: la encaja (contain) en un lienzo cuadrado 1600x1600 sobre fondo blanco,
   // así todas las fichas del carrusel salen completas, centradas y al mismo tamaño (sin recortes).
@@ -357,6 +435,9 @@ export default function AdminInventory() {
       image_url: finalUrls[0] || null,
       image_urls: finalUrls,
       spec_pdf_url: specPdfUrl,
+      sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
+      colors: form.colors.split(",").map((s) => s.trim()).filter(Boolean),
+
     };
 
     if (editItem) {
@@ -468,17 +549,62 @@ export default function AdminInventory() {
               <Label>Ubicación</Label>
               <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Almacén A" />
             </div>
+
+            {/* Variantes: tallas y colores (aplica principalmente a Uniformes) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tallas disponibles</Label>
+                <Input
+                  value={form.sizes}
+                  onChange={(e) => setForm({ ...form, sizes: e.target.value })}
+                  placeholder="ECH, CH, M, G, EG, EEG"
+                />
+                <p className="text-[11px] text-muted-foreground">Sepáralas con coma. Déjalo vacío si el producto no tiene tallas.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Colores disponibles</Label>
+                <Input
+                  value={form.colors}
+                  onChange={(e) => setForm({ ...form, colors: e.target.value })}
+                  placeholder="Blanco, Negro, Marino"
+                />
+                <p className="text-[11px] text-muted-foreground">Sube las fotos en el mismo orden de los colores para que la imagen cambie al seleccionar cada color.</p>
+              </div>
+            </div>
+
             {/* Image upload + ordering */}
-            <div className="space-y-2">
+            <div
+              className="space-y-2"
+              onDragOver={(e) => {
+                if (e.dataTransfer?.types?.includes("Files")) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "copy";
+                }
+              }}
+              onDrop={async (e) => {
+                if (!e.dataTransfer?.files?.length) return;
+                e.preventDefault();
+                const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+                if (!files.length) return;
+                const tooLarge = files.filter((f) => f.size > 8 * 1024 * 1024);
+                if (tooLarge.length) {
+                  toast({ title: "Imagen muy grande", description: `${tooLarge.length} archivo(s) > 8MB fueron omitidos.`, variant: "destructive" });
+                }
+                const valid = files.filter((f) => f.size <= 8 * 1024 * 1024);
+                const normalized = await Promise.all(valid.map(normalizeImage));
+                setImages((prev) => [...prev, ...normalized.map((f) => ({ url: URL.createObjectURL(f), file: f }))]);
+              }}
+            >
               <Label>Fotos del producto ({images.length})</Label>
-              <p className="text-xs text-muted-foreground">La primera imagen es la principal. <strong>Arrastra</strong> para reordenar o usa las flechas. Las fotos se ajustan automáticamente al cuadrado de la ficha sin recortes.</p>
+              <p className="text-xs text-muted-foreground">Arrastra imágenes aquí o usa el botón. La primera imagen es la principal. Reordena arrastrando o con las flechas.</p>
               <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleImagesSelect} className="hidden" />
               {images.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 py-8">
                   <ImageIcon className="w-8 h-8 text-muted-foreground/60" />
-                  <p className="text-xs text-muted-foreground">Aún no hay fotos. Sube al menos una para mostrar en el carrusel.</p>
+                  <p className="text-xs text-muted-foreground">Aún no hay fotos. Arrástralas aquí o pulsa el botón inferior.</p>
                 </div>
               ) : (
+
                 <div ref={gridRef} className={cn("grid grid-cols-3 sm:grid-cols-4 gap-3", touchDragging && "touch-none")}>
                   {images.map((img, i) => (
                     <div
