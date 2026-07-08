@@ -958,21 +958,18 @@ export function ChatWidget() {
           const transcript = (data?.text || "").trim();
           setIsTranscribing(false);
           if (transcript) {
-            // Populate the input so the user can review/edit before sending.
-            setInput((prev) => {
-              const merged = prev.trim() ? `${prev.trim()} ${transcript}` : transcript;
-              return merged;
-            });
-            // Defer to next tick so the textarea has the new value before resizing/focusing.
-            requestAnimationFrame(() => {
-              adjustHeight();
-              const el = inputRef.current;
-              if (el) {
-                el.focus();
-                const end = el.value.length;
-                try { el.setSelectionRange(end, end); } catch { /* noop */ }
-              }
-            });
+            // Voice-in → voice-out: send immediately and mark this turn as voice
+            // so `speak()` will play Sora's spoken reply back to the user.
+            lastInputViaVoiceRef.current = true;
+            const pending = input.trim();
+            const finalText = pending ? `${pending} ${transcript}` : transcript;
+            setInput("");
+            requestAnimationFrame(() => adjustHeight());
+            try {
+              await sendText(finalText);
+            } catch (err) {
+              console.error("voice send error", err);
+            }
           }
         } catch (err) {
           console.error("transcribe error", err);
