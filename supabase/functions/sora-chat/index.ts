@@ -123,15 +123,37 @@ Deno.serve(async (req) => {
       })),
     ];
 
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-    if (!OPENROUTER_API_KEY) {
-      console.error("OPENROUTER_API_KEY missing");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY missing");
       return new Response(JSON.stringify({ reply: "Intenta de nuevo en un momento." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const tools = [
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: apiMessages,
+        max_tokens: 800,
+        temperature: 0.5,
+        tools,
+        tool_choice: "auto",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI API error:", response.status, errorText);
+      return new Response(JSON.stringify({ reply: "Intenta de nuevo en un momento." }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
       {
         type: "function",
         function: {
