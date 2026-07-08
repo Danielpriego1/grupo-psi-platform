@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { InventoryVariantPreview } from "@/components/admin/InventoryVariantPreview";
 
 const SUBCATEGORY_OPTIONS = [
   "EPP-Guantes",
@@ -569,7 +570,15 @@ export default function AdminInventory() {
                   placeholder="Blanco, Negro, Marino"
                 />
                 <p className="text-[11px] text-muted-foreground">Sube las fotos en el mismo orden de los colores para que la imagen cambie al seleccionar cada color.</p>
-              </div>
+            </div>
+
+            {/* Vista previa en vivo de talla/color/imagen para el operador */}
+            <InventoryVariantPreview
+              productName={form.product_name}
+              sizes={form.sizes.split(",").map((s) => s.trim()).filter(Boolean)}
+              colors={form.colors.split(",").map((s) => s.trim()).filter(Boolean)}
+              images={images.map((i) => i.url).filter(Boolean)}
+            />
             </div>
 
             {/* Image upload + ordering */}
