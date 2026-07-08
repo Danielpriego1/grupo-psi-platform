@@ -155,6 +155,23 @@ const ProductDetail = () => {
   const seoDescription = (product.description || product.name).slice(0, 158);
   const seoImage = allImages[0]?.startsWith("http") ? allImages[0] : undefined;
 
+  // Uniformes use a dedicated Yazbek-style e-commerce layout
+  if (categorySlug === "uniformes") {
+    return (
+      <UniformeDetail
+        product={product}
+        images={allImages}
+        sizes={allSizes}
+        finalPrice={finalPrice}
+        basePrice={basePrice}
+        specPdfUrl={specPdfUrl}
+        inventoryStock={inventoryItem?.stock ?? null}
+        categorySlug={categorySlug}
+      />
+    );
+  }
+
+
   return (
     <div className="min-h-screen bg-[#09090b] text-white pt-24 pb-20">
       <SEO
