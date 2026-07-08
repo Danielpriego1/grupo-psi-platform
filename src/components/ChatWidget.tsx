@@ -166,7 +166,7 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
     <div className={cn("flex w-full mb-4", msg.role === "user" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[85%] rounded-[1.5rem] px-5 py-3.5 text-sm leading-relaxed shadow-sm transition-all duration-300",
+          "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm transition-all duration-300",
           msg.role === "user"
             ? "bg-gradient-to-br from-[#ea580c] to-[#c2410c] text-white rounded-br-none shadow-[#ea580c]/20"
             : "bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-bl-none"
