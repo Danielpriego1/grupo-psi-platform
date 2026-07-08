@@ -686,39 +686,88 @@ export function ChatWidget() {
   const recStreamRef = useRef<MediaStream | null>(null);
   const recStartRef = useRef<number>(0);
   const lastSpokenRef = useRef<string>("");
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Tracks whether the most recent user message came in via microphone.
+  // Voice-in → voice-out; typed input stays silent even if voiceEnabled is on.
+  const lastInputViaVoiceRef = useRef<boolean>(false);
+
+  const stopTtsPlayback = useCallback(() => {
+    const a = ttsAudioRef.current;
+    if (a) {
+      try { a.pause(); } catch { /* noop */ }
+      try { a.src = ""; } catch { /* noop */ }
+      ttsAudioRef.current = null;
+    }
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("soraVoice", voiceEnabled ? "1" : "0");
     }
-    if (!voiceEnabled && typeof window !== "undefined") {
-      window.speechSynthesis?.cancel();
-    }
+    if (!voiceEnabled) stopTtsPlayback();
     broadcast({ type: "voice", value: voiceEnabled });
-  }, [voiceEnabled, broadcast]);
+  }, [voiceEnabled, broadcast, stopTtsPlayback]);
 
 
-  const speak = useCallback((text: string) => {
-    if (!voiceEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    const clean = text
+  const speak = useCallback(async (text: string) => {
+    if (!voiceEnabled) return;
+    if (!lastInputViaVoiceRef.current) return; // only speak back to voice input
+    const clean = (text || "")
       .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`([^`]+)`/g, "$1")
       .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
       .replace(/https?:\/\/\S+/g, "")
       .replace(/[•·]/g, "")
+      .replace(/\s{2,}/g, " ")
       .trim();
     if (!clean || clean === lastSpokenRef.current) return;
     lastSpokenRef.current = clean;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = "es-MX";
-    const voices = window.speechSynthesis.getVoices();
-    const v = voices.find(v => /es[-_]MX/i.test(v.lang)) || voices.find(v => /^es/i.test(v.lang));
-    if (v) u.voice = v;
-    u.rate = 1.05;
-    u.pitch = 1.05;
-    window.speechSynthesis.speak(u);
-  }, [voiceEnabled]);
+    stopTtsPlayback();
+
+    try {
+      // Server-side TTS via Lovable AI (reliable across browsers, no voice-list race).
+      const { data, error } = await supabase.functions.invoke("sora-speak", {
+        body: { text: clean },
+      });
+      if (error) throw error;
+      // supabase-js returns a Blob for non-JSON responses.
+      let blob: Blob | null = null;
+      if (data instanceof Blob) blob = data;
+      else if (data instanceof ArrayBuffer) blob = new Blob([data], { type: "audio/mpeg" });
+      if (!blob || blob.size < 128) throw new Error("empty_audio");
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.preload = "auto";
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        if (ttsAudioRef.current === audio) ttsAudioRef.current = null;
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        if (ttsAudioRef.current === audio) ttsAudioRef.current = null;
+      };
+      ttsAudioRef.current = audio;
+      // The user just tapped the mic → we have a fresh gesture, so autoplay is allowed.
+      const p = audio.play();
+      if (p && typeof p.catch === "function") {
+        p.catch((err) => console.warn("tts autoplay blocked", err));
+      }
+    } catch (err) {
+      console.warn("sora-speak failed, falling back to speechSynthesis", err);
+      // Best-effort fallback so we still respond audibly when the edge function fails.
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        try {
+          const u = new SpeechSynthesisUtterance(clean);
+          u.lang = "es-MX";
+          window.speechSynthesis.speak(u);
+        } catch { /* noop */ }
+      }
+    }
+  }, [voiceEnabled, stopTtsPlayback]);
 
 
   // Performance instrumentation (dev or localStorage.chatPerf="1")
