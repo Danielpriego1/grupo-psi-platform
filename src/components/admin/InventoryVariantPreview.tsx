@@ -146,25 +146,35 @@ export function InventoryVariantPreview({ productName, sizes, colors, images }: 
 
           {colors.length > 0 && (
             <div className="space-y-1.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <div id="preview-color-label" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Color{selectedColor && <span className="ml-1 normal-case font-normal text-foreground/80">— {selectedColor}</span>}
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div
+                role="radiogroup"
+                aria-labelledby="preview-color-label"
+                className="flex flex-wrap gap-1.5"
+              >
                 {colors.map((c, i) => {
                   const swatch = COLOR_SWATCHES[c.toLowerCase()] || "#e5e7eb";
                   const active = selectedColor === c;
                   const hasImage = i < images.length;
+                  const tabIndex = active || (!selectedColor && i === 0) ? 0 : -1;
                   return (
                     <button
                       key={c}
+                      ref={(el) => { colorRefs.current[i] = el; }}
                       type="button"
+                      role="radio"
+                      aria-checked={active}
                       onClick={() => setSelectedColor(c)}
+                      onKeyDown={(e) => handleColorKeyDown(e, i)}
                       title={hasImage ? c : `${c} (sin foto en la posición ${i + 1})`}
-                      aria-label={c}
-                      aria-pressed={active}
+                      aria-label={`Color ${c}${hasImage ? "" : " (sin foto)"}`}
+                      tabIndex={tabIndex}
                       data-testid={`preview-color-${c}`}
                       className={cn(
                         "h-8 w-8 rounded-full border-2 transition-all relative",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         active ? "border-primary ring-2 ring-primary/40 scale-105" : "border-white/30 hover:border-white/60",
                         !hasImage && "opacity-60"
                       )}
