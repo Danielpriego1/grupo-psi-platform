@@ -116,13 +116,15 @@ export function CartLineRow({ item, liveStock }: Props) {
                       {availableColors.map((c) => (
                         <button
                           key={c}
-                          onClick={() =>
+                          onClick={() => {
                             updateLine(
                               item.product.id,
                               { selectedSize: item.selectedSize, selectedVariant: item.selectedVariant },
                               { selectedSize: item.selectedSize, selectedVariant: c }
-                            )
-                          }
+                            );
+                            persistSelection(item.selectedSize, c);
+                          }}
+
                           className={cn(
                             "h-8 rounded-md border px-2 text-xs font-semibold",
                             item.selectedVariant === c
