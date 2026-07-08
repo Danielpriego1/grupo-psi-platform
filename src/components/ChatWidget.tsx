@@ -1751,8 +1751,8 @@ export function ChatWidget() {
               </Button>
             </div>
           </form>
-          <div className="mt-3 text-center">
-            <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">Powered by Grupo PSI Intelligence</span>
+          <div className="mt-2 text-center">
+            <span className="text-[9px] font-medium text-white/15">Grupo PSI</span>
           </div>
         </div>
       </div>
