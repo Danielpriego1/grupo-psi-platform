@@ -142,8 +142,11 @@ export function mapInventorySubcategory(
   }
 
   // Uniformes
-  if (category === "Uniformes" || sub.toLowerCase().includes("playera") || sub.toLowerCase().includes("camisa")) {
-    return { mainCategory: "uniformes", subcategory: sub || "Playeras tipo polo" };
+  if (sub.startsWith("Uniformes-")) {
+    return { mainCategory: "uniformes", subcategory: sub.replace("Uniformes-", "") };
+  }
+  if (category === "Uniformes" || category === "Uniformes" || sub.toLowerCase().includes("playera") || sub.toLowerCase().includes("camisa") || sub.toLowerCase().includes("sudadera") || sub.toLowerCase().includes("chaleco")) {
+    return { mainCategory: "uniformes", subcategory: sub || "Playeras polo caballero" };
   }
 
   // Mantenimiento
