@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { friendlyAuthError } from "@/lib/authErrors";
 import { cn } from "@/lib/utils";
+import { clearRememberPreference } from "@/lib/authSession";
 
 const schema = z
   .object({
@@ -152,10 +153,21 @@ export default function ChangePassword() {
       .invoke("notify-password-change", { body: {} })
       .catch((err) => console.warn("notify-password-change failed:", err));
 
+    // Cerrar TODAS las sesiones activas (todos los dispositivos) por seguridad.
+    // scope: 'global' invalida los refresh tokens del usuario en el servidor.
+    try {
+      await supabase.auth.signOut({ scope: "global" });
+    } catch (err) {
+      console.warn("global signOut failed, falling back to local:", err);
+      await signOut();
+    }
+    clearRememberPreference();
+
     toast.success("Contraseña actualizada", {
-      description: "Te enviamos un correo de confirmación con los detalles del cambio.",
+      description:
+        "Por seguridad cerramos tu sesión en todos los dispositivos. Vuelve a iniciar sesión.",
     });
-    navigate("/portal", { replace: true });
+    navigate("/login", { replace: true });
   };
 
 
