@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { friendlyAuthError } from "@/lib/authErrors";
 import { cn } from "@/lib/utils";
+import { clearRememberPreference } from "@/lib/authSession";
 
 const schema = z
   .object({
