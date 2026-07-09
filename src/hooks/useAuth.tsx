@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { clearRememberPreference, enforceSessionExpiration } from "@/lib/authSession";
 import type { User, Session } from "@supabase/supabase-js";
 
 type AppRole = "admin" | "superadmin" | "vendor" | "tecnico" | "client";
@@ -55,7 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      // Aplicar expiración por "Recordarme" antes de exponer la sesión.
+      if (s?.user) {
+        const expired = await enforceSessionExpiration();
+        if (expired) {
+          setSession(null);
+          setUser(null);
+          setRoles([]);
+          setRolesLoading(false);
+          setLoading(false);
+          return;
+        }
+      }
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
@@ -107,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    clearRememberPreference();
     await supabase.auth.signOut();
   };
 
