@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, LogOut, ShieldCheck, Receipt } from "lucide-react";
+import { FileText, LogOut, ShieldCheck, Receipt, KeyRound } from "lucide-react";
 
 export default function PortalHome() {
   const { user, signOut } = useAuth();
@@ -56,6 +56,21 @@ export default function PortalHome() {
               <p className="text-sm text-muted-foreground mb-4">Consulta el estatus de tus pagos y descarga tus tickets con QR.</p>
               <Button asChild variant="outline" size="sm">
                 <Link to="/portal/pagos">Ver pagos</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <KeyRound className="h-5 w-5 text-primary" />
+                Seguridad
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">Actualiza tu contraseña y protege tu cuenta.</p>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/portal/cambiar-contrasena">Cambiar contraseña</Link>
               </Button>
             </CardContent>
           </Card>

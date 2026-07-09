@@ -31,6 +31,7 @@ import AdminCertificates from "./pages/admin/AdminCertificates";
 import PortalHome from "./pages/portal/PortalHome";
 import PortalCertificates from "./pages/portal/PortalCertificates";
 import PortalOrders from "./pages/portal/PortalOrders";
+import ChangePassword from "./pages/portal/ChangePassword";
 import VerifyCertificate from "./pages/VerifyCertificate";
 import VerifyEquipment from "./pages/VerifyEquipment";
 import AdminEquipment from "./pages/admin/AdminEquipment";
@@ -230,6 +231,7 @@ const App = () => (
               <Route path="/portal" element={<ProtectedRoute><PortalHome /></ProtectedRoute>} />
               <Route path="/portal/certificados" element={<ProtectedRoute><PortalCertificates /></ProtectedRoute>} />
               <Route path="/portal/pagos" element={<ProtectedRoute><PortalOrders /></ProtectedRoute>} />
+              <Route path="/portal/cambiar-contrasena" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
 
               {/* Public verification (QR targets) */}
               <Route path="/verificar/certificado/:token" element={<VerifyCertificate />} />
