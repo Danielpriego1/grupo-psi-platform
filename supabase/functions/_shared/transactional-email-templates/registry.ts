@@ -13,6 +13,7 @@ import { template as nuevaSolicitudMantenimiento } from './nueva-solicitud-mante
 import { template as nuevaCitaAgendada } from './nueva-cita-agendada.tsx'
 import { template as reportePagosDiario } from './reporte-pagos-diario.tsx'
 import { template as nuevaCotizacion } from './nueva-cotizacion.tsx'
+import { template as passwordCambiada } from './password-cambiada.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'nuevo-pedido-pagado': nuevoPedidoPagado,
@@ -20,4 +21,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'nueva-cita-agendada': nuevaCitaAgendada,
   'reporte-pagos-diario': reportePagosDiario,
   'nueva-cotizacion': nuevaCotizacion,
+  'password-cambiada': passwordCambiada,
 }
