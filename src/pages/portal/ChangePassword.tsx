@@ -85,30 +85,56 @@ export default function ChangePassword() {
       return;
     }
 
-    if (!user?.email) {
-      setErrors({ form: "No hay una sesión activa. Vuelve a iniciar sesión." });
+    // 1) Verificar que exista una sesión válida y vigente antes de continuar.
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      setErrors({ form: "Tu sesión expiró. Vuelve a iniciar sesión para cambiar tu contraseña." });
+      toast.error("Sesión expirada");
+      await signOut();
+      navigate("/login", { replace: true });
       return;
     }
 
+    // 2) Confirmar que el usuario actual siga vinculado a la sesión (evita cambios cruzados).
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user?.email || userData.user.id !== user?.id) {
+      setErrors({ form: "No pudimos verificar tu identidad. Vuelve a iniciar sesión." });
+      toast.error("Verificación fallida");
+      await signOut();
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    const verifiedEmail = userData.user.email;
     setLoading(true);
 
-    // Reautenticación segura: verificar la contraseña actual antes de actualizar.
+    // 3) Reautenticación: verificar la contraseña actual contra el email verificado.
     const { error: verifyError } = await supabase.auth.signInWithPassword({
-      email: user.email,
+      email: verifiedEmail,
       password: parsed.data.current,
     });
     if (verifyError) {
       setLoading(false);
+      const friendly = friendlyAuthError(verifyError as { message?: string; code?: string });
       const msg =
-        friendlyAuthError(verifyError as { message?: string; code?: string }) ===
-        "Correo o contraseña incorrectos."
+        friendly === "Correo o contraseña incorrectos."
           ? "La contraseña actual no es correcta."
-          : friendlyAuthError(verifyError as { message?: string; code?: string });
+          : friendly;
       setErrors({ current: msg });
       document.getElementById("current")?.focus();
       return;
     }
 
+    // 4) Refrescar la sesión para asegurar tokens frescos antes del update sensible.
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) {
+      setLoading(false);
+      setErrors({ form: "No pudimos refrescar tu sesión. Intenta de nuevo." });
+      toast.error("Sesión no verificada");
+      return;
+    }
+
+    // 5) Actualizar contraseña.
     const { error: updateError } = await supabase.auth.updateUser({
       password: parsed.data.next,
     });
@@ -131,6 +157,7 @@ export default function ChangePassword() {
     });
     navigate("/portal", { replace: true });
   };
+
 
   return (
     <div className="min-h-screen bg-background">
