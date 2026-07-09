@@ -121,8 +121,13 @@ export default function ChangePassword() {
       return;
     }
 
+    // Notificación de seguridad al correo del usuario (no bloqueante).
+    supabase.functions
+      .invoke("notify-password-change", { body: {} })
+      .catch((err) => console.warn("notify-password-change failed:", err));
+
     toast.success("Contraseña actualizada", {
-      description: "Usa tu nueva contraseña la próxima vez que inicies sesión.",
+      description: "Te enviamos un correo de confirmación con los detalles del cambio.",
     });
     navigate("/portal", { replace: true });
   };
