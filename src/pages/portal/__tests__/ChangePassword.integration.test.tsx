@@ -3,14 +3,22 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
-// --- Mocks ---
-const navigateMock = vi.fn();
+// --- Mocks (hoisted so vi.mock factories can reference them) ---
+const { navigateMock, signOutMock, toastSuccess, toastError, clearRememberMock } = vi.hoisted(
+  () => ({
+    navigateMock: vi.fn(),
+    signOutMock: vi.fn().mockResolvedValue(undefined),
+    toastSuccess: vi.fn(),
+    toastError: vi.fn(),
+    clearRememberMock: vi.fn(),
+  }),
+);
+
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return { ...actual, useNavigate: () => navigateMock };
 });
 
-const signOutMock = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({
     user: { id: "user-123", email: "u@test.com" },
@@ -18,13 +26,10 @@ vi.mock("@/hooks/useAuth", () => ({
   }),
 }));
 
-const toastSuccess = vi.fn();
-const toastError = vi.fn();
 vi.mock("sonner", () => ({
   toast: { success: toastSuccess, error: toastError },
 }));
 
-const clearRememberMock = vi.fn();
 vi.mock("@/lib/authSession", () => ({
   clearRememberPreference: clearRememberMock,
 }));
