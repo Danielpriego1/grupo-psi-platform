@@ -29,7 +29,7 @@ vi.mock("@/lib/authSession", () => ({
   clearRememberPreference: clearRememberMock,
 }));
 
-const supabaseMock = {
+const supabaseMock = vi.hoisted(() => ({
   auth: {
     getSession: vi.fn(),
     getUser: vi.fn(),
@@ -38,8 +38,8 @@ const supabaseMock = {
     updateUser: vi.fn(),
     signOut: vi.fn(),
   },
-  functions: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
-};
+  functions: { invoke: vi.fn() },
+}));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: supabaseMock }));
 
 import ChangePassword from "../ChangePassword";
