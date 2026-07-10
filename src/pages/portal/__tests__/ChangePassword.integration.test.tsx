@@ -61,6 +61,7 @@ async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  supabaseMock.functions.invoke.mockResolvedValue({ data: null, error: null });
   supabaseMock.auth.getSession.mockResolvedValue({
     data: { session: { access_token: "t" } },
     error: null,
