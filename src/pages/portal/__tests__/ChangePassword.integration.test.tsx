@@ -161,4 +161,27 @@ describe("ChangePassword flow (integration)", () => {
     expect(signOutMock).toHaveBeenCalled();
     expect(clearRememberMock).toHaveBeenCalled();
   });
+
+  it("confirma el cambio aunque la edge function de notificación falle", async () => {
+    // La invocación a notify-password-change falla, pero NO debe bloquear el flujo.
+    supabaseMock.functions.invoke.mockRejectedValueOnce(new Error("edge_down"));
+    const user = userEvent.setup();
+    renderPage();
+    await fillAndSubmit(user);
+
+    // Update sí ocurre
+    await waitFor(() => expect(supabaseMock.auth.updateUser).toHaveBeenCalled());
+
+    // signOut global + redirect + toast success igualmente
+    await waitFor(() =>
+      expect(supabaseMock.auth.signOut).toHaveBeenCalledWith({ scope: "global" }),
+    );
+    await waitFor(() =>
+      expect(navigateMock).toHaveBeenCalledWith("/login", { replace: true }),
+    );
+    expect(toastSuccess).toHaveBeenCalled();
+    // No se muestra error al usuario por el fallo del email
+    expect(toastError).not.toHaveBeenCalled();
+    expect(clearRememberMock).toHaveBeenCalled();
+  });
 });
