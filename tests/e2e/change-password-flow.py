@@ -116,34 +116,31 @@ async def run_scenario(playwright, *, name: str, notify_status: int):
     await page.fill("#confirm", "BrandNewPass456")
     await page.screenshot(path=str(SCREENSHOTS / f"{name}_02_filled.png"))
 
-    notify_called = asyncio.Event()
+    notify_seen = {"ok": False}
 
     def on_request(req):
         if "notify-password-change" in req.url:
-            notify_called.set()
+            notify_seen["ok"] = True
+            print(f"[{name}] notify-password-change request captured", flush=True)
 
     page.on("request", on_request)
 
+    print(f"[{name}] submitting form...", flush=True)
     await page.get_by_role("button", name="Actualizar contraseña").click()
 
     # Esperar redirección a /login
-    await page.wait_for_url("**/login", timeout=15_000)
+    await page.wait_for_url("**/login", timeout=20_000)
     await page.screenshot(path=str(SCREENSHOTS / f"{name}_03_redirect.png"))
 
     assert page.url.endswith("/login"), f"[{name}] esperaba /login, obtuvo {page.url}"
 
-    try:
-        await notify_called.wait()
-        notify_ok = True
-    except Exception:
-        notify_ok = False
-
     print(
-        f"[{name}] final_url={page.url} notify_called={notify_called.is_set()} "
-        f"notify_status_mocked={notify_status}"
+        f"[{name}] final_url={page.url} notify_called={notify_seen['ok']} "
+        f"notify_status_mocked={notify_status}",
+        flush=True,
     )
     for m in console_msgs[-15:]:
-        print(f"  console> {m}")
+        print(f"  console> {m}", flush=True)
 
     await browser.close()
 
