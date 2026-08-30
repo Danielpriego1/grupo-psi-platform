@@ -1,0 +1,71 @@
+name: Timeline E2E (visual + a11y)
+
+# Estas pruebas cubren la sección "Continuidad Operativa" del Home:
+#   - regresión visual del timeline (densidades, zoom 50%-200%, rotación móvil)
+#   - accesibilidad (prefers-reduced-motion, teclado, axe-core WCAG 2 A/AA)
+#
+# Para que un fallo BLOQUEE el merge, marca el job "timeline-e2e" como
+# "Required status check" en: Settings > Branches > Branch protection rules > main.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  timeline-e2e:
+    name: timeline-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install app deps
+        run: bun install --frozen-lockfile
+
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright pillow
+          python -m playwright install --with-deps chromium
+
+      - name: Build app
+        run: bun run build
+
+      - name: Serve build
+        run: |
+          bunx --bun vite preview --port 8080 --strictPort > /tmp/preview.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:8080/ && break
+            sleep 1
+          done
+          curl -sf -o /dev/null http://localhost:8080/ || (cat /tmp/preview.log; exit 1)
+
+      - name: Visual regression (timeline)
+        env:
+          APP_URL: http://localhost:8080
+        run: python tests/e2e/continuidad-timeline-visual.py
+
+      - name: Accessibility audit (timeline)
+        if: always()
+        env:
+          APP_URL: http://localhost:8080
+        run: python tests/e2e/continuidad-timeline-a11y.py
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: timeline-screenshots
+          path: |
+            tests/e2e/screenshots/timeline/**
+          retention-days: 7
