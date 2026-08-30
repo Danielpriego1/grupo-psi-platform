@@ -52,7 +52,7 @@ const Index = () => {
         }}
       />
       <HeroSection onScrollToProducts={scrollToProducts} />
-
+      <ContinuidadOperativaSection />
 
       {/* Vallen-style Category cards section */}
       <main ref={catalogRef} className="container mx-auto px-4 py-20">
