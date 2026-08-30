@@ -69,6 +69,9 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 220 16% 22%;
     --sidebar-ring: 215 65% 60%;
+
+    --cta-strong: 215 70% 32%;
+    --cta-strong-hover: 215 70% 26%;
   }
 }
 
