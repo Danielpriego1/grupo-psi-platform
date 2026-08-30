@@ -247,7 +247,7 @@ export function ContinuidadOperativaSection() {
           {benefits.map((item, i) => (
             <div
               key={item.title}
-              className={`group relative rounded-3xl border border-white/10 bg-white/5 p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:bg-white/[0.08] hover:shadow-[0_30px_60px_-15px_rgba(255,100,0,0.15)] motion-reduce:transition-none motion-reduce:hover:transform-none ${
+              className={`group relative rounded-3xl border border-white/10 bg-white/5 p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:bg-white/[0.08] hover:shadow-[0_30px_60px_-15px_rgba(255,100,0,0.15)] motion-reduce:!transition-none motion-reduce:hover:transform-none ${
                 benefitsRef.inView
                   ? "translate-y-0 opacity-100"
                   : "translate-y-8 opacity-0"
@@ -289,7 +289,7 @@ export function ContinuidadOperativaSection() {
               {/* Connecting line */}
               <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" />
               <div
-                className="absolute left-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[width,opacity] duration-700 ease-out will-change-[width] motion-reduce:transition-none"
+                className="absolute left-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[width,opacity] duration-700 ease-out will-change-[width] motion-reduce:!transition-none"
                 style={{
                   width: `${desktopProgress}%`,
                   opacity: desktopProgress > 0 ? 1 : 0,
@@ -305,12 +305,12 @@ export function ContinuidadOperativaSection() {
                       role="listitem"
                       ref={desktopNodes.setNode(i)}
                       data-node-index={i}
-                      className={`flex flex-col items-center text-center transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:transition-none ${
+                      className={`flex flex-col items-center text-center transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:!transition-none ${
                         on ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                       }`}
                     >
                       <div
-                        className={`relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:transition-none ${
+                        className={`relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:!transition-none ${
                           on
                             ? "scale-100 border-primary glow-primary"
                             : "scale-90 border-white/20"
@@ -342,7 +342,7 @@ export function ContinuidadOperativaSection() {
             <div className="relative space-y-8 pl-10">
               <div className="absolute bottom-4 left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary/20 via-primary/50 to-primary/20" />
               <div
-                className="absolute left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[height,opacity] duration-700 ease-out will-change-[height] motion-reduce:transition-none"
+                className="absolute left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[height,opacity] duration-700 ease-out will-change-[height] motion-reduce:!transition-none"
                 style={{
                   height: `calc((100% - 2rem) * ${mobileProgress / 100})`,
                   opacity: mobileProgress > 0 ? 1 : 0,
@@ -357,12 +357,12 @@ export function ContinuidadOperativaSection() {
                     role="listitem"
                     ref={mobileNodes.setNode(i)}
                     data-node-index={i}
-                    className={`relative transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:transition-none ${
+                    className={`relative transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:!transition-none ${
                       on ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
                     }`}
                   >
                     <div
-                      className={`absolute left-[-2.5rem] top-0 z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:transition-none ${
+                      className={`absolute left-[-2.5rem] top-0 z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:!transition-none ${
                         on
                           ? "scale-100 border-primary glow-primary"
                           : "scale-90 border-white/20"
@@ -398,7 +398,7 @@ export function ContinuidadOperativaSection() {
           {extras.map((item, i) => (
             <div
               key={item.title}
-              className={`group relative rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center transition-all duration-500 hover:-translate-y-2 hover:border-primary/30 hover:bg-white/[0.06] motion-reduce:transition-none motion-reduce:hover:transform-none ${
+              className={`group relative rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center transition-all duration-500 hover:-translate-y-2 hover:border-primary/30 hover:bg-white/[0.06] motion-reduce:!transition-none motion-reduce:hover:transform-none ${
                 extrasRef.inView
                   ? "translate-y-0 opacity-100"
                   : "translate-y-8 opacity-0"
@@ -430,7 +430,7 @@ export function ContinuidadOperativaSection() {
           <Button
             asChild
             size="lg"
-            className="glow-primary px-8 py-6 text-base font-black uppercase tracking-widest transition-all duration-300 hover:scale-105"
+            className="glow-primary bg-[hsl(var(--cta-strong))] px-8 py-6 text-base font-black uppercase tracking-widest text-white transition-all duration-300 hover:scale-105 hover:bg-[hsl(var(--cta-strong-hover))] motion-reduce:!transition-none motion-reduce:hover:scale-100"
           >
             <a href="#servicio-administrativo">
               Conozca nuestro Servicio Administrativo y Personalizado
