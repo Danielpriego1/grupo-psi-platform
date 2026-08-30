@@ -38,7 +38,7 @@ def compare(baseline_path: str, actual_path: str) -> float:
     if a.size != b.size:
         return 1.0
     diff = ImageChops.difference(a, b)
-    changed = sum(1 for px in diff.getdata() if max(px) > 12)
+    changed = sum(1 for px in diff.convert("L").tobytes() if px > 12)
     return changed / (a.size[0] * a.size[1])
 
 
