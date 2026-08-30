@@ -65,26 +65,40 @@ INSTRUMENT_JS = """() => {
 
   let last = performance.now();
   const tick = (now) => {
-    state.frames.push(now - last);
+    // Se guarda { t: instante, d: duración } para poder recortar la medición
+    // exactamente a la ventana de la animación del timeline.
+    state.frames.push({ t: now, d: now - last });
     last = now;
-    if (state.frames.length < 900) requestAnimationFrame(tick);
+    if (state.frames.length < 1200) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
 }"""
 
+# Margen tras el último nodo para incluir el final de la transición (700ms CSS)
+ANIMATION_TAIL_MS = 800
+
 
 def summarize(state: dict) -> dict:
-    frames = [f for f in state["frames"] if f > 0][1:]
     acts = [a for a in state["activations"] if a is not None]
+    start = state["sectionVisibleAt"]
+    end = (acts[-1] + ANIMATION_TAIL_MS) if acts else None
+
+    raw = [f for f in state["frames"] if f["d"] > 0][1:]
+    # Solo los frames de la ventana de animación del timeline: el resto del
+    # scroll (imágenes, mapa, otras secciones) no es lo que medimos aquí.
+    window = (
+        [f for f in raw if start is not None and start <= f["t"] <= end]
+        if end is not None
+        else raw
+    )
+    frames = [f["d"] for f in (window or raw)]
     long_frames = [f for f in frames if f > 32]
     avg = sum(frames) / len(frames) if frames else 0
     return {
         "nodos_activados": len(acts),
         "activacion_total_ms": round(acts[-1] - acts[0], 1) if len(acts) > 1 else 0,
         "visible_a_ultimo_nodo_ms": (
-            round(acts[-1] - state["sectionVisibleAt"], 1)
-            if acts and state["sectionVisibleAt"] is not None
-            else None
+            round(acts[-1] - start, 1) if acts and start is not None else None
         ),
         "fps_medio": round(1000 / avg, 1) if avg else 0,
         "peor_frame_ms": round(max(frames), 1) if frames else 0,
@@ -93,6 +107,7 @@ def summarize(state: dict) -> dict:
         else 0,
         "frames_medidos": len(frames),
     }
+
 
 
 async def run() -> int:
