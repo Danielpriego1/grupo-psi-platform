@@ -162,6 +162,16 @@ export function ContinuidadOperativaSection() {
   const header = useInView<HTMLDivElement>(0.2);
   const benefitsRef = useInView<HTMLDivElement>(0.15);
   const timelineRef = useInView<HTMLDivElement>(0.2);
+  const desktopNodes = useInViewItems(timeline.length, 0.6);
+  const mobileNodes = useInViewItems(timeline.length, 0.6);
+  const desktopProgress =
+    desktopNodes.reachedIndex < 0
+      ? 0
+      : ((desktopNodes.reachedIndex + 1) / timeline.length) * 100;
+  const mobileProgress =
+    mobileNodes.reachedIndex < 0
+      ? 0
+      : ((mobileNodes.reachedIndex + 1) / timeline.length) * 100;
   const extrasRef = useInView<HTMLDivElement>(0.15);
   const ctaRef = useInView<HTMLDivElement>(0.3);
 
