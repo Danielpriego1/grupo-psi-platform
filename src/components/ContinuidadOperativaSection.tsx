@@ -199,7 +199,14 @@ export function ContinuidadOperativaSection() {
       block: "start",
     });
     target.focus({ preventScroll: true });
+    // Con Enter el navegador puede procesar la activación del enlace después
+    // del keydown y devolver el foco al documento: lo reafirmamos en el
+    // siguiente frame para que teclado y lectores de pantalla no lo pierdan.
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => target.focus({ preventScroll: true }));
+    }
   };
+
 
   return (
     <section
