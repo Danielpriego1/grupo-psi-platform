@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { HeroSection } from "@/components/HeroSection";
+import { ContinuidadOperativaSection } from "@/components/ContinuidadOperativaSection";
 import { AboutSection } from "@/components/AboutSection";
 import { CTASection } from "@/components/CTASection";
 import { CustomerStories } from "@/components/CustomerStories";
