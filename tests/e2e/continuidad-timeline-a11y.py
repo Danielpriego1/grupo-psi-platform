@@ -41,14 +41,14 @@ async def run():
               const items = blocks.flatMap(b => [...b.querySelectorAll('[role=listitem]')]);
               return items.map(i => ({
                 on: !!i.querySelector('.border-primary'),
-                duration: getComputedStyle(i).transitionDuration,
+                property: getComputedStyle(i).transitionProperty,
                 opacity: getComputedStyle(i).opacity,
               }));
             }"""
         )
         if len(state) != 5 or not all(s["on"] for s in state):
             failures.append(f"reduced-motion: nodos no iluminados -> {state}")
-        if any(s["duration"] not in ("0s", "0s, 0s") for s in state):
+        if any(s["property"] != "none" for s in state):
             failures.append(f"reduced-motion: transiciones activas -> {state}")
         print("reduced-motion:", json.dumps(state, ensure_ascii=False))
 
