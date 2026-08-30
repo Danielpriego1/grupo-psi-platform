@@ -1,6 +1,19 @@
 # Timeline: temas, rendimiento, ARIA y diagnóstico de fallos
 
-Cinco trabajos aditivos sobre la sección Continuidad Operativa. Sin librerías nuevas y sin cambios de diseño visual: se amplían pruebas, se refuerza el marcado accesible y se mejora el diagnóstico en CI.
+Cinco trabajos aditivos sobre la sección Continuidad Operativa, más una corrección previa del fallo actual de CI. Sin librerías nuevas y sin cambios de diseño visual: se amplían pruebas, se refuerza el marcado accesible y se mejora el diagnóstico en CI.
+
+## 0. Arreglar el fallo actual del workflow (prioridad)
+
+El run "Timeline E2E (visual + a11y) #2" falla con las **19 comparaciones** en FAIL, incluidas las que aquí dan 0.00%. Cuando todas fallan a la vez, la causa no es una regresión del componente: las capturas base se generaron en este entorno y el runner de GitHub renderiza distinto (fuentes del sistema, versión de Chromium, tamaño de la captura). Los primeros pasos son de diagnóstico, no de ajuste ciego:
+
+1. Ejecutar el script en CI con subida de artefactos incluso al pasar/fallar y leer las capturas `actual/` frente a las base, además del valor exacto de diferencia por caso (hoy el log se corta). Si la diferencia es de tamaño (`1.00%` fijo por dimensiones distintas) el problema es el viewport/DPR; si es difusa por todo el texto, son las fuentes.
+2. Igualar el entorno de render: ejecutar el job dentro de la imagen oficial de Playwright (`container: mcr.microsoft.com/playwright:v1.x-jammy`) y **regenerar las 19 bases dentro de esa misma imagen** en local (`--update`), de modo que las bases del repositorio y el runner compartan Chromium y fuentes. Se instalan además las mismas familias que usa la app (`@fontsource/space-grotesk`, `dm-sans`) para no depender de fuentes del sistema.
+3. Endurecer la comparación frente a antialiasing: subir el umbral por píxel y usar tolerancia porcentual configurable, con un valor de CI (`TIMELINE_DIFF_TOLERANCE`) ligeramente mayor que el local, fijado tras la primera ejecución real y no antes.
+4. Esperar a que las fuentes estén listas (`document.fonts.ready`) y a que terminen las transiciones antes de capturar, para eliminar diferencias por texto sin cargar en el runner.
+5. Mientras la base de CI no sea estable, el paso visual se ejecuta en modo informativo (`continue-on-error`) y el que bloquea el merge es el estructural: los cinco nodos activos por viewport. Una vez verde de forma reproducible, se vuelve a marcar como bloqueante.
+
+El chequeo estructural (cinco nodos iluminados en cada viewport) se separa del pixel-diff en su propio paso, para distinguir "el timeline no funciona" de "el render cambió un píxel".
+
 
 ## 1. Regresión visual en modo oscuro y alto contraste
 
