@@ -126,7 +126,6 @@ const Index = () => {
       </main>
 
       <BrandsTicker />
-      <ServicesSection />
       <AboutSection />
       <CustomerStories />
       <CoverageMap />
