@@ -52,7 +52,12 @@ async def focus_cta(page) -> bool:
     for _ in range(80):
         await page.keyboard.press("Tab")
         focused = await page.evaluate(
-            "(t) => (document.activeElement?.textContent || '').includes(t)", CTA_TEXT
+            """(t) => {
+              const el = document.activeElement;
+              if (!el || el.tagName !== 'A') return false;
+              return (el.textContent || '').includes(t);
+            }""",
+            CTA_TEXT,
         )
         if focused:
             return True
