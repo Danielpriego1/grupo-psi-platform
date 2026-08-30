@@ -299,7 +299,8 @@ export function ContinuidadOperativaSection() {
         <div
           id="servicio-administrativo"
           ref={timelineRef.ref}
-          className="relative mx-auto mt-28 max-w-6xl"
+          tabIndex={-1}
+          className="relative mx-auto mt-28 max-w-6xl scroll-mt-24 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-black"
           role="list"
           aria-label="Ciclo de vida del equipo"
         >
