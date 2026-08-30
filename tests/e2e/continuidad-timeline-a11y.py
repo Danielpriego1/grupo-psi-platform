@@ -97,6 +97,16 @@ async def run():
             failures.append("teclado: el CTA no recibe foco programático")
 
         # --- 3. axe-core sobre la sección ---
+        # El CTA se revela con fade; hay que esperar su estado final para que
+        # axe no mida el contraste sobre un elemento semitransparente.
+        await page.evaluate(
+            "() => document.querySelector('#continuidad-operativa a[href^=\"#\"]').scrollIntoView()"
+        )
+        await page.wait_for_function(
+            "() => { const el = document.querySelector('#continuidad-operativa a[href^=\"#\"]').closest('div');"
+            " return getComputedStyle(el).opacity === '1'; }"
+        )
+        await page.wait_for_timeout(400)
         await page.add_script_tag(url=AXE)
         results = await page.evaluate(
             """async () => {
