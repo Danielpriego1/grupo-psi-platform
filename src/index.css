@@ -32,6 +32,10 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 215 65% 55%;
+
+    /* CTA sólido con contraste AA sobre texto blanco (ambos temas) */
+    --cta-strong: 215 70% 30%;
+    --cta-strong-hover: 215 70% 24%;
   }
 
   .dark {
