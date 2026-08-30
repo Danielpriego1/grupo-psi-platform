@@ -175,6 +175,32 @@ export function ContinuidadOperativaSection() {
   const extrasRef = useInView<HTMLDivElement>(0.15);
   const ctaRef = useInView<HTMLDivElement>(0.3);
 
+  /**
+   * Al activar el CTA (click o Enter/Espacio) llevamos al usuario al bloque de
+   * continuidad operativa y le damos foco, para que teclado y lectores de
+   * pantalla reciban contexto inmediato. Respeta prefers-reduced-motion.
+   */
+  const handleCtaActivate = (
+    event: React.MouseEvent<HTMLAnchorElement> | React.KeyboardEvent<HTMLAnchorElement>,
+  ) => {
+    if ("key" in event && event.key !== "Enter" && event.key !== " ") return;
+    if ("metaKey" in event && (event.metaKey || event.ctrlKey)) return;
+
+    const target = timelineRef.ref.current;
+    if (!target) return;
+
+    event.preventDefault();
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    target.scrollIntoView({
+      behavior: reduced ? "auto" : "smooth",
+      block: "start",
+    });
+    target.focus({ preventScroll: true });
+  };
+
   return (
     <section
       id="continuidad-operativa"
@@ -273,7 +299,8 @@ export function ContinuidadOperativaSection() {
         <div
           id="servicio-administrativo"
           ref={timelineRef.ref}
-          className="relative mx-auto mt-28 max-w-6xl"
+          tabIndex={-1}
+          className="relative mx-auto mt-28 max-w-6xl scroll-mt-24 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-black"
           role="list"
           aria-label="Ciclo de vida del equipo"
         >
@@ -432,7 +459,11 @@ export function ContinuidadOperativaSection() {
             size="lg"
             className="glow-primary bg-[hsl(var(--cta-strong))] px-8 py-6 text-base font-black uppercase tracking-widest text-white transition-all duration-300 hover:scale-105 hover:bg-[hsl(var(--cta-strong-hover))] motion-reduce:!transition-none motion-reduce:hover:scale-100"
           >
-            <a href="#servicio-administrativo">
+            <a
+              href="#servicio-administrativo"
+              onClick={handleCtaActivate}
+              onKeyDown={handleCtaActivate}
+            >
               Conozca nuestro Servicio Administrativo y Personalizado
             </a>
           </Button>

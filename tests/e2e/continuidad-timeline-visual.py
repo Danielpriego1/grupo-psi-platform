@@ -1,9 +1,9 @@
 """
 Pruebas visuales de regresión del timeline de Continuidad Operativa.
 
-Captura el bloque #servicio-administrativo en los mismos viewports y densidades
-de píxeles usados en la validación manual, y compara contra las capturas base
-guardadas en tests/e2e/screenshots/timeline/.
+Captura el bloque #servicio-administrativo en una matriz de viewports que cubre
+densidades de píxeles, zoom del navegador (50%-200%) y rotación en móviles, y
+compara contra las capturas base guardadas en tests/e2e/screenshots/timeline/.
 
 Uso:
     python3 tests/e2e/continuidad-timeline-visual.py            # compara
@@ -21,15 +21,38 @@ BASE_URL = os.environ.get("APP_URL", "http://localhost:8080")
 ROOT = os.path.dirname(os.path.abspath(__file__))
 BASELINE_DIR = os.path.join(ROOT, "screenshots", "timeline")
 ACTUAL_DIR = os.path.join(ROOT, "screenshots", "timeline", "actual")
-DIFF_TOLERANCE = 0.005  # 0.5% de píxeles distintos
+DIFF_TOLERANCE = float(os.environ.get("TIMELINE_DIFF_TOLERANCE", "0.005"))
 
+# (nombre, ancho CSS, alto CSS, device_scale_factor)
 VIEWPORTS = [
+    # Densidades base
     ("mobile-375-dpr3", 375, 900, 3),
     ("mobile-414-dpr2", 414, 896, 2),
     ("tablet-768-dpr2", 768, 1024, 2),
     ("desktop-1280-dpr1", 1280, 900, 1),
     ("desktop-1920-dpr2", 1920, 1080, 2),
+    # Rotación en móviles (retrato / paisaje)
+    ("mobile-375x667-portrait", 375, 667, 2),
+    ("mobile-667x375-landscape", 667, 375, 2),
+    ("mobile-414x896-portrait", 414, 896, 2),
+    ("mobile-896x414-landscape", 896, 414, 2),
 ]
+
+
+def zoom_viewports(label: str, phys_width: int, phys_height: int, dpr: int):
+    """Zoom del navegador simulado: el ancho CSS se divide por el zoom y el
+    device_scale_factor se multiplica por él, igual que hace Chromium."""
+    out = []
+    for zoom in (0.5, 0.75, 1.0, 1.5, 2.0):
+        css_w = round(phys_width / zoom)
+        css_h = round(phys_height / zoom)
+        pct = int(zoom * 100)
+        out.append((f"{label}-zoom{pct}", css_w, css_h, round(dpr * zoom, 2)))
+    return out
+
+
+VIEWPORTS += zoom_viewports("desktop-1280", 1280, 900, 1)
+VIEWPORTS += zoom_viewports("mobile-390", 390, 844, 2)
 
 
 def compare(baseline_path: str, actual_path: str) -> float:
@@ -40,6 +63,36 @@ def compare(baseline_path: str, actual_path: str) -> float:
     diff = ImageChops.difference(a, b)
     changed = sum(1 for px in diff.convert("L").tobytes() if px > 12)
     return changed / (a.size[0] * a.size[1])
+
+
+ACTIVE_NODES_JS = """() => {
+  const root = document.querySelector('#servicio-administrativo');
+  if (!root) return [];
+  const blocks = [...root.querySelectorAll(':scope > div')].slice(1);
+  const visible = blocks.filter(b => b.offsetParent !== null);
+  return visible.flatMap(b =>
+    [...b.querySelectorAll('[role=listitem]')]
+      .map(i => !!i.querySelector('.border-primary'))
+  );
+}"""
+
+
+async def activate_all_nodes(page, timeline) -> list:
+    """Scroll progresivo hasta que los cinco nodos de la variante renderizada
+    estén iluminados (paisaje móvil y zoom 200% requieren varios pasos)."""
+    await timeline.scroll_into_view_if_needed()
+    await page.wait_for_timeout(700)
+    active = await page.evaluate(ACTIVE_NODES_JS)
+    for _ in range(24):
+        if len(active) == 5 and all(active):
+            break
+        await page.mouse.wheel(0, 220)
+        await page.wait_for_timeout(200)
+        active = await page.evaluate(ACTIVE_NODES_JS)
+    # Volver al inicio del bloque para que la captura sea comparable
+    await timeline.scroll_into_view_if_needed()
+    await page.wait_for_timeout(600)
+    return active
 
 
 async def capture(update: bool) -> int:
@@ -60,21 +113,7 @@ async def capture(update: bool) -> int:
             await page.wait_for_timeout(1200)
 
             timeline = page.locator("#servicio-administrativo")
-            await timeline.scroll_into_view_if_needed()
-            await page.wait_for_timeout(1200)
-
-            # Los cinco nodos visibles deben estar iluminados antes de capturar
-            active = await page.evaluate(
-                """() => {
-                  const root = document.querySelector('#servicio-administrativo');
-                  const blocks = [...root.querySelectorAll(':scope > div')].slice(1);
-                  const visible = blocks.filter(b => b.offsetParent !== null);
-                  return visible.flatMap(b =>
-                    [...b.querySelectorAll('[role=listitem]')]
-                      .map(i => !!i.querySelector('.border-primary'))
-                  );
-                }"""
-            )
+            active = await activate_all_nodes(page, timeline)
             if len(active) != 5 or not all(active):
                 print(f"FAIL {name}: nodos activos = {active}")
                 failures += 1
