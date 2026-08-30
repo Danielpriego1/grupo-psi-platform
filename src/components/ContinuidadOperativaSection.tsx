@@ -85,10 +85,93 @@ function useInView<T extends HTMLElement>(threshold = 0.2) {
   return { ref, inView };
 }
 
+/**
+ * Observa una lista de nodos con UN solo IntersectionObserver.
+ * Cada nodo se marca como activo exactamente al entrar en pantalla
+ * y se deja de observar (sin re-cálculos ni listeners de scroll).
+ */
+function useInViewItems(count: number, threshold = 0.6) {
+  const nodes = useRef<(HTMLElement | null)[]>([]);
+  const [active, setActive] = useState<boolean[]>(() =>
+    Array.from({ length: count }, () => false),
+  );
+
+  const setNode = (index: number) => (el: HTMLElement | null) => {
+    nodes.current[index] = el;
+  };
+
+  useEffect(() => {
+    const els = nodes.current.filter(Boolean) as HTMLElement[];
+    if (!els.length) return;
+
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduced || typeof IntersectionObserver === "undefined") {
+      setActive(Array.from({ length: count }, () => true));
+      return;
+    }
+
+    let frame = 0;
+    const pending = new Set<number>();
+
+    const flush = () => {
+      frame = 0;
+      setActive((prev) => {
+        let changed = false;
+        const next = [...prev];
+        pending.forEach((i) => {
+          if (!next[i]) {
+            next[i] = true;
+            changed = true;
+          }
+        });
+        pending.clear();
+        return changed ? next : prev;
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const i = Number((entry.target as HTMLElement).dataset.nodeIndex);
+          if (Number.isNaN(i)) continue;
+          pending.add(i);
+          observer.unobserve(entry.target);
+        }
+        // Agrupa los cambios en un solo repintado
+        if (pending.size && !frame) frame = requestAnimationFrame(flush);
+      },
+      { threshold, rootMargin: "0px 0px -10% 0px" },
+    );
+
+    els.forEach((el) => observer.observe(el));
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [count, threshold]);
+
+  const reachedIndex = active.lastIndexOf(true);
+  return { setNode, active, reachedIndex };
+}
+
 export function ContinuidadOperativaSection() {
   const header = useInView<HTMLDivElement>(0.2);
   const benefitsRef = useInView<HTMLDivElement>(0.15);
   const timelineRef = useInView<HTMLDivElement>(0.2);
+  const desktopNodes = useInViewItems(timeline.length, 0.6);
+  const mobileNodes = useInViewItems(timeline.length, 0.6);
+  const desktopProgress =
+    desktopNodes.reachedIndex < 0
+      ? 0
+      : ((desktopNodes.reachedIndex + 1) / timeline.length) * 100;
+  const mobileProgress =
+    mobileNodes.reachedIndex < 0
+      ? 0
+      : ((mobileNodes.reachedIndex + 1) / timeline.length) * 100;
   const extrasRef = useInView<HTMLDivElement>(0.15);
   const ctaRef = useInView<HTMLDivElement>(0.3);
 
@@ -206,55 +289,50 @@ export function ContinuidadOperativaSection() {
               {/* Connecting line */}
               <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" />
               <div
-                className={`absolute left-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-all duration-[1500ms] ease-out ${
-                  timelineRef.inView ? "w-full opacity-100" : "w-0 opacity-0"
-                }`}
+                className="absolute left-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[width,opacity] duration-700 ease-out will-change-[width] motion-reduce:transition-none"
+                style={{
+                  width: `${desktopProgress}%`,
+                  opacity: desktopProgress > 0 ? 1 : 0,
+                }}
               />
 
               <div className="relative grid grid-cols-5 gap-4">
-                {timeline.map((node, i) => (
-                  <div
-                    key={node.title}
-                    role="listitem"
-                    className={`flex flex-col items-center text-center transition-all duration-700 motion-reduce:transition-none ${
-                      timelineRef.inView
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-6 opacity-0"
-                    }`}
-                    style={{
-                      transitionDelay: timelineRef.inView
-                        ? `${200 + i * 180}ms`
-                        : "0ms",
-                    }}
-                  >
+                {timeline.map((node, i) => {
+                  const on = desktopNodes.active[i];
+                  return (
                     <div
-                      className={`relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-2 bg-black transition-all duration-500 ${
-                        timelineRef.inView
-                          ? "border-primary glow-primary"
-                          : "border-white/20"
+                      key={node.title}
+                      role="listitem"
+                      ref={desktopNodes.setNode(i)}
+                      data-node-index={i}
+                      className={`flex flex-col items-center text-center transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:transition-none ${
+                        on ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                       }`}
-                      style={{
-                        transitionDelay: timelineRef.inView
-                          ? `${200 + i * 180}ms`
-                          : "0ms",
-                      }}
                     >
-                      <span
-                        className={`text-lg font-black transition-colors duration-500 ${
-                          timelineRef.inView ? "text-primary" : "text-white/40"
+                      <div
+                        className={`relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:transition-none ${
+                          on
+                            ? "scale-100 border-primary glow-primary"
+                            : "scale-90 border-white/20"
                         }`}
                       >
-                        {i + 1}
-                      </span>
+                        <span
+                          className={`text-lg font-black transition-colors duration-500 ${
+                            on ? "text-primary" : "text-white/40"
+                          }`}
+                        >
+                          {i + 1}
+                        </span>
+                      </div>
+                      <h4 className="mt-5 text-base font-black text-foreground">
+                        {node.title}
+                      </h4>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {node.desc}
+                      </p>
                     </div>
-                    <h4 className="mt-5 text-base font-black text-foreground">
-                      {node.title}
-                    </h4>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {node.desc}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -264,56 +342,52 @@ export function ContinuidadOperativaSection() {
             <div className="relative space-y-8 pl-10">
               <div className="absolute bottom-4 left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary/20 via-primary/50 to-primary/20" />
               <div
-                className={`absolute bottom-4 left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-all duration-[1500ms] ease-out ${
-                  timelineRef.inView ? "h-[calc(100%-2rem)] opacity-100" : "h-0 opacity-0"
-                }`}
+                className="absolute left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[height,opacity] duration-700 ease-out will-change-[height] motion-reduce:transition-none"
+                style={{
+                  height: `calc((100% - 2rem) * ${mobileProgress / 100})`,
+                  opacity: mobileProgress > 0 ? 1 : 0,
+                }}
               />
 
-              {timeline.map((node, i) => (
-                <div
-                  key={node.title}
-                  role="listitem"
-                  className={`relative transition-all duration-700 motion-reduce:transition-none ${
-                    timelineRef.inView
-                      ? "translate-x-0 opacity-100"
-                      : "translate-x-6 opacity-0"
-                  }`}
-                  style={{
-                    transitionDelay: timelineRef.inView
-                      ? `${200 + i * 180}ms`
-                      : "0ms",
-                  }}
-                >
+              {timeline.map((node, i) => {
+                const on = mobileNodes.active[i];
+                return (
                   <div
-                    className={`absolute left-[-2.5rem] top-0 z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-black transition-all duration-500 ${
-                      timelineRef.inView
-                        ? "border-primary glow-primary"
-                        : "border-white/20"
+                    key={node.title}
+                    role="listitem"
+                    ref={mobileNodes.setNode(i)}
+                    data-node-index={i}
+                    className={`relative transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:transition-none ${
+                      on ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
                     }`}
-                    style={{
-                      transitionDelay: timelineRef.inView
-                        ? `${200 + i * 180}ms`
-                        : "0ms",
-                    }}
                   >
-                    <span
-                      className={`text-sm font-black transition-colors duration-500 ${
-                        timelineRef.inView ? "text-primary" : "text-white/40"
+                    <div
+                      className={`absolute left-[-2.5rem] top-0 z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:transition-none ${
+                        on
+                          ? "scale-100 border-primary glow-primary"
+                          : "scale-90 border-white/20"
                       }`}
                     >
-                      {i + 1}
-                    </span>
+                      <span
+                        className={`text-sm font-black transition-colors duration-500 ${
+                          on ? "text-primary" : "text-white/40"
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                    </div>
+                    <h4 className="text-base font-black text-foreground">
+                      {node.title}
+                    </h4>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {node.desc}
+                    </p>
                   </div>
-                  <h4 className="text-base font-black text-foreground">
-                    {node.title}
-                  </h4>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {node.desc}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
+
         </div>
 
         {/* Bottom 3 cards */}
