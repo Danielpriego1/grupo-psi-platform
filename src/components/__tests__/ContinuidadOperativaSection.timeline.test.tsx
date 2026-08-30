@@ -129,4 +129,21 @@ describe("ContinuidadOperativaSection · timeline", () => {
     const items = screen.getAllByRole("listitem").slice(0, 5);
     items.forEach((item) => expect(isNodeActive(item)).toBe(true));
   });
+
+  it("mueve el foco al bloque de continuidad al activar el CTA", () => {
+    renderSection();
+    const cta = screen.getByRole("link", {
+      name: /Servicio Administrativo y Personalizado/i,
+    });
+    const target = document.getElementById("servicio-administrativo")!;
+    target.scrollIntoView = vi.fn();
+
+    act(() => {
+      cta.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(target.scrollIntoView).toHaveBeenCalled();
+    expect(document.activeElement).toBe(target);
+    expect(target).toHaveAttribute("tabindex", "-1");
+  });
 });
