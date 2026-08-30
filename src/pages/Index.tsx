@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { HeroSection } from "@/components/HeroSection";
+import { ContinuidadOperativaSection } from "@/components/ContinuidadOperativaSection";
 import { AboutSection } from "@/components/AboutSection";
 import { CTASection } from "@/components/CTASection";
 import { CustomerStories } from "@/components/CustomerStories";
@@ -51,7 +52,9 @@ const Index = () => {
         }}
       />
       <HeroSection onScrollToProducts={scrollToProducts} />
+      <ContinuidadOperativaSection />
 
+      <ServicesSection />
 
       {/* Vallen-style Category cards section */}
       <main ref={catalogRef} className="container mx-auto px-4 py-20">
@@ -123,7 +126,6 @@ const Index = () => {
       </main>
 
       <BrandsTicker />
-      <ServicesSection />
       <AboutSection />
       <CustomerStories />
       <CoverageMap />
