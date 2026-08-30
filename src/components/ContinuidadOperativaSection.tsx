@@ -175,6 +175,32 @@ export function ContinuidadOperativaSection() {
   const extrasRef = useInView<HTMLDivElement>(0.15);
   const ctaRef = useInView<HTMLDivElement>(0.3);
 
+  /**
+   * Al activar el CTA (click o Enter/Espacio) llevamos al usuario al bloque de
+   * continuidad operativa y le damos foco, para que teclado y lectores de
+   * pantalla reciban contexto inmediato. Respeta prefers-reduced-motion.
+   */
+  const handleCtaActivate = (
+    event: React.MouseEvent<HTMLAnchorElement> | React.KeyboardEvent<HTMLAnchorElement>,
+  ) => {
+    if ("key" in event && event.key !== "Enter" && event.key !== " ") return;
+    if ("metaKey" in event && (event.metaKey || event.ctrlKey)) return;
+
+    const target = timelineRef.ref.current;
+    if (!target) return;
+
+    event.preventDefault();
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    target.scrollIntoView({
+      behavior: reduced ? "auto" : "smooth",
+      block: "start",
+    });
+    target.focus({ preventScroll: true });
+  };
+
   return (
     <section
       id="continuidad-operativa"
