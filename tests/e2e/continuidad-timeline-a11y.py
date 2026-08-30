@@ -10,11 +10,12 @@ Verifica:
 
 import asyncio
 import json
+import os
 import sys
 
 from playwright.async_api import async_playwright
 
-BASE_URL = "http://localhost:8080"
+BASE_URL = os.environ.get("APP_URL", "http://localhost:8080")
 AXE = "https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js"
 
 
@@ -36,9 +37,9 @@ async def run():
         state = await page.evaluate(
             """() => {
               const root = document.querySelector('#servicio-administrativo');
-              const blocks = [...root.querySelectorAll(':scope > div')].slice(1)
+              const blocks = [...root.querySelectorAll('[data-timeline-variant]')]
                 .filter(b => b.offsetParent !== null);
-              const items = blocks.flatMap(b => [...b.querySelectorAll('[role=listitem]')]);
+              const items = blocks.flatMap(b => [...b.querySelectorAll('[data-timeline-node]')]);
               return items.map(i => ({
                 on: !!i.querySelector('.border-primary'),
                 property: getComputedStyle(i).transitionProperty,
