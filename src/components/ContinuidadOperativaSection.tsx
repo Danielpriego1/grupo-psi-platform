@@ -85,6 +85,79 @@ function useInView<T extends HTMLElement>(threshold = 0.2) {
   return { ref, inView };
 }
 
+/**
+ * Observa una lista de nodos con UN solo IntersectionObserver.
+ * Cada nodo se marca como activo exactamente al entrar en pantalla
+ * y se deja de observar (sin re-cálculos ni listeners de scroll).
+ */
+function useInViewItems(count: number, threshold = 0.6) {
+  const nodes = useRef<(HTMLElement | null)[]>([]);
+  const [active, setActive] = useState<boolean[]>(() =>
+    Array.from({ length: count }, () => false),
+  );
+
+  const setNode = (index: number) => (el: HTMLElement | null) => {
+    nodes.current[index] = el;
+  };
+
+  useEffect(() => {
+    const els = nodes.current.filter(Boolean) as HTMLElement[];
+    if (!els.length) return;
+
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduced || typeof IntersectionObserver === "undefined") {
+      setActive(Array.from({ length: count }, () => true));
+      return;
+    }
+
+    let frame = 0;
+    const pending = new Set<number>();
+
+    const flush = () => {
+      frame = 0;
+      setActive((prev) => {
+        let changed = false;
+        const next = [...prev];
+        pending.forEach((i) => {
+          if (!next[i]) {
+            next[i] = true;
+            changed = true;
+          }
+        });
+        pending.clear();
+        return changed ? next : prev;
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const i = Number((entry.target as HTMLElement).dataset.nodeIndex);
+          if (Number.isNaN(i)) continue;
+          pending.add(i);
+          observer.unobserve(entry.target);
+        }
+        // Agrupa los cambios en un solo repintado
+        if (pending.size && !frame) frame = requestAnimationFrame(flush);
+      },
+      { threshold, rootMargin: "0px 0px -10% 0px" },
+    );
+
+    els.forEach((el) => observer.observe(el));
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [count, threshold]);
+
+  const reachedIndex = active.lastIndexOf(true);
+  return { setNode, active, reachedIndex };
+}
+
 export function ContinuidadOperativaSection() {
   const header = useInView<HTMLDivElement>(0.2);
   const benefitsRef = useInView<HTMLDivElement>(0.15);
