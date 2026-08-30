@@ -146,4 +146,31 @@ describe("ContinuidadOperativaSection · timeline", () => {
     expect(document.activeElement).toBe(target);
     expect(target).toHaveAttribute("tabindex", "-1");
   });
+
+  it("usa listas ordenadas reales con nombre accesible", () => {
+    renderSection();
+    const lists = screen.getAllByRole("list", {
+      name: /Ciclo de vida del equipo/i,
+    });
+    expect(lists.length).toBe(2); // variante escritorio + variante móvil
+    lists.forEach((list) => {
+      expect(list.tagName).toBe("OL");
+      expect(list.querySelectorAll("li").length).toBe(5);
+    });
+  });
+
+  it("expone el nombre accesible de cada paso", () => {
+    renderSection();
+    const items = screen.getAllByRole("listitem").slice(0, 5);
+    const srText = (el: HTMLElement) =>
+      el.querySelector(".sr-only")?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+
+    expect(srText(items[0])).toMatch(
+      /Paso 1 de 5: Alta del activo — Registro digital del equipo/i,
+    );
+    expect(srText(items[4])).toMatch(/Paso 5 de 5: Entrega y seguimiento/i);
+    // El número decorativo del círculo no se anuncia dos veces
+    expect(items[0].querySelector("[aria-hidden='true']")).not.toBeNull();
+  });
 });
+

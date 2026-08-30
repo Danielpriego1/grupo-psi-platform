@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright artifacts (trace, video, diffs)
+tests/e2e/artifacts/

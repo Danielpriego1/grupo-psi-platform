@@ -295,3 +295,20 @@ html.light {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Timeline de Continuidad Operativa: en modo alto contraste (forced-colors)
+   el navegador elimina degradados y sombras, así que la línea del ciclo de
+   vida desaparecería. Se fuerzan colores de sistema para conservarla. */
+@media (forced-colors: active) {
+  .timeline-line,
+  .timeline-line-progress {
+    forced-color-adjust: none;
+    box-shadow: none;
+  }
+  .timeline-line {
+    background: CanvasText;
+  }
+  .timeline-line-progress {
+    background: Highlight;
+  }
+}

@@ -199,7 +199,14 @@ export function ContinuidadOperativaSection() {
       block: "start",
     });
     target.focus({ preventScroll: true });
+    // Con Enter el navegador puede procesar la activación del enlace después
+    // del keydown y devolver el foco al documento: lo reafirmamos en el
+    // siguiente frame para que teclado y lectores de pantalla no lo pierdan.
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => target.focus({ preventScroll: true }));
+    }
   };
+
 
   return (
     <section
@@ -296,47 +303,60 @@ export function ContinuidadOperativaSection() {
         </div>
 
         {/* Timeline */}
-        <div
+        <section
           id="servicio-administrativo"
           ref={timelineRef.ref}
           tabIndex={-1}
           className="relative mx-auto mt-28 max-w-6xl scroll-mt-24 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-black"
-          role="list"
-          aria-label="Ciclo de vida del equipo"
+          aria-labelledby="ciclo-de-vida-titulo"
         >
           <div className="mb-12 text-center">
-            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+            <span
+              id="ciclo-de-vida-titulo"
+              className="text-sm font-semibold uppercase tracking-[0.2em] text-primary"
+            >
               Ciclo de vida administrado
             </span>
           </div>
 
           {/* Desktop horizontal timeline */}
-          <div className="hidden md:block">
+          <div className="hidden md:block" data-timeline-variant="desktop">
             <div className="relative">
               {/* Connecting line */}
-              <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" />
               <div
-                className="absolute left-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[width,opacity] duration-700 ease-out will-change-[width] motion-reduce:!transition-none"
+                aria-hidden="true"
+                className="timeline-line absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20"
+              />
+              <div
+                aria-hidden="true"
+                className="timeline-line-progress absolute left-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-gradient-to-r from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[width,opacity] duration-700 ease-out will-change-[width] motion-reduce:!transition-none"
                 style={{
                   width: `${desktopProgress}%`,
                   opacity: desktopProgress > 0 ? 1 : 0,
                 }}
               />
 
-              <div className="relative grid grid-cols-5 gap-4">
+              <ol
+                className="relative grid grid-cols-5 gap-4"
+                aria-label="Ciclo de vida del equipo"
+              >
                 {timeline.map((node, i) => {
                   const on = desktopNodes.active[i];
                   return (
-                    <div
+                    <li
                       key={node.title}
-                      role="listitem"
                       ref={desktopNodes.setNode(i)}
                       data-node-index={i}
+                      data-timeline-node="desktop"
                       className={`flex flex-col items-center text-center transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:!transition-none ${
                         on ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                       }`}
                     >
+                      <span className="sr-only">
+                        Paso {i + 1} de {timeline.length}: {node.title} — {node.desc}
+                      </span>
                       <div
+                        aria-hidden="true"
                         className={`relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:!transition-none ${
                           on
                             ? "scale-100 border-primary glow-primary"
@@ -351,71 +371,91 @@ export function ContinuidadOperativaSection() {
                           {i + 1}
                         </span>
                       </div>
-                      <h4 className="mt-5 text-base font-black text-foreground">
+                      <h4
+                        aria-hidden="true"
+                        className="mt-5 text-base font-black text-foreground"
+                      >
                         {node.title}
                       </h4>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p aria-hidden="true" className="mt-1 text-sm text-muted-foreground">
                         {node.desc}
                       </p>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ol>
             </div>
           </div>
 
           {/* Mobile vertical timeline */}
-          <div className="md:hidden">
-            <div className="relative space-y-8 pl-10">
-              <div className="absolute bottom-4 left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary/20 via-primary/50 to-primary/20" />
+          <div className="md:hidden" data-timeline-variant="mobile">
+            <div className="relative">
               <div
-                className="absolute left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[height,opacity] duration-700 ease-out will-change-[height] motion-reduce:!transition-none"
+                aria-hidden="true"
+                className="timeline-line absolute bottom-4 left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary/20 via-primary/50 to-primary/20"
+              />
+              <div
+                aria-hidden="true"
+                className="timeline-line-progress absolute left-[2.25rem] top-4 w-[2px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary to-primary/60 shadow-[0_0_20px_rgba(255,100,0,0.5)] transition-[height,opacity] duration-700 ease-out will-change-[height] motion-reduce:!transition-none"
                 style={{
                   height: `calc((100% - 2rem) * ${mobileProgress / 100})`,
                   opacity: mobileProgress > 0 ? 1 : 0,
                 }}
               />
 
-              {timeline.map((node, i) => {
-                const on = mobileNodes.active[i];
-                return (
-                  <div
-                    key={node.title}
-                    role="listitem"
-                    ref={mobileNodes.setNode(i)}
-                    data-node-index={i}
-                    className={`relative transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:!transition-none ${
-                      on ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
-                    }`}
-                  >
-                    <div
-                      className={`absolute left-[-2.5rem] top-0 z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:!transition-none ${
-                        on
-                          ? "scale-100 border-primary glow-primary"
-                          : "scale-90 border-white/20"
+              <ol
+                className="relative space-y-8 pl-10"
+                aria-label="Ciclo de vida del equipo"
+              >
+                {timeline.map((node, i) => {
+                  const on = mobileNodes.active[i];
+                  return (
+                    <li
+                      key={node.title}
+                      ref={mobileNodes.setNode(i)}
+                      data-node-index={i}
+                      data-timeline-node="mobile"
+                      className={`relative transition-[transform,opacity] duration-500 ease-out will-change-[transform,opacity] motion-reduce:!transition-none ${
+                        on ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
                       }`}
                     >
-                      <span
-                        className={`text-sm font-black transition-colors duration-500 ${
-                          on ? "text-primary" : "text-white/40"
+                      <span className="sr-only">
+                        Paso {i + 1} de {timeline.length}: {node.title} — {node.desc}
+                      </span>
+                      <div
+                        aria-hidden="true"
+                        className={`absolute left-[-2.5rem] top-0 z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-black transition-[border-color,box-shadow,transform] duration-500 ease-out motion-reduce:!transition-none ${
+                          on
+                            ? "scale-100 border-primary glow-primary"
+                            : "scale-90 border-white/20"
                         }`}
                       >
-                        {i + 1}
-                      </span>
-                    </div>
-                    <h4 className="text-base font-black text-foreground">
-                      {node.title}
-                    </h4>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {node.desc}
-                    </p>
-                  </div>
-                );
-              })}
+                        <span
+                          className={`text-sm font-black transition-colors duration-500 ${
+                            on ? "text-primary" : "text-white/40"
+                          }`}
+                        >
+                          {i + 1}
+                        </span>
+                      </div>
+                      <h4
+                        aria-hidden="true"
+                        className="text-base font-black text-foreground"
+                      >
+                        {node.title}
+                      </h4>
+                      <p aria-hidden="true" className="mt-1 text-sm text-muted-foreground">
+                        {node.desc}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
           </div>
 
-        </div>
+        </section>
+
 
         {/* Bottom 3 cards */}
         <div
