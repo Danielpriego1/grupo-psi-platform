@@ -430,7 +430,7 @@ export function ContinuidadOperativaSection() {
           <Button
             asChild
             size="lg"
-            className="glow-primary px-8 py-6 text-base font-black uppercase tracking-widest transition-all duration-300 hover:scale-105"
+            className="glow-primary bg-[hsl(var(--cta-strong))] px-8 py-6 text-base font-black uppercase tracking-widest text-white transition-all duration-300 hover:scale-105 hover:bg-[hsl(var(--cta-strong-hover))] motion-reduce:!transition-none motion-reduce:hover:scale-100"
           >
             <a href="#servicio-administrativo">
               Conozca nuestro Servicio Administrativo y Personalizado
