@@ -21,14 +21,11 @@ interface CheckItem {
 }
 
 function newCorrelationId(): string {
-  const bytes = new Uint8Array(2);
-  crypto.getRandomValues(bytes);
   const block = () =>
     Array.from(crypto.getRandomValues(new Uint8Array(2)))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("")
       .toUpperCase();
-  void bytes;
   return `PSI-${block()}-${block()}`;
 }
 
