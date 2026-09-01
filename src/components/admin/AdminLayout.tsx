@@ -19,6 +19,7 @@ import {
   Target,
   Receipt,
   Bell,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ const navItems = [
   { label: "Eventos de pago", icon: Receipt, path: "/admin/payment-events" },
   { label: "Auditoría Stripe", icon: ShieldCheck, path: "/admin/auditoria" },
   { label: "Notificaciones", icon: Bell, path: "/admin/notificaciones" },
+  { label: "Salud del servicio", icon: Activity, path: "/admin/salud" },
 ];
 
 export function AdminLayout() {
