@@ -22,6 +22,9 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminNotificationHistory from "./pages/admin/AdminNotificationHistory";
+import AdminHealth from "./pages/admin/AdminHealth";
+import Diagnostico from "./pages/Diagnostico";
+import AppErrorBoundary from "./components/AppErrorBoundary";
 import AdminDeliveries from "./pages/admin/AdminDeliveries";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminClients from "./pages/admin/AdminClients";
@@ -64,6 +67,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+            <AppErrorBoundary>
             <Routes>
               {/* Public routes */}
               <Route
@@ -197,6 +201,7 @@ const App = () => (
                 }
               />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/diagnostico" element={<Diagnostico />} />
 
               {/* Admin routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -222,6 +227,7 @@ const App = () => (
                 <Route path="crm" element={<AdminCRM />} />
                 <Route path="payment-events" element={<AdminPaymentEvents />} />
                 <Route path="notificaciones" element={<AdminNotificationHistory />} />
+                <Route path="salud" element={<AdminHealth />} />
               </Route>
 
               {/* Print view (admin auth required) */}
@@ -243,6 +249,7 @@ const App = () => (
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </AppErrorBoundary>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>
