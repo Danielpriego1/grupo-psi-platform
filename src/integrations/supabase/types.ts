@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_error_logs: {
+        Row: {
+          correlation_id: string
+          created_at: string
+          detail: Json
+          duration_ms: number | null
+          id: string
+          kind: string
+          message: string
+          route: string | null
+          status_code: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          correlation_id: string
+          created_at?: string
+          detail?: Json
+          duration_ms?: number | null
+          id?: string
+          kind?: string
+          message: string
+          route?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          correlation_id?: string
+          created_at?: string
+          detail?: Json
+          duration_ms?: number | null
+          id?: string
+          kind?: string
+          message?: string
+          route?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           address: string | null
@@ -1032,6 +1074,75 @@ export type Database = {
           updated_at?: string
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      service_health_checks: {
+        Row: {
+          checked_at: string
+          checks: Json
+          correlation_id: string | null
+          failed_dependency: string | null
+          id: string
+          latency_ms: number | null
+          ok: boolean
+          source: string
+          status: string
+        }
+        Insert: {
+          checked_at?: string
+          checks?: Json
+          correlation_id?: string | null
+          failed_dependency?: string | null
+          id?: string
+          latency_ms?: number | null
+          ok: boolean
+          source?: string
+          status: string
+        }
+        Update: {
+          checked_at?: string
+          checks?: Json
+          correlation_id?: string | null
+          failed_dependency?: string | null
+          id?: string
+          latency_ms?: number | null
+          ok?: boolean
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      service_health_incidents: {
+        Row: {
+          closed_at: string | null
+          consecutive_failures: number
+          dependency: string
+          id: string
+          last_alert_at: string | null
+          last_message: string | null
+          opened_at: string
+          status: string
+        }
+        Insert: {
+          closed_at?: string | null
+          consecutive_failures?: number
+          dependency: string
+          id?: string
+          last_alert_at?: string | null
+          last_message?: string | null
+          opened_at?: string
+          status?: string
+        }
+        Update: {
+          closed_at?: string | null
+          consecutive_failures?: number
+          dependency?: string
+          id?: string
+          last_alert_at?: string | null
+          last_message?: string | null
+          opened_at?: string
+          status?: string
         }
         Relationships: []
       }
