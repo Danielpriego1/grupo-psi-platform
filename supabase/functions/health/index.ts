@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const modeParam = url.searchParams.get("mode") ?? (url.pathname.endsWith("/ready") ? "ready" : "health");
   const mode: "health" | "ready" = modeParam === "ready" ? "ready" : "health";
-  const correlationId = req.headers.get("x-psi-correlation-id") ?? newCorrelationId();
+  const correlationId =
+    url.searchParams.get("cid") ?? req.headers.get("x-psi-correlation-id") ?? newCorrelationId();
   const started = Date.now();
 
   if (mode === "health") {

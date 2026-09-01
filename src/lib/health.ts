@@ -28,14 +28,16 @@ export function healthEndpoint(mode: "health" | "ready"): string {
   return `${BASE_URL ?? ""}/functions/v1/health?mode=${mode}`;
 }
 
+// El ID viaja como query param: un header propio dispararía preflight CORS.
+function endpointWithCorrelation(mode: "health" | "ready"): string {
+  return `${healthEndpoint(mode)}&cid=${encodeURIComponent(getCorrelationId())}`;
+}
+
 export async function fetchHealth(mode: "health" | "ready"): Promise<HealthResponse> {
   const started = performance.now();
-  const response = await fetch(healthEndpoint(mode), {
+  const response = await fetch(endpointWithCorrelation(mode), {
     method: "GET",
-    headers: {
-      apikey: ANON_KEY ?? "",
-      "x-psi-correlation-id": getCorrelationId(),
-    },
+    headers: { apikey: ANON_KEY ?? "" },
   });
 
   const elapsed = Math.round(performance.now() - started);
