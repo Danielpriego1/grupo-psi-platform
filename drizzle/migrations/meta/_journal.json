@@ -15,6 +15,13 @@
       "when": 1788669271710,
       "tag": "0001_fix_clients_select_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788669356030,
+      "tag": "0002_create_contact_messages",
+      "breakpoints": true
     }
   ]
 }
