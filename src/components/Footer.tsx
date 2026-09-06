@@ -50,6 +50,11 @@ export function Footer() {
                   ventas@grupopsi.com
                 </a>
               </li>
+              <li>
+                <Link to="/contacto" className="hover:text-primary transition-colors">
+                  Formulario de contacto
+                </Link>
+              </li>
               <li className="pt-2 border-t border-border/20">
                 <Link to="/admin/login" className="hover:text-primary transition-colors text-xs opacity-60 hover:opacity-100">
                   Acceso administrativo
