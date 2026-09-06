@@ -1329,6 +1329,7 @@ export type Database = {
         Returns: Json
       }
       crm_mark_overdue_tasks: { Args: never; Returns: undefined }
+      current_auth_email: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
