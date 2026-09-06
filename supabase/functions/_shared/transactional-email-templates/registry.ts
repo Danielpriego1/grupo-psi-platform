@@ -15,6 +15,7 @@ import { template as reportePagosDiario } from './reporte-pagos-diario.tsx'
 import { template as nuevaCotizacion } from './nueva-cotizacion.tsx'
 import { template as passwordCambiada } from './password-cambiada.tsx'
 import { template as alertaServicio } from './alerta-servicio.tsx'
+import { template as nuevoMensajeContacto } from './nuevo-mensaje-contacto.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'nuevo-pedido-pagado': nuevoPedidoPagado,
@@ -24,4 +25,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'nueva-cotizacion': nuevaCotizacion,
   'password-cambiada': passwordCambiada,
   'alerta-servicio': alertaServicio,
+  'nuevo-mensaje-contacto': nuevoMensajeContacto,
 }
