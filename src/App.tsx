@@ -53,6 +53,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import AuthCallback from "./pages/auth/Callback";
 import Privacidad from "./pages/Privacidad";
 import Terminos from "./pages/Terminos";
+import Contacto from "./pages/Contacto";
 import Unsubscribe from "./pages/Unsubscribe";
 import CambiosDevoluciones from "./pages/CambiosDevoluciones";
 import PrivacidadGlobal from "./pages/PrivacidadGlobal";
@@ -150,6 +151,20 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+
+              {/* Contacto */}
+              <Route
+                path="/contacto"
+                element={
+                  <>
+                    <Navbar />
+                    <CartDrawer />
+                    <Contacto />
+                    <Footer />
+                    <ChatWidget />
+                  </>
+                }
+              />
 
               {/* Legal */}
               <Route
