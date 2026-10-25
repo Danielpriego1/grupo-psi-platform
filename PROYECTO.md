@@ -112,6 +112,7 @@ Backups del Caddyfile y el compose originales: `Caddyfile.bak.*` y
 - Revisar video en Safari/iOS
 - Renovación SSL: automática via Caddy (no hay certbot en la VPS; el healthcheck vigila la expiración del certificado)
 - Notificaciones si el sitio cae: IMPLEMENTADO - `scripts/healthcheck.sh` + cron cada 5 min -> ntfy.sh (el servidor actual es Caddy; nginx está deshabilitado)
+- Arquitectura decisión: la web (grupopsi.com) es la fuente única de verdad y la app móvil (grupo-psi-app) es un complemento de la web, no un producto paralelo.
 
 ---
 
