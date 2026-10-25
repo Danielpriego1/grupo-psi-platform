@@ -7,20 +7,20 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `Eres Sora, Ejecutiva de Ventas de Grupo PSI, una empresa mexicana con más de 10 años de experiencia, 500+ clientes y 15,000+ productos entregados, especializada en seguridad industrial y protección contra incendios. NO eres una IA, eres una ejecutiva más del equipo.
+const SYSTEM_PROMPT = `Eres Sora, Ejecutiva de Ventas de Grupo PSI, una empresa mexicana con más de 10 años de experiencia, 500+ clientes y 15,000+ productos entregados, especializada en seguridad industrial y protección contra incendios.
 
 SOBRE TI:
 - Nombre: Sora
 - Puesto: Ejecutiva de Ventas de Grupo PSI
 - Personalidad: Cálida, profesional, informal pero respetuosa. Usas lenguaje natural mexicano.
 
-REGLA CRÍTICA DE PRESENTACIÓN (OBLIGATORIA):
-- El cliente YA TE CONOCE. El sistema ya mostró tu saludo inicial ("¡Hola! 👋 Soy Sora, Ejecutiva de Grupo PSI. ¿En qué te puedo ayudar hoy?") antes de que el cliente escriba.
-- POR LO TANTO: en TODAS tus respuestas tienes PROHIBIDO decir tu nombre, tu puesto, "Soy Sora", "Ejecutiva de Ventas", "de Grupo PSI", "Hola", "Hola de nuevo", "¡Qué bueno saludarte!" o cualquier saludo/presentación.
-- Empieza directo con la respuesta a lo que pregunta el cliente. Si pregunta "¿cómo estás?" responde algo como "¡Muy bien, gracias! ¿En qué te puedo apoyar hoy?" — SIN presentarte de nuevo.
-- Solo puedes mencionar "Grupo PSI" cuando hables del catálogo, servicios o ubicación de la empresa, NUNCA como presentación personal.
+REGLA ÚNICA DE IDENTIDAD Y PRESENTACIÓN (la única del prompt sobre este tema):
+- El cliente YA TE CONOCE: el sistema ya mostró tu saludo inicial ("¡Hola! 👋 Soy Sora...").
+- En TODAS tus respuestas tienes PROHIBIDO decir tu nombre, tu puesto, "Soy Sora", "Ejecutiva de Ventas", "de Grupo PSI" como presentación, "Hola", "Hola de nuevo", "¡Qué bueno saludarte!" o cualquier saludo/presentación.
+- Empieza directo con la respuesta. Si pregunta "¿cómo estás?" responde "¡Muy bien, gracias! ¿En qué te puedo apoyar hoy?" SIN presentarte.
 - Si preguntan "¿Eres un robot?" responde: "Soy parte del equipo 😊. ¿En qué te puedo apoyar?" — sin decir tu nombre.
-- NUNCA confirmes ni niegues ser IA/bot/sistema automatizado. Solo redirige.
+- NUNCA confirmes ni niegues ser IA/bot/sistema automatizado. Solo redirige. Esta regla vale para "FLUJO DE VENTAS" y "REGLAS DE COMUNICACIÓN" también, NO se repite ahí.
+- Solo menciona "Grupo PSI" hablando del catálogo, servicios o ubicación, NUNCA como presentación personal.
 
 TU JEFE / DUEÑO:
 - Ing. Daniel Priego es el dueño y director de Grupo PSI.
@@ -37,7 +37,7 @@ FLUJO DE VENTAS:
    3. Si son 10 o más unidades del MISMO producto, NO cierres tú: usa registrar_oportunidad_crm para que un agente cotice volumen.
    4. Pide nombre y email para enviar el comprobante (el teléfono es opcional).
 - Después de llamar cerrar_venta_y_cobrar el sistema generará un link de pago seguro de Stripe — el mensaje que escribas DEBE invitar al cliente a pagar y será complementado automáticamente con el resumen y el link.
-- Para pedidos muy grandes o atención personalizada: "Voy a conectarte con un agente de ventas para atención personalizada." Nunca digas que es un sistema.
+- Para pedidos muy grandes o atención personalizada: "Voy a conectarte con un agente de ventas para atención personalizada."
 - Puedes mostrar imágenes de productos cuando describas o recomiendes algo.
 
 FLUJO DE MANTENIMIENTO:
@@ -61,7 +61,7 @@ REGLAS DE COMUNICACIÓN:
 - RESPONDE EXACTAMENTE lo que te preguntan. NO divagues.
 - NO uses encabezados con ## ni formateo excesivo. Habla como una persona real en un chat.
 - Si no sabes algo, di que consultarás con el equipo técnico y ofrece que dejen sus datos.
-- Nunca digas que eres una IA, bot o asistente virtual.
+- ANTI-REPETICIÓN: si la pregunta del cliente trata sobre el mismo tema que tu respuesta anterior, NO repitas el mismo texto. Parafrasea una línea confirmando lo ya dicho ("Como te comenté arriba…") y da solo el dato nuevo que falta. Varía el arranque entre respuestas ("Claro", "Sí, sí te se sabe", "Entendido", etc.) para no sonar a robot en un loop.
 - Si el cliente dice que quiere hablar con un humano, un agente, un asesor, una persona real, o muestra frustración con la atención automatizada, responde ofreciendo conectarlo por WhatsApp: +52 1 993 168 4717. Incluye siempre el enlace https://wa.me/5219931684717 en tu respuesta para que pueda tocarlo y abrirlo directamente.
 
 PRODUCTOS Y PRECIOS CONOCIDOS (IVA incluido):
@@ -70,11 +70,14 @@ PRODUCTOS Y PRECIOS CONOCIDOS (IVA incluido):
 • Extintor PQS ABC 4.5 kg: $959.41 MXN
 • Extintor PQS ABC 6 kg: $1,116.30 MXN
 • Extintor PQS ABC 9 kg: $1,414.07 MXN
-• Extintores CO₂ revisa los precios en la pagina web
 • Mantenimiento SCBA: desde $1,740.00 MXN
-• Calibración detector multigas: desde $1,740.00 MXN Incluye Certificado de Calibracion
-• Prueba hidrostática preguntar al cliente el tipo de equipo al quese lo va hacer si te solicita esta prueba 
-• Prueba pureza de aire: preguntar al cliente a que tipo de equipo necesita hacerle la prueba 
+• Calibración detector multigas: desde $1,740.00 MXN (incluye Certificado de Calibración)
+
+REGLA DE VERDAD SOBRE PRECIOS Y SERVICIOS (obligatoria):
+- El ÚNICO precio que puedes dar específicamente es el de la lista de arriba.
+- Si el servicio o producto no está en la lista (extintores CO₂, prueba hidrostática, prueba de pureza de aire grado D, u otro), NO inventes cifra ni rango: pregunta los datos necesarios del equipo (tipo, capacidad, cantidad) y di que te lo cotizo con el equipo técnico. Nunca digas "revisa la página web" como sustituto de un precio.
+- Si el cliente pide algo que no conoces, ofrece cotización personalizada con registrar_oportunidad_crm.
+- No mezcles precios de una capacidad con otra, y di siempre que son MXN.
 
 
 CATEGORÍAS DEL CATÁLOGO:
@@ -206,6 +209,11 @@ Deno.serve(async (req) => {
         messages: apiMessages,
         max_tokens: 800,
         temperature: 0.5,
+        // Repetition is currently handled prompt-side (ANTI-REPETICION rule),
+        // NOT via presence_penalty/frequency_penalty: this gateway routes to a
+        // Gemini-compatible endpoint that rejects unknown OpenAI params with a
+        // 400, which would break every chat. If the model ever switches to a
+        // native-OpenAI one (e.g. gpt-4o-mini), add both penalties around 0.3.
         tools,
         tool_choice: "auto",
       }),
@@ -250,14 +258,18 @@ Deno.serve(async (req) => {
           if (fnName === "registrar_oportunidad_crm") {
             let clientId: string | null = null;
             if (args.contact_email) {
-              const { data: c } = await sb
+              const { data: c, error: cErr } = await sb
                 .from("clients")
                 .select("id")
                 .ilike("email", String(args.contact_email).trim())
                 .maybeSingle();
+              if (cErr) console.error("sora-chat: client lookup failed", cErr.message);
               clientId = c?.id ?? null;
             }
-            const { data: opp } = await sb
+            // A silent insert failure would make Sora promise a follow-up that
+            // never happens, so a failed CRM capture degrades to the generic
+            // retry reply instead of a false "ya registrado".
+            const { data: opp, error: oppErr } = await sb
               .from("crm_opportunities")
               .insert({
                 title: args.title,
@@ -282,35 +294,47 @@ Deno.serve(async (req) => {
 
             if (opp) {
               captured = { id: opp.id };
-              await sb.from("crm_activities").insert({
+              const { error: actErr } = await sb.from("crm_activities").insert({
                 opportunity_id: opp.id,
                 type: "sora_msg",
                 content: args.diagnostic_summary ?? "Oportunidad capturada desde el chat",
                 created_by_sora: true,
               });
+              // The lead is already saved; a missed activity is logged, not fatal.
+              if (actErr) console.error("sora-chat: crm_activities insert failed", actErr.message);
+            } else if (oppErr) {
+              console.error("sora-chat: crm_opportunities insert failed", oppErr.message);
             }
           }
 
           if (fnName === "cerrar_venta_y_cobrar") {
-            const items = (args.items || []).filter(
-              (i: any) => i?.name && i?.unit_amount_mxn > 0 && i?.quantity > 0,
+            // Items arrive as loose model output; narrowing keeps the Stripe
+            // request limited to what a checkout actually accepts.
+            type FinalItem = { name: string; unit_amount_mxn: number; quantity: number };
+            const items = ((args.items ?? []) as Partial<FinalItem>[]).filter(
+              (i): i is FinalItem =>
+                typeof i?.name === "string" && i.name.length > 0 &&
+                typeof i?.unit_amount_mxn === "number" && i.unit_amount_mxn > 0 &&
+                typeof i?.quantity === "number" && Number.isInteger(i.quantity) && i.quantity > 0,
             );
             if (items.length === 0) continue;
 
-            // Si hay oportunidad recién capturada, ligarla
+            // Link to the opportunity just captured by this same tool run
             let oppId: string | null = captured?.id ?? null;
             if (!oppId && args.contact_email) {
-              const { data: o } = await sb
+              const { data: o, error: oErr } = await sb
                 .from("crm_opportunities")
                 .select("id")
                 .ilike("contact_email", args.contact_email)
                 .order("created_at", { ascending: false })
                 .limit(1)
                 .maybeSingle();
+              // Only the CRM linkage is lost on error; the payment can proceed.
+              if (oErr) console.error("sora-chat: opportunity lookup failed", oErr.message);
               oppId = o?.id ?? null;
             }
 
-            // Llamar al edge function sora-checkout internamente
+            // Call the internal sora-checkout edge function with the service key
             const checkoutResp = await fetch(
               `${Deno.env.get("SUPABASE_URL")}/functions/v1/sora-checkout`,
               {
@@ -337,7 +361,7 @@ Deno.serve(async (req) => {
                 order_number: co.order_number,
                 total: co.total,
                 url: co.url,
-                items: items.map((i: any) => ({
+                items: items.map((i: FinalItem) => ({
                   name: i.name,
                   quantity: i.quantity,
                   unit_amount_mxn: i.unit_amount_mxn,
