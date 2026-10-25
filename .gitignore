@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Environment: never commit real values, only the example
+.env
+.env.*
+!.env.example
+
+# Agent tooling
+.atl/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -25,3 +33,10 @@ dist-ssr
 
 # Playwright artifacts (trace, video, diffs)
 tests/e2e/artifacts/
+
+# bun.lock is the single source of truth (CI runs `bun install --frozen-lockfile`).
+# These are legacy/alternative lockfiles that cause silent dependency drift.
+bun.lockb
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
