@@ -112,11 +112,19 @@ Backups del Caddyfile y el compose originales: `Caddyfile.bak.*` y
 - Revisar video en Safari/iOS
 - Renovación SSL: automática via Caddy (no hay certbot en la VPS; el healthcheck vigila la expiración del certificado)
 - Notificaciones si el sitio cae: IMPLEMENTADO - `scripts/healthcheck.sh` + cron cada 5 min -> ntfy.sh (el servidor actual es Caddy; nginx está deshabilitado)
+## Pendientes Web
+
+- Deploy automatico GitHub Webhook (en progreso)
+- Arreglar chatbot Sora
+- Revisar video en Safari/iOS
+- Renovación SSL: automática via Caddy (no hay certbot en la VPS; el healthcheck vigila la expiración del certificado)
+- Notificaciones si el sitio cae: IMPLEMENTADO - `scripts/healthcheck.sh` + cron cada 5 min -> ntfy.sh (el servidor actual es Caddy; nginx está deshabilitado)
 - Arquitectura decisión (IMPLEMENTADA en diseño): la web (grupopsi.com) es la ÚNICA fuente de verdad de datos de negocio; la app móvil (grupo-psi-app) es un complemento. Dos proyectos Supabase separados a propósito; se cruzan así:
     1) App -> Web: la app apunta EXPO_PUBLIC_SUPABASE_URL al proyecto de la web y comparte auth + RLS (la RLS decide qué ve cada rol).
     2) Web -> App: push via las edge functions ya existentes en la web (push-subscribe, push-send, push-public-key); los device tokens se registran en la WEB, no en la app.
     3) Supabase de la app (gchaoyqlkjtdkkgyawpg): solo soporte de la app (telemetría, caché offline, settings). Nunca datos de negocio. Puede deprecarse si deja de necesitarse.
   NOTA: acá el lado web ya cumple su parte. El cambio real de URL debe hacerse en el repo de la app, que NO está en esta VPS.
+- **PENDIENTE para después** (orden: primero "a" = pulir la web, luego "b" = la app): en el repo de la app (NO en esta VPS) cambiar `EXPO_PUBLIC_SUPABASE_URL` de `gchaoyqlkjtdkkgyawpg` a `wcnbqlpbqansyvslxlth` y rediseñar la RLS del proyecto de la web para el rol de la app. NO empezar mientras la web tenga pendientes propios (chatbot Sora, video Safari/iOS, deploy hook).
 
 ---
 
