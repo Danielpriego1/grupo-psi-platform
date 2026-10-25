@@ -107,14 +107,7 @@ Backups del Caddyfile y el compose originales: `Caddyfile.bak.*` y
 
 ## Pendientes Web
 
-- Deploy automatico GitHub Webhook (en progreso)
-- Arreglar chatbot Sora
-- Revisar video en Safari/iOS
-- Renovación SSL: automática via Caddy (no hay certbot en la VPS; el healthcheck vigila la expiración del certificado)
-- Notificaciones si el sitio cae: IMPLEMENTADO - `scripts/healthcheck.sh` + cron cada 5 min -> ntfy.sh (el servidor actual es Caddy; nginx está deshabilitado)
-## Pendientes Web
-
-- Deploy automatico GitHub Webhook (en progreso)
+- Deploy automatico: workflow `Deploy` en GitHub Actions (`.github/workflows/deploy.yml`, sucesor del deploy.yml borrado en 3815d2f). Pendiente definir los 4 secrets del repo: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY y SUPABASE_ACCESS_TOKEN - sin eso el workflow corre vacio.
 - Arreglar chatbot Sora
 - Revisar video en Safari/iOS
 - Renovación SSL: automática via Caddy (no hay certbot en la VPS; el healthcheck vigila la expiración del certificado)

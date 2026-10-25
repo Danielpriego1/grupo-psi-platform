@@ -1,0 +1,98 @@
+# Deploy to the Contabo VPS (94.72.113.32) and Supabase.
+# Successor of the pre-lapsis deploy.yml (SSH + git pull + pm2 + nginx),
+# rebuilt for the current architecture: Caddy serves /var/www/grupopsi as
+# static files, so no daemon restart is needed, just an atomic-ish rsync.
+#
+# Secrets this workflow expects (repository Settings > Secrets and variables > Actions):
+#   DEPLOY_HOST            94.72.113.32
+#   DEPLOY_USER            dani
+#   DEPLOY_SSH_KEY         ed25519 private key whose PUBLIC half is in that user's authorized_keys
+#   SUPABASE_ACCESS_TOKEN  personal access token for functions deploys (kept in flock)
+# Nothing is rebuilt on the VPS anymore: CI builds, the VPS only receives files.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "bun.lock"
+      - "vite.config.ts"
+      - "tailwind.config.ts"
+      - "tsconfig*.json"
+      - "supabase/functions/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch: {}
+
+jobs:
+  site:
+    name: Build & rsync static site
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-site
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+        env:
+          NODE_ENV: production
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # TOFU host key acceptance: the VPS key is pinned on first contact.
+          # Rotate by deleting the line from known_hosts and re-running.
+          ssh-keyscan -p 22 "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Rsync dist to /var/www/grupopsi
+        run: |
+          rsync -a --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p 22" \
+            dist/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/grupopsi/"
+
+      - name: Smoke check the public URL
+        run: |
+          sleep 2
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://grupopsi.com/)
+          echo "grupopsi.com -> $code"
+          test "$code" = "200" || { echo "smoke check failed"; exit 1; }
+
+  sora-chat:
+    name: Deploy sora-chat edge function
+    runs-on: ubuntu-latest
+    # Deploying every function unconditionally would push stale branches of
+    # them; scope to the chat function the workspace actually changed.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(join(github.event.commits.*.modified, ' '), 'supabase/functions/') ||
+      contains(join(github.event.commits.*.added, ' '), 'supabase/functions/') ||
+      contains(join(github.event.commits.*.removed, ' '), 'supabase/functions/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy sora-chat
+        run: supabase functions deploy sora-chat --project-ref wcnbqlpbqansyvslxlth
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+  # To deploy more functions later, widen this job to a matrix over
+  # supabase/functions/*/ names instead of hand-picking slugs.
