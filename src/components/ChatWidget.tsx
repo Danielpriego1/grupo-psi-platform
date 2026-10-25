@@ -197,14 +197,14 @@ function renderMarkdown(text: string): React.ReactNode[] {
       continue;
     }
 
-    // blank line = pequeño gap entre párrafos
+    // blank line = small paragraph gap
     if (line.trim() === "") {
       blocks.push(<div key={nextKey()} className="h-1.5" />);
       i++;
       continue;
     }
 
-    // párrafo: agrupa líneas normales con <br/>
+    // paragraph: collects consecutive normal lines, rendered with <br/>
     const para: string[] = [line];
     i++;
     while (
@@ -352,7 +352,7 @@ function matchShortcut(e: KeyboardEvent, s: Shortcut): boolean {
   );
 }
 
-// ───── Validación de atajos (duplicados / reservados) ─────
+// ───── Shortcut validation (duplicates / reserved) ─────
 const RESERVED_SHORTCUTS: ReadonlyArray<Shortcut> = [
   { ctrl: true, shift: false, alt: false, key: "c" },
   { ctrl: true, shift: false, alt: false, key: "v" },
@@ -408,7 +408,7 @@ type SyncMessage =
   | { type: "help"; value: boolean }
   | { type: "radius"; value: number };
 
-// ───── Ghost mode: última acción / dev sync log ─────
+// ───── Ghost mode: last action / dev sync log ─────
 type GhostTrigger = "scroll" | "proximity-out" | "proximity-in" | "manual-on" | "manual-off" | "shortcut";
 const GHOST_TRIGGER_LABEL: Record<GhostTrigger, string> = {
   scroll: "Se ocultó por scroll",
@@ -420,6 +420,12 @@ const GHOST_TRIGGER_LABEL: Record<GhostTrigger, string> = {
 };
 type SyncLogEntry = { id: number; source: "broadcast" | "storage"; type: string; at: number };
 const IS_DEV = typeof import.meta !== "undefined" && !!(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV;
+
+/**
+ * Idle placeholder of the composer textarea. Exported so tests assert on the
+ * real value instead of a copy that silently drifts when the UI copy changes.
+ */
+export const CHAT_INPUT_PLACEHOLDER = "Mensaje…";
 
 
 
@@ -439,7 +445,7 @@ export function ChatWidget() {
   const [atBottom, setAtBottom] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessageCountRef = useRef(messages.length);
-  const [kbOffset, setKbOffset] = useState(0); // altura ocupada por el teclado móvil
+  const [kbOffset, setKbOffset] = useState(0); // height occupied by the mobile keyboard
 
   // Positioning & dim-on-scroll so Sora no estorba
   const [corner, setCorner] = useState<Corner>(() => {
@@ -451,7 +457,7 @@ export function ChatWidget() {
   const dragStateRef = useRef<{ id: number; moved: boolean; longPress: ReturnType<typeof setTimeout> | null }>({ id: -1, moved: false, longPress: null });
   const [dim, setDim] = useState(false);
   const dimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Ghost mode: hide launcher/panel automáticamente al leer o hacer scroll, reaparece al acercar el cursor
+  // Ghost mode: automatically hide launcher/panel on read or scroll, reappear as the cursor approaches
   const [ghostMode, setGhostMode] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("soraGhost") === "1";
@@ -599,7 +605,7 @@ export function ChatWidget() {
   }, [helpDismissed, broadcast]);
 
 
-  // Pequeño "flash" al entrar en estado oculto, para que sepas dónde reaparecerá
+  // Small "flash" when entering the hidden state, so you know where it will reappear
   useEffect(() => {
     if (!ghostMode || !hidden) return;
     setProximityHint(true);
@@ -651,11 +657,13 @@ export function ChatWidget() {
     const loadProfile = async () => {
       if (!userId) return;
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("profiles")
           .select("sora_proximity_radius" as never)
           .eq("user_id", userId)
           .maybeSingle();
+        // RLS blockers or outages are logged, not thrown: local radius keeps working.
+        if (error) console.warn("[sora] radius profile load failed:", error.message);
         if (cancelled) return;
         const remote = (data as { sora_proximity_radius?: number | null } | null)?.sora_proximity_radius;
         if (remote != null) applyRemote(remote);
@@ -705,10 +713,12 @@ export function ChatWidget() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        await supabase
+        const { error } = await supabase
           .from("profiles")
           .update({ sora_proximity_radius: proximityRadius } as never)
           .eq("user_id", user.id);
+        // A failed write means the radius never syncs to other devices; log it.
+        if (error) console.warn("[sora] radius profile save failed:", error.message);
       } catch { /* silent */ }
     }, 800);
     return () => { if (profileRadiusSaveRef.current) clearTimeout(profileRadiusSaveRef.current); };
@@ -904,8 +914,8 @@ export function ChatWidget() {
   useFpsMonitor(open && (isLoading || messages.some(m => m.isTyping)), "transcript");
   useLongTaskMonitor("ChatWidget");
 
-  // Detectar teclado móvil vía VisualViewport para que el input y el botón
-  // "mensajes nuevos" no queden tapados. Mantener scroll estable.
+  // Detect the mobile keyboard via VisualViewport so the input and the "new
+  // messages" pill stay visible. Keep scroll stable.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const vv = window.visualViewport;
@@ -1021,7 +1031,7 @@ export function ChatWidget() {
     setMessages(updatedMessages);
     setInput("");
 
-    // Escalación humana detectada: responder directamente sin llamar a la API
+    // Human handoff detected: reply directly without calling the API
     if (detectHumanRequest(text)) {
       const msgId = (Date.now() + 1).toString();
       const humanMsg = `Entendido. Te conecto con un asesor de Grupo PSI por WhatsApp.\n\n[Abrir WhatsApp →](${WHATSAPP_URL})`;
@@ -1199,7 +1209,7 @@ export function ChatWidget() {
     return () => window.removeEventListener("keydown", onKey);
   }, [shortcuts, capturingAction]);
 
-  // Captura de un nuevo atajo (con validación de duplicados y reservados)
+  // Capture a new shortcut (with duplicate and reserved validation)
   useEffect(() => {
     if (!capturingAction) return;
     const onKey = (e: KeyboardEvent) => {
@@ -1278,7 +1288,8 @@ export function ChatWidget() {
     if (dragStateRef.current.longPress) clearTimeout(dragStateRef.current.longPress);
     dragStateRef.current.longPress = setTimeout(() => {
       setIsDragging(true);
-      try { btn.setPointerCapture(e.pointerId); } catch {}
+      // Pointer capture is best-effort: some browsers reject it for an already-released pointer.
+      try { btn.setPointerCapture(e.pointerId); } catch { /* ignore */ }
       if ("vibrate" in navigator) navigator.vibrate?.(15);
       const rect = btn.getBoundingClientRect();
       setDragPos({ x: rect.left, y: rect.top });
@@ -1306,7 +1317,8 @@ export function ChatWidget() {
       setCorner(next);
       setDragPos(null);
       setIsDragging(false);
-      try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+      // Releasing an already-released capture throws; it is safe to ignore.
+      try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       return;
     }
     if (!dragStateRef.current.moved) {
@@ -1350,7 +1362,7 @@ export function ChatWidget() {
         )}
       </button>
 
-      {/* Círculo visualizador del radio de proximidad — muestra el umbral en tiempo real */}
+      {/* Proximity radius visual circle — shows the threshold in real time */}
       {ghostMode && !open && !isDragging && (() => {
         const size = proximityRadius * 2;
         const offset = 48 - proximityRadius;
@@ -1449,8 +1461,8 @@ export function ChatWidget() {
         );
       })()}
 
-      {/* Indicador persistente cuando Sora está oculta por modo fantasma:
-          muestra dónde reaparecerá al acercar el cursor. */}
+      {/* Persistent indicator while Sora is hidden by ghost mode:
+          shows where it will reappear as the cursor approaches. */}
       {ghostMode && hidden && !open && !isDragging && (
         <div
           className={cn(
@@ -1465,7 +1477,7 @@ export function ChatWidget() {
         </div>
       )}
 
-      {/* Anuncio accesible: se lee en voz al cambiar la última acción del modo fantasma */}
+      {/* Accessible announcement: read out loud on ghost-mode last-action change */}
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {ghostAnnouncement}
       </div>
@@ -1473,7 +1485,7 @@ export function ChatWidget() {
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {radiusAnnouncement}
       </div>
-      {/* Anuncio accesible: al chocar contra los límites del radio */}
+      {/* Accessible announcement: when the radius limits are hit */}
       <div className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
         {radiusBoundaryHit === "min" && `Ya alcanzaste el radio mínimo (${PROXIMITY_MIN} píxeles).`}
         {radiusBoundaryHit === "max" && `Ya alcanzaste el radio máximo (${PROXIMITY_MAX} píxeles).`}
@@ -1835,7 +1847,7 @@ export function ChatWidget() {
               value={input}
               onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
               onKeyDown={handleKeyDown}
-              placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : "Mensaje…"}
+              placeholder={isRecording ? "Escuchando…" : isTranscribing ? "Transcribiendo…" : CHAT_INPUT_PLACEHOLDER}
               rows={1}
               wrap="soft"
               className="block w-full flex-1 min-w-0 min-h-[40px] max-h-[120px] rounded-xl border border-white/10 bg-white/5 pl-3.5 pr-[4.5rem] sm:pr-[5rem] py-2 text-[13px] text-white placeholder:text-white/30 outline-none transition-all focus:border-primary/50 focus:bg-white/10 focus:ring-2 focus:ring-primary/10 resize-none overflow-y-auto break-words [overflow-wrap:anywhere] [word-break:break-word]"

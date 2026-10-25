@@ -51,7 +51,7 @@ class MockBroadcastChannel implements MockBCInstance {
   close() { this._closed = true; }
 }
 
-import { ChatWidget } from "@/components/ChatWidget";
+import { CHAT_INPUT_PLACEHOLDER, ChatWidget } from "@/components/ChatWidget";
 
 function latestBC(): MockBCInstance {
   const live = bcInstances.filter(b => !b._closed);
@@ -97,7 +97,7 @@ beforeEach(() => {
 });
 
 function panelIsOpen(): boolean {
-  const ta = screen.queryByPlaceholderText(/escribe o toca el micrófono/i) as HTMLTextAreaElement | null;
+  const ta = screen.queryByPlaceholderText(CHAT_INPUT_PLACEHOLDER) as HTMLTextAreaElement | null;
   if (!ta) return false;
   const panel = ta.closest("div.fixed") as HTMLElement | null;
   return !!panel && !/opacity-0|pointer-events-none/.test(panel.className);
@@ -141,7 +141,7 @@ describe("ChatWidget cross-tab sync", () => {
     // Open the panel + settings so the radius label is visible
     sendBC({ type: "open", value: true });
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/escribe o toca el micrófono/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(CHAT_INPUT_PLACEHOLDER)).toBeInTheDocument();
     });
     fireEvent.click(screen.getByLabelText(/abrir ajustes/i));
 

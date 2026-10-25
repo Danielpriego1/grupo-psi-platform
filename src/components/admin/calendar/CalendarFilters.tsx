@@ -23,17 +23,25 @@ export function CalendarFilters({ filters, setFilters }: Props) {
   const [techs, setTechs] = useState<{ user_id: string; full_name: string | null }[]>([]);
 
   useEffect(() => {
-    supabase.from("clients").select("id, company_name").order("company_name").then(({ data }) => {
+    supabase.from("clients").select("id, company_name").order("company_name").then(({ data, error }) => {
+      // A failed fetch keeps the empty lists instead of crashing a blocked calendar.
+      if (error) console.warn("[calendar] clients fetch failed:", error.message);
       if (data) setClients(data);
     });
-    supabase.from("profiles").select("user_id, full_name").then(({ data }) => {
+    supabase.from("profiles").select("user_id, full_name").then(({ data, error }) => {
+      // Same policy: log, keep the lists, calendar still renders.
+      if (error) console.warn("[calendar] technicians fetch failed:", error.message);
       if (data) setTechs(data);
     });
   }, []);
 
   const toggleSet = <T extends string>(set: Set<T>, val: T): Set<T> => {
     const n = new Set(set);
-    n.has(val) ? n.delete(val) : n.add(val);
+    if (n.has(val)) {
+      n.delete(val);
+    } else {
+      n.add(val);
+    }
     return n;
   };
 

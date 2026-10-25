@@ -24,7 +24,7 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const inventoryImages = useInventoryImages();
   const [date, setDate] = useState<Date>();
-  const serviceType: "delivery" = "delivery";
+  const serviceType = "delivery" as const;
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -40,12 +40,17 @@ const ProductDetail = () => {
     setCurrentImage(0); // reset al cambiar de producto
     (async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("inventory")
           .select("*")
           .eq("product_id", id)
           .maybeSingle();
+        // RLS blockers or outages log, not throw: the static product still renders.
+        if (error) console.warn("[product] inventory load failed:", error.message);
         if (data) setInventoryItem(data);
+      } catch (err) {
+        // Unexpected throw: keep inventoryItem null, static product still renders.
+        console.warn("[product] inventory load threw:", err);
       } finally {
         setLoading(false);
       }
@@ -110,7 +115,7 @@ const ProductDetail = () => {
     );
   }
 
-  // Orden de prioridad: image_urls del inventario (orden que definió el admin) → image_url legacy → product.images estático.
+  // Order of priority: inventory image_urls (order set by the admin) → legacy image_url → static product.images.
   // Si el inventario define image_urls, esa lista es autoritativa para respetar el orden de admin.
   const invImage = inventoryImages[product.id] || primaryInvImg;
   const baseImages = product.images?.length ? product.images : [product.image || "/placeholder.svg"];

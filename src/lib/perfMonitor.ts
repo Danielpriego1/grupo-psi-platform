@@ -26,7 +26,6 @@ const LOG_STYLE = "color:#ea580c;font-weight:bold";
 
 export function logPerf(...args: unknown[]) {
   if (!isPerfEnabled()) return;
-  // eslint-disable-next-line no-console
   console.log(LOG_PREFIX, LOG_STYLE, ...args);
 }
 

@@ -31,7 +31,7 @@ vi.mock("@/lib/perfMonitor", () => ({
   useLongTaskMonitor: () => {},
 }));
 
-import { ChatWidget } from "@/components/ChatWidget";
+import { CHAT_INPUT_PLACEHOLDER, ChatWidget } from "@/components/ChatWidget";
 
 type Viewport = { width: number; height: number };
 
@@ -67,7 +67,7 @@ function openChat() {
 }
 
 function getTextarea() {
-  return screen.getByPlaceholderText(/escribe tu mensaje/i) as HTMLTextAreaElement;
+  return screen.getByPlaceholderText(CHAT_INPUT_PLACEHOLDER) as HTMLTextAreaElement;
 }
 
 beforeEach(() => {
