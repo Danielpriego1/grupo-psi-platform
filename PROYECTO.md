@@ -13,12 +13,12 @@
        Vite + React               Expo + React Native
           |                              |
              Supabase Cloud
-          Web: faadsipcsecmulwhbjah
+          Web: wcnbqlpbqansyvslxlth
           App: gchaoyqlkjtdkkgyawpg
                          |
-                VPS Contabo 147.93.138.51
+                VPS Contabo 94.72.113.32
                          |
-                       Nginx
+                  Caddy (Docker, TLS auto)
 
 ---
 
@@ -27,19 +27,25 @@
 **URL**: https://grupopsi.com
 **Repo**: https://github.com/Danielpriego1/grupo-psi-platform
 **Stack**: Vite + React + TypeScript + shadcn/ui + Tailwind CSS
-**Supabase**: faadsipcsecmulwhbjah
-**Hosting**: VPS Contabo — Nginx desde /var/www/grupopsi
-**SSL**: Certbot (Let's Encrypt)
+**Supabase**: wcnbqlpbqansyvslxlth
+**Hosting**: VPS Contabo — Caddy sirve /var/www/grupopsi
+**SSL**: Caddy / Let's Encrypt (automático, sin Certbot)
 
 ## Infraestructura Web
 
 | Componente | Detalle |
 |---|---|
-| VPS | Ubuntu 24.04 — 147.93.138.51 |
+| VPS | Ubuntu — 94.72.113.32 |
 | Usuario VPS | dani |
-| Nginx config | /etc/nginx/sites-available/grupopsi.com |
+| Web server | Caddy 2 en Docker — /opt/nextcloud-stack/Caddyfile |
+| Puertos | 80 y 443 los toma Caddy (contenedor nextcloud-stack-caddy-1) |
 | Build dir | /home/dani/grupo-psi-platform/dist |
-| Deploy dir | /var/www/grupopsi |
+| Deploy dir | /var/www/grupopsi (montado en el contenedor como /srv/grupopsi:ro) |
+| nginx | Instalado pero **deshabilitado**: no puede tomar 80/443 |
+
+El stack de Nextcloud que provee Contabo en este VPS usa **Caddy**, no nginx + Certbot.
+Caddy es el único dueño de 80/443 y emite/renueva los certificados solo, para
+`vmi3647271.contaboserver.net` (Nextcloud), `grupopsi.com` y `www.grupopsi.com`.
 
 ## Deploy Manual Web
 
@@ -47,8 +53,17 @@
     git pull origin main
     npm run build
     sudo rsync -av --delete dist/ /var/www/grupopsi/
-    sudo chown -R www-data:www-data /var/www/grupopsi
-    sudo systemctl reload nginx
+
+No hace falta reload: Caddy lee el directorio en cada request. No toques los permisos
+a www-data; el contenedor de Caddy corre como root y solo necesita lectura.
+
+## Deploy del stack Nextcloud
+
+    cd /opt/nextcloud-stack
+    sudo docker compose up -d
+
+Backups del Caddyfile y el compose originales: `Caddyfile.bak.*` y
+`docker-compose.yaml.bak.*` en el mismo directorio.
 
 ## Historial Web
 
@@ -95,8 +110,8 @@
 - Deploy automatico GitHub Webhook (en progreso)
 - Arreglar chatbot Sora
 - Revisar video en Safari/iOS
-- Cron renovacion SSL (certbot renew)
-- Notificaciones iPhone si nginx se cae (ntfy.sh)
+- Renovación SSL: automática via Caddy (no hay certbot en la VPS; el healthcheck vigila la expiración del certificado)
+- Notificaciones si el sitio cae: IMPLEMENTADO - `scripts/healthcheck.sh` + cron cada 5 min -> ntfy.sh (el servidor actual es Caddy; nginx está deshabilitado)
 
 ---
 
