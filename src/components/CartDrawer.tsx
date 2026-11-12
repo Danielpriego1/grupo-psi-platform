@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShoppingBag, CreditCard, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { whatsappUrl } from "@/lib/contact";
 import { useToast } from "@/hooks/use-toast";
 import { getProductPrice } from "@/data/products";
 import { CartLineRow } from "@/components/cart/CartLineRow";
@@ -77,7 +78,7 @@ export function CartDrawer() {
     msg += `\nTotal estimado: $${totalPrice.toFixed(2)} MXN`;
     if (clientName) msg += `\n\nNombre: ${clientName}`;
     if (clientPhone) msg += `\nTeléfono: ${clientPhone}`;
-    return encodeURIComponent(msg);
+    return msg;
   };
 
   // Stripe checkout — real payment
@@ -126,14 +127,14 @@ export function CartDrawer() {
         title: "Cotización registrada",
         description: `Tu pedido ${orderNumber} ha sido guardado. Te contactaremos pronto.`,
       });
-      window.open(`https://wa.me/5219931684717?text=${buildWhatsAppMessage(orderNumber)}`, "_blank");
+      window.open(whatsappUrl(buildWhatsAppMessage(orderNumber)), "_blank");
       clearCart();
       setClientName("");
       setClientPhone("");
       setIsOpen(false);
     } catch (error) {
       console.error("Error creating quote:", error);
-      window.open(`https://wa.me/5219931684717?text=${buildWhatsAppMessage()}`, "_blank");
+      window.open(whatsappUrl(buildWhatsAppMessage()), "_blank");
       toast({
         title: "Cotización enviada",
         description: "Tu solicitud fue enviada por WhatsApp.",

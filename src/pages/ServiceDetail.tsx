@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Wrench, User, Phone, Mail, Send, 
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { whatsappUrl } from "@/lib/contact";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -405,7 +406,7 @@ const ServiceDetail = () => {
                 </div>
                 
                 <Button className="w-full h-16 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all" asChild>
-                  <a href={`https://wa.me/5219931684717?text=${encodeURIComponent(`Hola, me interesa el servicio de: ${service.label}`)}`} target="_blank" rel="noopener noreferrer">
+                  <a href={whatsappUrl(`Hola, me interesa el servicio de: ${service.label}`)} target="_blank" rel="noopener noreferrer">
                     <Phone className="mr-2 h-5 w-5" />
                     Cotizar por WhatsApp
                   </a>

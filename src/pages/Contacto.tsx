@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-
+import { SALES_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/contact";
 const schema = z.object({
   name: z.string().trim().min(2, "Escriba su nombre completo").max(120, "Nombre demasiado largo"),
   email: z.string().trim().email("Correo no válido").max(255),
@@ -37,14 +37,14 @@ const channels = [
   {
     icon: Phone,
     label: "Teléfono y WhatsApp",
-    value: "+52 1 993 168 4717",
-    href: "https://wa.me/5219931684717",
+    value: WHATSAPP_DISPLAY,
+    href: WHATSAPP_URL,
   },
   {
     icon: Mail,
     label: "Correo",
-    value: "ventas@grupopsi.com",
-    href: "mailto:ventas@grupopsi.com",
+    value: SALES_EMAIL,
+    href: `mailto:${SALES_EMAIL}`,
   },
   {
     icon: MapPin,
@@ -96,7 +96,7 @@ export default function Contacto() {
     if (error) {
       setStatus("error");
       setServerMessage(
-        "No pudimos enviar su mensaje en este momento. Escríbanos por WhatsApp al +52 1 993 168 4717.",
+        `No pudimos enviar su mensaje en este momento. Escríbanos por WhatsApp al ${WHATSAPP_DISPLAY}.`,
       );
       return;
     }
@@ -290,7 +290,7 @@ export default function Contacto() {
               </p>
               <Button asChild variant="outline" className="mt-4 w-full">
                 <a
-                  href="https://wa.me/5219931684717"
+                  href={WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

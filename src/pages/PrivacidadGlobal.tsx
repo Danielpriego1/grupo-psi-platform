@@ -1,4 +1,5 @@
 import { SEO } from "@/components/SEO";
+import { WHATSAPP_DISPLAY } from "@/lib/contact";
 
 export default function PrivacidadGlobal() {
   return (
@@ -19,7 +20,7 @@ export default function PrivacidadGlobal() {
         <p><strong>Grupo Psi</strong><br />
         Domicilio: Nacajuca, Tabasco, México<br />
         Email: <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a><br />
-        Teléfono: +52 1 993 168 4717</p>
+        Teléfono: {WHATSAPP_DISPLAY}</p>
 
         <h2>3. Datos que recopilamos</h2>
         <p>Recopilamos únicamente los datos necesarios para prestar nuestros servicios:</p>
@@ -78,7 +79,7 @@ export default function PrivacidadGlobal() {
         <p>Para preguntas sobre esta política o para ejercer tus derechos:</p>
         <ul>
           <li>Email: <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a></li>
-          <li>Teléfono: +52 1 993 168 4717</li>
+          <li>Teléfono: {WHATSAPP_DISPLAY}</li>
           <li>Dirección postal: Nacajuca, Tabasco, México</li>
         </ul>
         <p>Si resides en la Unión Europea o en un país con autoridad de protección de datos, también tienes derecho a presentar una queja ante la autoridad correspondiente de tu país de residencia.</p>

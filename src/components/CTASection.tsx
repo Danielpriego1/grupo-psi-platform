@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, MapPin } from "lucide-react";
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/contact";
 
 export function CTASection() {
   return (
@@ -31,7 +32,7 @@ export function CTASection() {
               className="flex-1 min-w-0 bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all duration-300 [word-break:break-word]"
               asChild
             >
-              <a href="https://wa.me/5219931684717" target="_blank" rel="noopener noreferrer">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 <Phone />
                 <span>Solicitar cotización</span>
               </a>
@@ -57,7 +58,7 @@ export function CTASection() {
               className="flex flex-col items-center gap-2"
             >
               <Phone className="h-5 w-5 text-primary" />
-              <span className="text-muted-foreground">+52 1 993 168 4717</span>
+              <span className="text-muted-foreground">{WHATSAPP_DISPLAY}</span>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}

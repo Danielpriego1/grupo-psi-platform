@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/contact";
 
 export function Footer() {
   return (
@@ -41,8 +42,8 @@ export function Footer() {
             <h4 className="font-semibold text-foreground mb-4">Contacto</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="https://wa.me/5219931684717" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
-                  +52 1 993 168 4717
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  {WHATSAPP_DISPLAY}
                 </a>
               </li>
               <li>

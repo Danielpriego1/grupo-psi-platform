@@ -1,4 +1,5 @@
 import { SEO } from "@/components/SEO";
+import { WHATSAPP_DISPLAY } from "@/lib/contact";
 
 export default function Privacidad() {
   return (
@@ -47,7 +48,7 @@ export default function Privacidad() {
         <p>Puedes ejercer en cualquier momento tus derechos de acceso, rectificación, cancelación y oposición escribiendo a <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a>.</p>
 
         <h2>9. Contacto</h2>
-        <p>Para cualquier duda sobre privacidad: <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a> · +52 1 993 168 4717.</p>
+        <p>Para cualquier duda sobre privacidad: <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a> · {WHATSAPP_DISPLAY}.</p>
       </main>
     </>
   );

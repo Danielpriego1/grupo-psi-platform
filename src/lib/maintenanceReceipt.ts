@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { SALES_EMAIL, WHATSAPP_DISPLAY } from "@/lib/contact";
 
 export interface MaintenanceReceiptData {
   folio: string;
@@ -67,7 +68,7 @@ export async function downloadMaintenanceReceipt(data: MaintenanceReceiptData) {
   doc.setFontSize(10);
   doc.setTextColor(100);
   doc.text("Comprobante de Solicitud de Mantenimiento", margin + 85, y + 42);
-  doc.text("Nacajuca, Tabasco · +52 1 993 168 4717 · ventas@grupopsi.com", margin + 85, y + 56);
+  doc.text(`Nacajuca, Tabasco · ${WHATSAPP_DISPLAY} · ${SALES_EMAIL}`, margin + 85, y + 56);
 
   y += 90;
 

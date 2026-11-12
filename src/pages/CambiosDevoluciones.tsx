@@ -1,4 +1,5 @@
 import { SEO } from "@/components/SEO";
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/contact";
 
 export default function CambiosDevoluciones() {
   return (
@@ -28,7 +29,7 @@ export default function CambiosDevoluciones() {
         <p>Los cambios por talla, modelo o presentación están sujetos a disponibilidad de inventario y deben solicitarse dentro de los <strong>15 días naturales</strong> posteriores a la recepción, en las mismas condiciones de devolución.</p>
 
         <h3>2.3 Proceso</h3>
-        <p>Para iniciar una devolución o cambio, contáctanos vía WhatsApp al <a href="https://wa.me/5219931684717">+52 1 993 168 4717</a> o escribe a <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a>. Te indicaremos los pasos para el envío. Los costos de envío de devolución corren por cuenta del cliente, salvo que el producto tenga un defecto de fábrica.</p>
+        <p>Para iniciar una devolución o cambio, contáctanos vía WhatsApp al <a href={WHATSAPP_URL}>{WHATSAPP_DISPLAY}</a> o escribe a <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a>. Te indicaremos los pasos para el envío. Los costos de envío de devolución corren por cuenta del cliente, salvo que el producto tenga un defecto de fábrica.</p>
 
         <h2>3. Reembolsos</h2>
         <p>Una vez recibido y verificado el producto, procesaremos el reembolso en un plazo de <strong>5 a 10 días hábiles</strong> mediante el mismo método de pago utilizado en la compra (Stripe). Para transferencias bancarias directas, el plazo puede extenderse según las políticas de la institución bancaria.</p>
@@ -59,7 +60,7 @@ export default function CambiosDevoluciones() {
         <h2>8. Contacto</h2>
         <p>Para cualquier solicitud relacionada con cambios, devoluciones o garantías:</p>
         <ul>
-          <li>WhatsApp: <a href="https://wa.me/5219931684717">+52 1 993 168 4717</a></li>
+          <li>WhatsApp: <a href={WHATSAPP_URL}>{WHATSAPP_DISPLAY}</a></li>
           <li>Email: <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a></li>
           <li>Dirección: Nacajuca, Tabasco, México.</li>
         </ul>

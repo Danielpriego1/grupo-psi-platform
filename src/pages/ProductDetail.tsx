@@ -9,6 +9,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { whatsappUrl } from "@/lib/contact";
 import { LocationMap } from "@/components/LocationMap";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
@@ -363,7 +364,7 @@ const ProductDetail = () => {
                   <div className="space-y-3">
                     <div className="text-xl font-bold text-muted-foreground">Consultar precio</div>
                     <a
-                      href={`https://wa.me/5219931684717?text=${encodeURIComponent(`Hola, me interesa cotizar: ${product.name}`)}`}
+                      href={whatsappUrl(`Hola, me interesa cotizar: ${product.name}`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm font-medium transition-colors"

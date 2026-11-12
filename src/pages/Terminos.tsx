@@ -1,4 +1,5 @@
 import { SEO } from "@/components/SEO";
+import { WHATSAPP_DISPLAY } from "@/lib/contact";
 
 export default function Terminos() {
   return (
@@ -47,7 +48,7 @@ export default function Terminos() {
         <p>Estos Términos se rigen por las leyes mexicanas. Cualquier controversia se someterá a los tribunales competentes de Villahermosa, Tabasco.</p>
 
         <h2>11. Contacto</h2>
-        <p>Grupo Psi · Nacajuca, Tabasco · <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a> · +52 1 993 168 4717.</p>
+        <p>Grupo Psi · Nacajuca, Tabasco · <a href="mailto:ventas@grupopsi.com">ventas@grupopsi.com</a> · {WHATSAPP_DISPLAY}.</p>
       </main>
     </>
   );

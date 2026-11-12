@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { WHATSAPP_URL } from "@/lib/contact";
 
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -51,9 +52,6 @@ const INITIAL_MESSAGES: Message[] = [
     content: "¡Hola! 👋 Soy Sora, Ejecutiva de Grupo PSI. ¿En qué te puedo ayudar hoy?",
   },
 ];
-
-const WHATSAPP_NUMBER = "5219931684717";
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 function detectHumanRequest(text: string): boolean {
   const t = text.toLowerCase();

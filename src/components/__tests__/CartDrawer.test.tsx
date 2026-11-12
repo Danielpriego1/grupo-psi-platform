@@ -236,4 +236,26 @@ describe("CartDrawer", () => {
     expect(payBtn()).not.toBeDisabled();
     expect(quoteBtn()).not.toBeDisabled();
   });
+
+  it("[4] 'Cotizar por WhatsApp' opens the current contact number", async () => {
+    mockInventory = [{ product_id: polo.id, stock: 50 }];
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+    render(
+      <Harness
+        seed={[{ product: polo, quantity: 1, selectedSize: "M", selectedVariant: "Blanco" }]}
+      />
+    );
+    await flush();
+
+    fireEvent.click(screen.getByRole("button", { name: /cotizar por whatsapp/i }));
+    await flush();
+
+    expect(openSpy).toHaveBeenCalled();
+    const url = openSpy.mock.calls[0][0] as string;
+    // Digits-only international format required by wa.me, without "+" or spaces.
+    expect(url.startsWith("https://wa.me/5219932151217?text=")).toBe(true);
+
+    openSpy.mockRestore();
+  });
 });

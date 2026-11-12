@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { whatsappUrl } from "@/lib/contact";
 
 interface OrderItem {
   product_name: string;
@@ -96,7 +97,7 @@ export default function PagoExitoso() {
   const orderNumber = summary?.order.order_number || orderParam;
   const isPaid = summary?.order.payment_status === "paid";
 
-  const whatsappMsg = encodeURIComponent(
+  const whatsappConfirmUrl = whatsappUrl(
     `¡Hola! Acabo de realizar un pago en la tienda de Grupo PSI.${orderNumber ? ` Número de pedido: ${orderNumber}.` : ""} ¿Pueden confirmar mi pedido?`
   );
 
@@ -224,7 +225,7 @@ export default function PagoExitoso() {
             ) : null}
 
             <a
-              href={`https://wa.me/5219931684717?text=${whatsappMsg}`}
+              href={whatsappConfirmUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="block"
